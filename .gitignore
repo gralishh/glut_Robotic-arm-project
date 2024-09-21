@@ -1,0 +1,4 @@
+/MDK-ARM/*
+!/MDK-ARM/h7_basic_board_code.uvoptx
+!/MDK-ARM/h7_basic_board_code.uvprojx
+!/MDK-ARM/startup_stm32h723xx.s
