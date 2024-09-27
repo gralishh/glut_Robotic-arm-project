@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ws2812.h"
+#include "remote_control.h" /*ÓÃÓÚ²âÊÔ*/
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -87,7 +88,10 @@ void StartDefaultTask(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  for(int aaaa = 5000000 ; aaaa > 0 ; aaaa--)
+	{
+    ;
+	}
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -117,7 +121,7 @@ int main(void)
   MX_ADC1_Init();
   MX_SPI6_Init();
   /* USER CODE BEGIN 2 */
-  WS2812_Ctrl(100,100,100);
+  remote_control_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -447,7 +451,7 @@ static void MX_UART5_Init(void)
   /* USER CODE END UART5_Init 1 */
   huart5.Instance = UART5;
   huart5.Init.BaudRate = 100000;
-  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.WordLength = UART_WORDLENGTH_9B;
   huart5.Init.StopBits = UART_STOPBITS_1;
   huart5.Init.Parity = UART_PARITY_EVEN;
   huart5.Init.Mode = UART_MODE_TX_RX;
@@ -488,9 +492,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
-  /* DMA1_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
 
 }
 
@@ -509,6 +513,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -528,18 +533,18 @@ static void MX_GPIO_Init(void)
 void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN 5 */
-  uint8_t r = 1;
-  uint8_t g = 1;
-  uint8_t b = 1;
+  #define LEDBRIGHT() WS2812_Ctrl(10,10,10)
+  #define LEDDARK() WS2812_Ctrl(0,0,0)
+  //LEDDARK();
+
   /* Infinite loop */
   for(;;)
   {
-    WS2812_Ctrl(r, g, b);
-    r++;
-    g += 5;
-    b += 10;
-    r++;g++;b++;
-    osDelay(100);
+    if(get_remote_control_point()->rc.s[0]==3)
+      LEDBRIGHT();
+    else
+      LEDDARK();
+    osDelay(5);
   }
   /* USER CODE END 5 */
 }

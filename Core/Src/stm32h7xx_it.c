@@ -22,6 +22,7 @@
 #include "stm32h7xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "remote_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,7 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern uint8_t sbus_rx_buf[2][SBUS_RX_BUF_NUM];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -162,17 +163,17 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief This function handles DMA1 stream0 global interrupt.
+  * @brief This function handles DMA1 stream1 global interrupt.
   */
-void DMA1_Stream0_IRQHandler(void)
+void DMA1_Stream1_IRQHandler(void)
 {
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 0 */
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 0 */
 
-  /* USER CODE END DMA1_Stream0_IRQn 0 */
+  /* USER CODE END DMA1_Stream1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_uart5_rx);
-  /* USER CODE BEGIN DMA1_Stream0_IRQn 1 */
+  /* USER CODE BEGIN DMA1_Stream1_IRQn 1 */
 
-  /* USER CODE END DMA1_Stream0_IRQn 1 */
+  /* USER CODE END DMA1_Stream1_IRQn 1 */
 }
 
 /**
@@ -185,7 +186,7 @@ void UART5_IRQHandler(void)
   /* USER CODE END UART5_IRQn 0 */
   HAL_UART_IRQHandler(&huart5);
   /* USER CODE BEGIN UART5_IRQn 1 */
-
+  HAL_UARTEx_ReceiveToIdle_DMA(&DBUS_USART,sbus_rx_buf[0],SBUS_RX_BUF_NUM);
   /* USER CODE END UART5_IRQn 1 */
 }
 
