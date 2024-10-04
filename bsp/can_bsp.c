@@ -59,13 +59,13 @@ uint8_t fdcanx_send_data(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data
 	FDCAN_TxHeaderTypeDef TxHeader;
 	
   TxHeader.Identifier = id;
-  TxHeader.IdType = FDCAN_STANDARD_ID;																// ???ID 
-  TxHeader.TxFrameType = FDCAN_DATA_FRAME;														// ????? 
-  TxHeader.DataLength = len << 16;																		// ??????????? 
-  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;										// ??????????? 								
-  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;															// ????????????? 
-  TxHeader.FDFormat = FDCAN_CLASSIC_CAN;															// ???CAN??? 
-  TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;										// ??????????FIFO????, ???洢 
+  TxHeader.IdType = FDCAN_STANDARD_ID;																// 
+  TxHeader.TxFrameType = FDCAN_DATA_FRAME;														// 
+  TxHeader.DataLength = FDCAN_DLC_BYTES_8;                            // 固定报文为8字节
+  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;										
+  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;															// 
+  TxHeader.FDFormat = FDCAN_CLASSIC_CAN;															// 
+  TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;										// 
   TxHeader.MessageMarker = 0x00; 			// ????????TX EVENT FIFO?????Maker??????????????Χ0??0xFF                
     
   if(HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, data)!=HAL_OK) 

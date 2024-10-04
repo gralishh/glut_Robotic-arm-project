@@ -25,6 +25,9 @@
 #include "ws2812.h"
 #include "remote_control.h" /*”√”⁄≤‚ ‘*/
 #include "can_bsp.h"
+
+#include "task.h"
+#include "chassis_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -60,8 +63,16 @@ const osThreadAttr_t defaultTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for ChassisTask */
+osThreadId_t ChassisTaskHandle;
+const osThreadAttr_t ChassisTask_attributes = {
+  .name = "ChassisTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityHigh,
+};
 /* USER CODE BEGIN PV */
-
+/*task????*/
+osThreadId chassis_task_handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,6 +86,7 @@ static void MX_ADC1_Init(void);
 static void MX_SPI6_Init(void);
 static void MX_FDCAN1_Init(void);
 void StartDefaultTask(void *argument);
+void __chassis_task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -152,6 +164,9 @@ int main(void)
   /* Create the thread(s) */
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* creation of ChassisTask */
+  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -606,6 +621,25 @@ void StartDefaultTask(void *argument)
     osDelay(5);
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header___chassis_task */
+/**
+* @brief Function implementing the ChassisTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___chassis_task */
+void __chassis_task(void *argument)
+{
+  /* USER CODE BEGIN __chassis_task */
+  chassis_task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __chassis_task */
 }
 
 /**

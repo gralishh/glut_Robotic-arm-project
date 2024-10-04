@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;../components/devices;../application;../components/algorithm;../components/support</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;../components/devices;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1072,6 +1072,16 @@
               <FileType>1</FileType>
               <FilePath>..\application\CAN_receive.c</FilePath>
             </File>
+            <File>
+              <FileName>chassis_behaviour.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\chassis_behaviour.c</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\chassis_task.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1101,6 +1111,11 @@
               <FileName>pid.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\algorithm\pid.c</FilePath>
+            </File>
+            <File>
+              <FileName>user_lib.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\user_lib.c</FilePath>
             </File>
           </Files>
         </Group>

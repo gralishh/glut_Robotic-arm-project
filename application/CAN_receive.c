@@ -1,6 +1,8 @@
 #include "CAN_receive.h"
 //#include "MCU_communicaton_task.h"
 #include "circular_buffer.h"
+#include "can_bsp.h"
+#include "cmsis_os.h"
 //#include "PC_communication_task.h"
 #include "string.h"
 #include "detect_task.h"

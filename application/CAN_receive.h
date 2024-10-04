@@ -27,6 +27,15 @@
 #define M2006_REDUCTIONRTION 36
 #define M3510_REDUCTIONRTION  27
 
+/*??f4???*/
+#define hcan1 hfdcan1
+#define hcan2 hfdcan2
+#define hcan3 hfdcan3
+
+extern FDCAN_HandleTypeDef hfdcan1;
+//extern FDCAN_HandleTypeDef hfdcan2;
+//extern FDCAN_HandleTypeDef hfdcan3;
+
 typedef enum
 {
 	CAN_2006_roll_1_ID  				  = 0x201,
