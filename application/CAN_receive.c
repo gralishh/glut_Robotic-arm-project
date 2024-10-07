@@ -289,62 +289,14 @@ void CanSendMess(FDCAN_HandleTypeDef* CANx,uint32_t SendID,int16_t *message)
   can_send_data[5] = (uint8_t) message[2];
   can_send_data[6] = (uint8_t)(message[3] >> 8);
   can_send_data[7] = (uint8_t) message[3];
-	//if (CANx==&hcan1)
-  //{
-   //HAL_CAN_AddTxMessage(&hcan1, &tx_message, can_send_data, &send_mail_box0);
-  //}
-  	//if (CANx==&hcan2)
-  //{
-   //HAL_CAN_AddTxMessage(&hcan2, &tx_message, can_send_data, &send_mail_box1);
-	  
-  //}
+
   fdcanx_send_data(CANx,SendID,can_send_data,0x08);
   	
 }
-////允许发送任意长度的数据，并在不足8个字节的部分用0填充
-//void u8CanSendMoreMess(CAN_HandleTypeDef* CANx, uint32_t SendID, uint8_t *message, uint8_t messageLength)
-//{
-//    uint32_t send_mail_box;
-//    CAN_TxHeaderTypeDef tx_message;
-//    tx_message.StdId = SendID;   // 设备标识符（编码器地址）
-//    tx_message.IDE = CAN_ID_STD; // 标准帧
-//    tx_message.RTR = CAN_RTR_DATA;     // 数据帧
-//    tx_message.DLC = 0x08; //帧长度  数据长度
 
-//    // 计算需要填充的0的数量
-//    uint8_t fill_zeros = (8 - (messageLength % 8)) % 8;
-
-//    // 发送数据
-//    for (uint8_t i = 0; i < messageLength + fill_zeros; i += 8) {
-//        // 将数据拷贝到发送缓冲区
-//        uint8_t can_send_data[8] = {0}; // 初始化为0
-//        for (uint8_t j = 0; j < 8; ++j) {
-//            if (i + j < messageLength) {
-//                can_send_data[j] = message[i + j];
-//            }
-//        }  
-
-//        // 调用HAL库函数发送数据
-//        if (CANx == &hcan1) {
-//            HAL_CAN_AddTxMessage(&hcan1, &tx_message, can_send_data, &send_mail_box);
-//        } else if (CANx == &hcan2) {
-//            HAL_CAN_AddTxMessage(&hcan2, &tx_message, can_send_data, &send_mail_box);
-//        }
-//		
-//		vTaskDelay(5);
-//    }
-//	
-//}
-
+//允许发送任意长度的数据，并在不足8个字节的部分用0填充
 void CanSendMoreMess(FDCAN_HandleTypeDef* CANx, uint32_t SendID, uint8_t *message, uint8_t messageLength)
 {
-    //uint32_t send_mail_box;
-    //CAN_TxHeaderTypeDef tx_message;
-    //tx_message.StdId = SendID;   // 设备标识符（编码器地址）
-    //tx_message.IDE = CAN_ID_STD; // 标准帧
-    //tx_message.RTR = CAN_RTR_DATA;     // 数据帧
-    //tx_message.DLC = 0x08; //帧长度  数据长度
-
     //// 计算需要填充的0的数量
     uint8_t fill_zeros = (4 - (messageLength % 4)) % 4;
 
@@ -358,12 +310,7 @@ void CanSendMoreMess(FDCAN_HandleTypeDef* CANx, uint32_t SendID, uint8_t *messag
             }
         }  
 
-        // 调用HAL库函数发送数据
-        //if (CANx == &hfdcan1) {
-        //    //HAL_CAN_AddTxMessage(&hcan1, &tx_message, can_send_data, &send_mail_box);
-        //} else if (CANx == &hfdcan2) {
-        //    //HAL_CAN_AddTxMessage(&hcan2, &tx_message, can_send_data, &send_mail_box);
-        //}
+        // 发送数据
         fdcanx_send_data(CANx,SendID,can_send_data,0x08);
 		
 		    vTaskDelay(20);

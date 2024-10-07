@@ -16,9 +16,6 @@ RC_ctrl_t rc_ctrl;
 //static uint8_t sbus_rx_buf[2][SBUS_RX_BUF_NUM];
 uint8_t sbus_rx_buf[2][SBUS_RX_BUF_NUM];
 
-/*测试用，可删*/
-uint32_t test_value;
-
 //取正函数
 static int16_t RC_abs(int16_t value);
 /**
@@ -111,90 +108,7 @@ void slove_data_error(void)
     RC_restart(SBUS_RX_BUF_NUM);
 }
 
-//dbus串口中断
-void DBUS_IRQHandler(void)
-{
-    //if (test_value=__HAL_UART_GET_FLAG(&DBUS_USART, UART_FLAG_RXNE))//接收到数据 
-    if((&DBUS_USART)->Instance->ISR & UART_FLAG_RXNE)
-    {
-        __HAL_UART_CLEAR_PEFLAG(&DBUS_USART);
-    }
-    else if (__HAL_UART_GET_FLAG(&DBUS_USART, UART_FLAG_IDLE))
-    {
-        static uint16_t this_time_rx_len = 0;
-
-        __HAL_UART_CLEAR_PEFLAG(&DBUS_USART);
-
-        if ((__HAL_DMA_GET_INSTANCE(DMA_DBUS_USART_RX)->CR & DMA_SxCR_CT) == RESET)
-        {
-            /* Current memory buffer used is Memory 0 */
-
-            //disable DMA
-            //失效DMA
-            __HAL_DMA_DISABLE(&DMA_DBUS_USART_RX);
-
-            //get receive data length, length = set_data_length - remain_length
-            //获取接收数据长度,长度 = 设定长度 - 剩余长度
-            this_time_rx_len = SBUS_RX_BUF_NUM - __HAL_DMA_GET_COUNTER(&DMA_DBUS_USART_RX);
-
-            //reset set_data_lenght
-            //重新设定数据长度
-            __HAL_DMA_GET_INSTANCE(DMA_DBUS_USART_RX)->NDTR = SBUS_RX_BUF_NUM;
-
-            //set memory buffer 1
-            //设定缓冲区1
-            __HAL_DMA_GET_INSTANCE(DMA_DBUS_USART_RX)->CR |= DMA_SxCR_CT;
-            
-            //enable DMA
-            //使能DMA
-            __HAL_DMA_ENABLE(&DMA_DBUS_USART_RX);
-            //__HAL_DMA_GET_INSTANCE(&DMA_DBUS_USART_RX)->CR |= DMA_SxCR_EN;
-
-            if(this_time_rx_len == RC_FRAME_LENGTH)
-            {
-                SBUS_TO_RC(sbus_rx_buf[0], &rc_ctrl);
-                //记录数据接收时间
-                DetectHook(DBUSTOE);
-            }
-        }
-        else
-        {
-            /* Current memory buffer used is Memory 1 */
-            //disable DMA
-            //失效DMA
-            __HAL_DMA_DISABLE(&DMA_DBUS_USART_RX);
-
-            //get receive data length, length = set_data_length - remain_length
-            //获取接收数据长度,长度 = 设定长度 - 剩余长度
-            this_time_rx_len = SBUS_RX_BUF_NUM - __HAL_DMA_GET_COUNTER(&DMA_DBUS_USART_RX);
-
-            //reset set_data_lenght
-            //重新设定数据长度
-            __HAL_DMA_GET_INSTANCE(DMA_DBUS_USART_RX)->NDTR = SBUS_RX_BUF_NUM;
-
-            //set memory buffer 0
-            //设定缓冲区0
-            __HAL_DMA_GET_INSTANCE(DMA_DBUS_USART_RX)->CR &= ~(DMA_SxCR_CT);
-            /*旧的*/
-            //DMA1_Stream1->CR &= ~(DMA_SxCR_CT);
-            
-            //enable DMA
-            //使能DMA
-            __HAL_DMA_ENABLE(&DMA_DBUS_USART_RX);
-            //__HAL_DMA_GET_INSTANCE(&DMA_DBUS_USART_RX)->CR |= DMA_SxCR_EN;
-
-            if(this_time_rx_len == RC_FRAME_LENGTH)
-            {
-                //处理遥控器数据
-                SBUS_TO_RC(sbus_rx_buf[1], &rc_ctrl);
-                //记录数据接收时间
-                DetectHook(DBUSTOE);
-            }
-        }
-    }
-
-}
-
+/*DBUS空闲中断接收*/
 void DBUS_IDLERX_HOOK(void)
 {
     static uint16_t this_time_rx_len = 0;

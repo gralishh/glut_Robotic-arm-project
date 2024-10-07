@@ -124,7 +124,6 @@ void slove_RC_lost(void);
 void slove_data_error(void);
 static int16_t RC_abs(int16_t value);
 void SBUS_TO_RC(volatile const uint8_t *sbus_buf, RC_ctrl_t *rc_ctrl);
-void DBUS_IRQHandler(void);
 void DBUS_IDLERX_HOOK(void);
 void DBUS_ERR_HOOK(void);
 #endif
