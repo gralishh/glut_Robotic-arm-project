@@ -8,6 +8,9 @@ extern UART_HandleTypeDef huart5;
 extern UART_HandleTypeDef huart7;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart10;
+extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
+
 extern DMA_HandleTypeDef hdma_uart5_rx;
 extern DMA_HandleTypeDef hdma_uart7_rx;
 extern DMA_HandleTypeDef hdma_uart7_tx;
@@ -15,6 +18,10 @@ extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart1_tx;
 extern DMA_HandleTypeDef hdma_usart10_rx;
 extern DMA_HandleTypeDef hdma_usart10_tx;
+extern DMA_HandleTypeDef hdma_usart2_rx;
+extern DMA_HandleTypeDef hdma_usart2_tx;
+extern DMA_HandleTypeDef hdma_usart3_rx;
+extern DMA_HandleTypeDef hdma_usart3_tx;
 
 
 /*****中断callback函数*****/
@@ -32,6 +39,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
     UART7_IDLERX_HOOK(huart,Size);
   else if(huart->Instance==USART10)
     USART10_IDLERX_HOOK(huart,Size);
+  else if(huart->Instance==USART2)
+    USART2_IDLERX_HOOK(huart,Size);
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -44,6 +53,8 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     UART7_ERR_HOOK();
   else if(huart->Instance==USART10)
     USART10_ERR_HOOK();
+  else if(huart->Instance==USART2)
+    USART2_ERR_HOOK();
 }
 
 
@@ -88,6 +99,29 @@ unsigned char USART10_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 unsigned char USART10_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
+/*****USART2(RS485通信)变量*****/
+CircBuf_t USART2_RxCBuf,USART2_TxCBuf;/*环形缓冲区句柄*/
+#define USART2_BUF_SIZE 1024
+/*DMA缓冲区*/
+unsigned char USART2_RxBuf0[ USART2_BUF_SIZE ] = {0};
+unsigned char USART2_RxBuf1[ USART2_BUF_SIZE ] = {0};
+unsigned char USART2_TxBuf[ 300 ] = {0};
+/*环形缓冲区*/
+unsigned char USART2_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
+unsigned char USART2_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
+
+
+/*****USART3(RS485通信)变量*****/
+CircBuf_t USART3_RxCBuf,USART3_TxCBuf;/*环形缓冲区句柄*/
+#define USART3_BUF_SIZE 1024
+/*DMA缓冲区*/
+unsigned char USART3_RxBuf0[ USART3_BUF_SIZE ] = {0};
+unsigned char USART3_RxBuf1[ USART3_BUF_SIZE ] = {0};
+unsigned char USART3_TxBuf[ 300 ] = {0};
+/*环形缓冲区*/
+unsigned char USART3_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
+unsigned char USART3_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
+
 
 /*****模板*****/
 #define SINGLE_BUF_RX_TEMPLATE(huart_ptr,rx_circbuf,buf_ptr,buf_size,Size) \
@@ -108,6 +142,7 @@ unsigned char USART10_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
     }\
     HAL_UART_Transmit_DMA(&huart, buf_ptr, len);\
     return result;\
+
 
 
 /*****USART1函数*****/
@@ -313,4 +348,142 @@ unsigned int USART10_GetDataCount( void )
 void USART10_Free(void)
 {
     CircBuf_Free(&USART10_RxCBuf);
+}
+
+
+
+/*****USART2函数*****/
+/**
+ * @brief USART2初始化
+ */
+void usart2_init(void)
+{
+
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2,USART2_RxBuf0,(uint16_t)USART2_BUF_SIZE);
+  /*初始化环形缓冲*/
+  CircBuf_Init(&USART2_TxCBuf, USART2_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
+  CircBuf_Init(&USART2_RxCBuf, USART2_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  __HAL_DMA_ENABLE((&huart2)->hdmarx);
+  __HAL_DMA_ENABLE((&huart2)->hdmatx);
+}
+
+/**
+ * @brief USART2空闲中断hook函数
+ */
+void USART2_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size)
+{
+  SINGLE_BUF_RX_TEMPLATE(huart,USART2_RxCBuf, USART2_RxBuf0, USART2_BUF_SIZE,Size);
+}
+
+/**
+ * @brief USART2错误中断hook函数
+ */
+void USART2_ERR_HOOK(void)
+{
+  memset(USART2_RxBuf0,0,USART2_BUF_SIZE);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2,USART2_RxBuf0,USART2_BUF_SIZE);
+}
+
+unsigned int USART2_Send(uint8_t *data, unsigned short len)
+{
+  TX_TEMPLATE(huart2,USART2_TxCBuf,USART2_TxBuf,USART2_BUF_SIZE);
+}
+
+unsigned int USART2_Recv(unsigned char *data, unsigned short len)
+{    
+  unsigned int result = 0;
+
+  if(data != NULL)
+      result = CircBuf_Pop(&USART2_RxCBuf, data, len);
+
+  return result;
+}
+
+unsigned char USART2_At( unsigned short offset)
+{
+    return CircBuf_At(&USART2_RxCBuf, offset);
+}
+
+void USART2_Drop( unsigned short LenToDrop)
+{
+    CircBuf_Drop(&USART2_RxCBuf, LenToDrop);
+}
+
+unsigned int USART2_GetDataCount( void )
+{
+    return CircBuf_GetUsedSize(&USART2_RxCBuf);
+}
+
+void USART2_Free(void)
+{
+    CircBuf_Free(&USART2_RxCBuf);
+}
+
+
+
+/*****USART3函数*****/
+/**
+ * @brief USART3初始化
+ */
+void usart2_init(void)
+{
+
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart3,USART3_RxBuf0,(uint16_t)USART3_BUF_SIZE);
+  /*初始化环形缓冲*/
+  CircBuf_Init(&USART3_TxCBuf, USART3_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
+  CircBuf_Init(&USART3_RxCBuf, USART3_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  __HAL_DMA_ENABLE((&huart3)->hdmarx);
+  __HAL_DMA_ENABLE((&huart3)->hdmatx);
+}
+
+/**
+ * @brief USART3空闲中断hook函数
+ */
+void USART3_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size)
+{
+  SINGLE_BUF_RX_TEMPLATE(huart,USART3_RxCBuf, USART3_RxBuf0, USART3_BUF_SIZE,Size);
+}
+
+/**
+ * @brief USART3错误中断hook函数
+ */
+void USART3_ERR_HOOK(void)
+{
+  memset(USART3_RxBuf0,0,USART3_BUF_SIZE);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart3,USART3_RxBuf0,USART3_BUF_SIZE);
+}
+
+unsigned int USART3_Send(uint8_t *data, unsigned short len)
+{
+  TX_TEMPLATE(huart3,USART3_TxCBuf,USART3_TxBuf,USART3_BUF_SIZE);
+}
+
+unsigned int USART3_Recv(unsigned char *data, unsigned short len)
+{    
+  unsigned int result = 0;
+
+  if(data != NULL)
+      result = CircBuf_Pop(&USART3_RxCBuf, data, len);
+
+  return result;
+}
+
+unsigned char USART3_At( unsigned short offset)
+{
+    return CircBuf_At(&USART3_RxCBuf, offset);
+}
+
+void USART3_Drop( unsigned short LenToDrop)
+{
+    CircBuf_Drop(&USART3_RxCBuf, LenToDrop);
+}
+
+unsigned int USART3_GetDataCount( void )
+{
+    return CircBuf_GetUsedSize(&USART3_RxCBuf);
+}
+
+void USART3_Free(void)
+{
+    CircBuf_Free(&USART3_RxCBuf);
 }
