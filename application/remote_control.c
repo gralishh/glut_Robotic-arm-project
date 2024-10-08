@@ -112,9 +112,7 @@ void slove_data_error(void)
 void DBUS_IDLERX_HOOK(void)
 {
     static uint16_t this_time_rx_len = 0;
-    __HAL_DMA_DISABLE(&DMA_DBUS_USART_RX);
     this_time_rx_len = SBUS_RX_BUF_NUM - __HAL_DMA_GET_COUNTER(&DMA_DBUS_USART_RX);
-    __HAL_DMA_ENABLE(&DMA_DBUS_USART_RX);
     if(this_time_rx_len == RC_FRAME_LENGTH)
     {
         SBUS_TO_RC(sbus_rx_buf[0], &rc_ctrl);
@@ -124,9 +122,9 @@ void DBUS_IDLERX_HOOK(void)
     }
     else
     {
-        HAL_UARTEx_ReceiveToIdle_DMA(&DBUS_USART,sbus_rx_buf[0],SBUS_RX_BUF_NUM);
         //通信错误清除缓冲区
         memset(sbus_rx_buf[0], 0, SBUS_RX_BUF_NUM);
+        HAL_UARTEx_ReceiveToIdle_DMA(&DBUS_USART,sbus_rx_buf[0],SBUS_RX_BUF_NUM);
     }
 }
 
