@@ -41,6 +41,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
     USART10_IDLERX_HOOK(huart,Size);
   else if(huart->Instance==USART2)
     USART2_IDLERX_HOOK(huart,Size);
+  else if(huart->Instance==USART3)
+    USART3_IDLERX_HOOK(huart,Size);
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -55,6 +57,8 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     USART10_ERR_HOOK();
   else if(huart->Instance==USART2)
     USART2_ERR_HOOK();
+  else if(huart->Instance==USART3)
+    USART3_ERR_HOOK();
 }
 
 
@@ -425,7 +429,7 @@ void USART2_Free(void)
 /**
  * @brief USART3≥ı ºªØ
  */
-void usart2_init(void)
+void usart3_init(void)
 {
 
   HAL_UARTEx_ReceiveToIdle_DMA(&huart3,USART3_RxBuf0,(uint16_t)USART3_BUF_SIZE);
