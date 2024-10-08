@@ -24,7 +24,28 @@ void USART1_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
 void USART1_ERR_HOOK(void);
 
 /*UART7(4pin¿Ú0)*/
+void uart7_init(void);
+unsigned int UART7_Send(uint8_t *data, unsigned short len);
+unsigned int UART7_Recv(unsigned char *data, unsigned short len);
+unsigned char UART7_At( unsigned short offset);
+void UART7_Drop( unsigned short LenToDrop);
+unsigned int UART7_GetDataCount( void );
+void UART7_Free(void);
 
-/*UART10(4pin¿Ú1)*/
+void UART7_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
+void UART7_ERR_HOOK(void);
+
+/*USART10(4pin¿Ú1)*/
+void usart10_init(void);
+unsigned int USART10_Send(uint8_t *data, unsigned short len);
+unsigned int USART10_Recv(unsigned char *data, unsigned short len);
+unsigned char USART10_At( unsigned short offset);
+void USART10_Drop( unsigned short LenToDrop);
+unsigned int USART10_GetDataCount( void );
+void USART10_Free(void);
+
+void USART10_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
+void USART10_ERR_HOOK(void);
+
 
 #endif 
