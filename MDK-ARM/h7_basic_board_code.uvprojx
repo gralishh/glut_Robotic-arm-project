@@ -1052,6 +1052,11 @@
               <FileType>1</FileType>
               <FilePath>..\bsp\can_bsp.c</FilePath>
             </File>
+            <File>
+              <FileName>GO-M8010-6.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\GO-M8010-6.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1082,6 +1087,16 @@
               <FileType>1</FileType>
               <FilePath>..\application\chassis_task.c</FilePath>
             </File>
+            <File>
+              <FileName>GO_M8010_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\GO_M8010_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_measure_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\usart_measure_task.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1102,6 +1117,21 @@
               <FileType>1</FileType>
               <FilePath>..\components\support\circular_buffer.c</FilePath>
             </File>
+            <File>
+              <FileName>CRC8_CRC16.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\support\CRC8_CRC16.c</FilePath>
+            </File>
+            <File>
+              <FileName>fifo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\support\fifo.c</FilePath>
+            </File>
+            <File>
+              <FileName>mem_mang4.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\support\mem_mang4.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1116,6 +1146,11 @@
               <FileName>user_lib.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\algorithm\user_lib.c</FilePath>
+            </File>
+            <File>
+              <FileName>crc_ccitt.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\crc_ccitt.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include "main.h"
 
   //******************************************************************************************
   //!                           CONFIGURE MACRO
@@ -17,8 +18,6 @@
 
 #define NDEBUG
 #define USE_DYNAMIC_MEMORY //!< Use system malloc/free function
-
-#include "stm32f4xx_hal.h"
 
 #define FIFO_ENTER_CRITICAL __disable_irq
 #define FIFO_EXIT_CRITICAL __enable_irq

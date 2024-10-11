@@ -41,8 +41,8 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-#define chassisControlBorad 1
-#define gimbalControlBoard  0
+#define chassisControlBorad 0
+#define gimbalControlBoard  1
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

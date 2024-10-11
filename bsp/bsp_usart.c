@@ -24,7 +24,7 @@ extern DMA_HandleTypeDef hdma_usart3_rx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
 
 
-/*****中断callback函数*****/
+/***************中断callback函数***************/
 /**
  * @brief 接收函数回调
  * 请在其它文件中定义hook函数
@@ -62,12 +62,12 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 }
 
 
-/*****全局设置*****/
+/***************全局设置***************/
 #define MAX_RING_BUF_SIZE 4096
 #define DMA_DOUBLE_BUFFER_MODE 0
 
 
-/*****USART1变量*****/
+/***************USART1变量***************/
 CircBuf_t USART1_RxCBuf,USART1_TxCBuf;/*环形缓冲区句柄*/
 #define USART1_BUF_SIZE 1024
 /*DMA缓冲区*/
@@ -79,7 +79,7 @@ unsigned char USART1_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 unsigned char USART1_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
-/*****UART7变量*****/
+/***************UART7变量***************/
 CircBuf_t UART7_RxCBuf,UART7_TxCBuf;/*环形缓冲区句柄*/
 #define UART7_BUF_SIZE 1024
 /*DMA缓冲区*/
@@ -91,7 +91,7 @@ unsigned char UART7_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 unsigned char UART7_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
-/*****USART10(4pin口1)变量*****/
+/***************USART10(4pin口1)变量***************/
 CircBuf_t USART10_RxCBuf,USART10_TxCBuf;/*环形缓冲区句柄*/
 #define USART10_BUF_SIZE 1024
 /*DMA缓冲区*/
@@ -103,9 +103,9 @@ unsigned char USART10_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 unsigned char USART10_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
-/*****USART2(RS485通信)变量*****/
+/***************USART2(RS485通信)变量***************/
 CircBuf_t USART2_RxCBuf,USART2_TxCBuf;/*环形缓冲区句柄*/
-#define USART2_BUF_SIZE 1024
+#define USART2_BUF_SIZE 32
 /*DMA缓冲区*/
 unsigned char USART2_RxBuf0[ USART2_BUF_SIZE ] = {0};
 unsigned char USART2_RxBuf1[ USART2_BUF_SIZE ] = {0};
@@ -115,7 +115,7 @@ unsigned char USART2_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 unsigned char USART2_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
-/*****USART3(RS485通信)变量*****/
+/***************USART3(RS485通信)变量***************/
 CircBuf_t USART3_RxCBuf,USART3_TxCBuf;/*环形缓冲区句柄*/
 #define USART3_BUF_SIZE 1024
 /*DMA缓冲区*/
@@ -127,7 +127,7 @@ unsigned char USART3_TxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 unsigned char USART3_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
-/*****模板*****/
+/***************模板***************/
 #define SINGLE_BUF_RX_TEMPLATE(huart_ptr,rx_circbuf,buf_ptr,buf_size,Size) \
     CircBuf_Push(&rx_circbuf,buf_ptr,Size);\
     HAL_UARTEx_ReceiveToIdle_DMA(huart_ptr,buf_ptr,buf_size);\
@@ -135,6 +135,13 @@ unsigned char USART3_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 /**
  * @brief 发送代码模板,
  * 因tx代码结构相同,直接使用宏来方便修改
+ * @date 2024/10/8
+ * @param huart uart的handle
+ * @param tx_circbuf 发送环形缓冲区
+ * @param buf_ptr 发送缓冲区指针
+ * @param buf_size 发送缓冲区大小
+ * @note circbuf 先push又pop的操作有些多余,
+ * 可以改为传输完成中断装载新数据,send函数里只对tx_circlbuf操作
  */
 #define TX_TEMPLATE(huart,tx_circbuf,buf_ptr,buf_size)\
     unsigned int result = HAL_OK;\
@@ -149,7 +156,7 @@ unsigned char USART3_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 
 
-/*****USART1函数*****/
+/***************USART1函数***************/
 /**
  * @brief USART1初始化
  */
@@ -218,7 +225,7 @@ void USART1_Free(void)
 
 
 
-/*****UART7函数*****/
+/***************UART7函数***************/
 /**
  * @brief UART7初始化
  */
@@ -287,7 +294,7 @@ void UART7_Free(void)
 
 
 
-/*****USART10函数*****/
+/***************USART10函数***************/
 /**
  * @brief USART10初始化
  */
@@ -356,7 +363,7 @@ void USART10_Free(void)
 
 
 
-/*****USART2函数*****/
+/***************USART2函数***************/
 /**
  * @brief USART2初始化
  */
@@ -384,7 +391,8 @@ void USART2_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size)
  */
 void USART2_ERR_HOOK(void)
 {
-  memset(USART2_RxBuf0,0,USART2_BUF_SIZE);
+  /*FE错误清除了缓冲，未找到原因暂且注释*/
+  //memset(USART2_RxBuf0,0,USART2_BUF_SIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2,USART2_RxBuf0,USART2_BUF_SIZE);
 }
 
@@ -425,7 +433,7 @@ void USART2_Free(void)
 
 
 
-/*****USART3函数*****/
+/***************USART3函数***************/
 /**
  * @brief USART3初始化
  */

@@ -29,6 +29,8 @@
 
 #include "task.h"
 #include "chassis_task.h"
+#include "usart_measure_task.h"/*??????*/
+#include "GO_M8010_control.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -86,6 +88,13 @@ const osThreadAttr_t ChassisTask_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityHigh,
 };
+/* Definitions for USART2_measure */
+osThreadId_t USART2_measureHandle;
+const osThreadAttr_t USART2_measure_attributes = {
+  .name = "USART2_measure",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 /*task????*/
 osThreadId chassis_task_handle;
@@ -108,6 +117,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void *argument);
 void __chassis_task(void *argument);
+void __usart2_measure_task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -169,6 +179,8 @@ int main(void)
   usart1_init();
   uart7_init();
   usart10_init();
+  usart2_init();
+  //usart3_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -196,6 +208,9 @@ int main(void)
 
   /* creation of ChassisTask */
   ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+
+  /* creation of USART2_measure */
+  USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -698,7 +713,7 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
   huart2.Init.BaudRate = 4000000;
-  huart2.Init.WordLength = UART_WORDLENGTH_9B;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
   huart2.Init.Mode = UART_MODE_TX_RX;
@@ -746,7 +761,7 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE END USART3_Init 1 */
   huart3.Instance = USART3;
   huart3.Init.BaudRate = 4000000;
-  huart3.Init.WordLength = UART_WORDLENGTH_9B;
+  huart3.Init.WordLength = UART_WORDLENGTH_8B;
   huart3.Init.StopBits = UART_STOPBITS_1;
   huart3.Init.Parity = UART_PARITY_NONE;
   huart3.Init.Mode = UART_MODE_TX_RX;
@@ -912,14 +927,18 @@ void StartDefaultTask(void *argument)
   #define LEDDARK() WS2812_Ctrl(0,0,0)
 
   uint8_t dat[8] = {0};
+  MOTOR_send __motor_s={0};
+  MOTOR_recv __motor_r={0};
+  __motor_s.id=1;
+  __motor_s.GM_Send_Effort=0;
+  __motor_s.GM_Send_speed=0;
   //LEDDARK();
 
   /* Infinite loop */
   for(;;)
   {
     //USART1_Recv(dat,1);
-    USART10_Recv(dat,8);
-    USART10_Send(dat,8);
+    SERVO1_RS485_Send(&__motor_s,&__motor_r);
     osDelay(50);
   }
   /* USER CODE END 5 */
@@ -942,6 +961,25 @@ void __chassis_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __chassis_task */
+}
+
+/* USER CODE BEGIN Header___usart2_measure_task */
+/**
+* @brief Function implementing the USART2_measure thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___usart2_measure_task */
+void __usart2_measure_task(void *argument)
+{
+  /* USER CODE BEGIN __usart2_measure_task */
+  /* Infinite loop */
+  for(;;)
+  {
+    usart2_measure_task(argument);
+    osDelay(1);
+  }
+  /* USER CODE END __usart2_measure_task */
 }
 
 /**
