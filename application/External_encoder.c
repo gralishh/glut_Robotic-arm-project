@@ -1,5 +1,4 @@
 #include "External_encoder.h"
-#include "usart.h"
 #include "circular_buffer.h"
 
 // //	UART7_RX(PE7) DMA1:数据流3通道5

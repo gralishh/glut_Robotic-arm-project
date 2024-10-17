@@ -5,6 +5,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+/*反馈数据大小*/
+#define FEEDBACK_DATA_SIZE 16
 
 /*记得改回static*/
 MOTOR_recv roll_3_motor_rx ;
@@ -17,8 +19,8 @@ const MOTOR_recv *get_hand_yaw_5_motor_rx_point(void)
 {
 return &yaw_5_motor_rx;
 }
-unsigned char Transmission_usart2[20] = {0};  //unsigned char类型长度
-unsigned char Transmission_usart3[50] = {0};  //unsigned char类型长度
+unsigned char Transmission_usart2[80] = {0};  //unsigned char类型长度
+unsigned char Transmission_usart3[80] = {0};  //unsigned char类型长度
 unsigned int usart2_length;
 unsigned int usart3_length;
 
@@ -34,7 +36,7 @@ void usart2_measure_task(void const *pvParameters)
         {
             if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  // 判断数据的起始值是否为0xFD 0xEE
             {
-                USART2_Recv(Transmission_usart2, 37);  // 把数据出栈并存储在Transmission_BufferOfusart2，数据处理在中断里
+                USART2_Recv(Transmission_usart2, FEEDBACK_DATA_SIZE);  // 把数据出栈并存储在Transmission_BufferOfusart2，数据处理在中断里
                 yaw_5_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart2);
                 USART2_Drop(4096);
             }
@@ -98,7 +100,7 @@ void usart3_measure_task(void const *pvParameters)
         {
             if(USART3_At(0) == 0xFD && USART3_At(1) == 0xEE)
             {
-                USART3_Recv(Transmission_usart3, 37);
+                USART3_Recv(Transmission_usart3, FEEDBACK_DATA_SIZE);
                 roll_3_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart3);
                 USART3_Drop(4096);
             }

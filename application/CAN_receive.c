@@ -9,6 +9,7 @@
 
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
+extern FDCAN_HandleTypeDef hfdcan3;
 
 /*"云台"和底盘主控通信缓冲*/
 //extern CircBuf_t chassis_can2_rxcbuf;
@@ -136,13 +137,10 @@ const external_encoder_t *get_gimbal_encoder_leftRight_Point(void)
 
 void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uint8_t* rx_message) 
 {
-	if(CANx == &hfdcan1)
+	if(CANx == &hfdcan2)
 	{
 		switch (rx_header->Identifier)
 		{
-/*******************************************************************************************/
-		#if gimbalControlBoard
-
 			case CAN_2006_roll_1_ID:
 			{
 					//get_motor_measure(&_2006_HAND_roll_1, rx_message);
@@ -175,10 +173,12 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 					DetectHook(TOE_encoder_x_4);
 					break;
 			}
-
-		#endif 
-		#if  chassisControlBorad   
-
+    }
+  }
+  else if(CANx == &hfdcan1)
+  {
+    switch(rx_header->Identifier)
+    {
 			case CAN_3508_M1_ID:
 			case CAN_3508_M2_ID:
 			case CAN_3508_M3_ID:
@@ -193,14 +193,12 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 					DetectHook(TOE_3508_M1_ID + i);
 					break;
 			}
-		#endif 
 			default:
 			{
 
 				break;
 			}	
-			
-		}
+    }
 	}
 	else
 	{

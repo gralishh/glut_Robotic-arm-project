@@ -12,8 +12,6 @@
 #include "crc_ccitt.h"
 #include "main.h"
 
-extern DMA_HandleTypeDef hdma_usart6_tx;
-
 #define SATURATE(_IN, _MIN, _MAX) {\
  if (_IN < _MIN)\
  _IN = _MIN;\

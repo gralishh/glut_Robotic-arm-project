@@ -5,6 +5,11 @@
 #include "motor_control.h"
 #include "crc_ccitt.h"
 
+/**
+ * yaw_5_motor  SERVO1 USART2
+ * roll_3_motor SERVO2 USART3
+ */
+
 const MOTOR_recv *get_hand_roll_3_motor_rx_point(void);
 const MOTOR_recv *get_hand_yaw_5_motor_rx_point(void);
 

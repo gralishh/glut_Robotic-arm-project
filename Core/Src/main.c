@@ -29,6 +29,8 @@
 
 #include "task.h"
 #include "chassis_task.h"
+#include "gimbal_task.h"
+#include "hand_task.h"
 #include "usart_measure_task.h"/*??????*/
 #include "GO_M8010_control.h"
 /* USER CODE END Includes */
@@ -53,6 +55,8 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc3;
 
 FDCAN_HandleTypeDef hfdcan1;
+FDCAN_HandleTypeDef hfdcan2;
+FDCAN_HandleTypeDef hfdcan3;
 
 SPI_HandleTypeDef hspi6;
 
@@ -95,6 +99,27 @@ const osThreadAttr_t USART2_measure_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for GimbalTask */
+osThreadId_t GimbalTaskHandle;
+const osThreadAttr_t GimbalTask_attributes = {
+  .name = "GimbalTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for HandTask */
+osThreadId_t HandTaskHandle;
+const osThreadAttr_t HandTask_attributes = {
+  .name = "HandTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for USART3_measure */
+osThreadId_t USART3_measureHandle;
+const osThreadAttr_t USART3_measure_attributes = {
+  .name = "USART3_measure",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* USER CODE BEGIN PV */
 /*task????*/
 osThreadId chassis_task_handle;
@@ -115,9 +140,14 @@ static void MX_UART7_Init(void);
 static void MX_USART10_UART_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_FDCAN2_Init(void);
+static void MX_FDCAN3_Init(void);
 void StartDefaultTask(void *argument);
 void __chassis_task(void *argument);
 void __usart2_measure_task(void *argument);
+void __gimbal_task(void *argument);
+void __hand_task(void *argument);
+void __usart3_measure_task(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -173,6 +203,8 @@ int main(void)
   MX_USART10_UART_Init();
   MX_USART3_UART_Init();
   MX_USART2_UART_Init();
+  MX_FDCAN2_Init();
+  MX_FDCAN3_Init();
   /* USER CODE BEGIN 2 */
   remote_control_init();
   can_bsp_init();
@@ -180,7 +212,7 @@ int main(void)
   uart7_init();
   usart10_init();
   usart2_init();
-  //usart3_init();
+  usart3_init();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -207,10 +239,19 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of USART2_measure */
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
+
+  /* creation of GimbalTask */
+  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+
+  /* creation of HandTask */
+  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+
+  /* creation of USART3_measure */
+  USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -501,6 +542,112 @@ static void MX_FDCAN1_Init(void)
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
   /* USER CODE END FDCAN1_Init 2 */
+
+}
+
+/**
+  * @brief FDCAN2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_FDCAN2_Init(void)
+{
+
+  /* USER CODE BEGIN FDCAN2_Init 0 */
+
+  /* USER CODE END FDCAN2_Init 0 */
+
+  /* USER CODE BEGIN FDCAN2_Init 1 */
+
+  /* USER CODE END FDCAN2_Init 1 */
+  hfdcan2.Instance = FDCAN2;
+  hfdcan2.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan2.Init.Mode = FDCAN_MODE_NORMAL;
+  hfdcan2.Init.AutoRetransmission = DISABLE;
+  hfdcan2.Init.TransmitPause = DISABLE;
+  hfdcan2.Init.ProtocolException = DISABLE;
+  hfdcan2.Init.NominalPrescaler = 24;
+  hfdcan2.Init.NominalSyncJumpWidth = 1;
+  hfdcan2.Init.NominalTimeSeg1 = 2;
+  hfdcan2.Init.NominalTimeSeg2 = 2;
+  hfdcan2.Init.DataPrescaler = 1;
+  hfdcan2.Init.DataSyncJumpWidth = 1;
+  hfdcan2.Init.DataTimeSeg1 = 1;
+  hfdcan2.Init.DataTimeSeg2 = 1;
+  hfdcan2.Init.MessageRAMOffset = 0;
+  hfdcan2.Init.StdFiltersNbr = 1;
+  hfdcan2.Init.ExtFiltersNbr = 0;
+  hfdcan2.Init.RxFifo0ElmtsNbr = 32;
+  hfdcan2.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan2.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan2.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan2.Init.RxBuffersNbr = 0;
+  hfdcan2.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
+  hfdcan2.Init.TxEventsNbr = 0;
+  hfdcan2.Init.TxBuffersNbr = 0;
+  hfdcan2.Init.TxFifoQueueElmtsNbr = 32;
+  hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  hfdcan2.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
+  if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN FDCAN2_Init 2 */
+
+  /* USER CODE END FDCAN2_Init 2 */
+
+}
+
+/**
+  * @brief FDCAN3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_FDCAN3_Init(void)
+{
+
+  /* USER CODE BEGIN FDCAN3_Init 0 */
+
+  /* USER CODE END FDCAN3_Init 0 */
+
+  /* USER CODE BEGIN FDCAN3_Init 1 */
+
+  /* USER CODE END FDCAN3_Init 1 */
+  hfdcan3.Instance = FDCAN3;
+  hfdcan3.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan3.Init.Mode = FDCAN_MODE_NORMAL;
+  hfdcan3.Init.AutoRetransmission = DISABLE;
+  hfdcan3.Init.TransmitPause = DISABLE;
+  hfdcan3.Init.ProtocolException = DISABLE;
+  hfdcan3.Init.NominalPrescaler = 24;
+  hfdcan3.Init.NominalSyncJumpWidth = 1;
+  hfdcan3.Init.NominalTimeSeg1 = 2;
+  hfdcan3.Init.NominalTimeSeg2 = 2;
+  hfdcan3.Init.DataPrescaler = 1;
+  hfdcan3.Init.DataSyncJumpWidth = 1;
+  hfdcan3.Init.DataTimeSeg1 = 1;
+  hfdcan3.Init.DataTimeSeg2 = 1;
+  hfdcan3.Init.MessageRAMOffset = 0;
+  hfdcan3.Init.StdFiltersNbr = 1;
+  hfdcan3.Init.ExtFiltersNbr = 0;
+  hfdcan3.Init.RxFifo0ElmtsNbr = 32;
+  hfdcan3.Init.RxFifo0ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan3.Init.RxFifo1ElmtsNbr = 0;
+  hfdcan3.Init.RxFifo1ElmtSize = FDCAN_DATA_BYTES_8;
+  hfdcan3.Init.RxBuffersNbr = 0;
+  hfdcan3.Init.RxBufferSize = FDCAN_DATA_BYTES_8;
+  hfdcan3.Init.TxEventsNbr = 0;
+  hfdcan3.Init.TxBuffersNbr = 0;
+  hfdcan3.Init.TxFifoQueueElmtsNbr = 32;
+  hfdcan3.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
+  hfdcan3.Init.TxElmtSize = FDCAN_DATA_BYTES_8;
+  if (HAL_FDCAN_Init(&hfdcan3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN FDCAN3_Init 2 */
+
+  /* USER CODE END FDCAN3_Init 2 */
 
 }
 
@@ -869,9 +1016,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream5_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-  /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
   /* DMA1_Stream7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
@@ -884,6 +1028,9 @@ static void MX_DMA_Init(void)
   /* DMA2_Stream2_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  /* DMA2_Stream4_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
 
@@ -926,19 +1073,19 @@ void StartDefaultTask(void *argument)
   #define LEDBRIGHT() WS2812_Ctrl(10,10,10)
   #define LEDDARK() WS2812_Ctrl(0,0,0)
 
-  uint8_t dat[8] = {0};
-  MOTOR_send __motor_s={0};
-  MOTOR_recv __motor_r={0};
-  __motor_s.id=1;
-  __motor_s.GM_Send_Effort=0;
-  __motor_s.GM_Send_speed=0;
+  //uint8_t dat[8] = {0};
+  //MOTOR_send __motor_s={0};
+  //MOTOR_recv __motor_r={0};
+  //__motor_s.id=1;
+  //__motor_s.GM_Send_Effort=0;
+  //__motor_s.GM_Send_speed=0;
   //LEDDARK();
 
   /* Infinite loop */
   for(;;)
   {
     //USART1_Recv(dat,1);
-    SERVO1_RS485_Send(&__motor_s,&__motor_r);
+    //SERVO1_RS485_Send(&__motor_s,&__motor_r);
     osDelay(50);
   }
   /* USER CODE END 5 */
@@ -973,13 +1120,70 @@ void __chassis_task(void *argument)
 void __usart2_measure_task(void *argument)
 {
   /* USER CODE BEGIN __usart2_measure_task */
+  usart2_measure_task(argument);
   /* Infinite loop */
   for(;;)
   {
-    usart2_measure_task(argument);
     osDelay(1);
   }
   /* USER CODE END __usart2_measure_task */
+}
+
+/* USER CODE BEGIN Header___gimbal_task */
+/**
+* @brief Function implementing the GimbalTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___gimbal_task */
+void __gimbal_task(void *argument)
+{
+  /* USER CODE BEGIN __gimbal_task */
+  gimbal_task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __gimbal_task */
+}
+
+/* USER CODE BEGIN Header___hand_task */
+/**
+* @brief Function implementing the HandTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___hand_task */
+void __hand_task(void *argument)
+{
+  /* USER CODE BEGIN __hand_task */
+  Hand_task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __hand_task */
+}
+
+/* USER CODE BEGIN Header___usart3_measure_task */
+/**
+* @brief Function implementing the USART3_measure thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___usart3_measure_task */
+void __usart3_measure_task(void *argument)
+{
+  /* USER CODE BEGIN __usart3_measure_task */
+  usart3_measure_task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __usart3_measure_task */
 }
 
 /**

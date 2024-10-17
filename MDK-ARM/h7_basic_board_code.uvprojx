@@ -1057,6 +1057,11 @@
               <FileType>1</FileType>
               <FilePath>..\bsp\GO-M8010-6.c</FilePath>
             </File>
+            <File>
+              <FileName>bsp_buzzer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\bsp\bsp_buzzer.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1096,6 +1101,36 @@
               <FileName>usart_measure_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\usart_measure_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>gimbal_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\gimbal_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>hand_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\hand_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>External_encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\External_encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>MCU_communicaton_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\MCU_communicaton_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>PC_communication_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\PC_communication_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>Referee_DispatchTask.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\Referee_DispatchTask.c</FilePath>
             </File>
           </Files>
         </Group>

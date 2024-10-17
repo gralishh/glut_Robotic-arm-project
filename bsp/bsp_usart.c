@@ -117,7 +117,7 @@ unsigned char USART2_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
 
 /***************USART3(RS485通信)变量***************/
 CircBuf_t USART3_RxCBuf,USART3_TxCBuf;/*环形缓冲区句柄*/
-#define USART3_BUF_SIZE 1024
+#define USART3_BUF_SIZE 32
 /*DMA缓冲区*/
 unsigned char USART3_RxBuf0[ USART3_BUF_SIZE ] = {0};
 unsigned char USART3_RxBuf1[ USART3_BUF_SIZE ] = {0};
@@ -434,6 +434,7 @@ void USART2_Free(void)
 
 
 /***************USART3函数***************/
+
 /**
  * @brief USART3初始化
  */
