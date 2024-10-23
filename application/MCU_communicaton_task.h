@@ -86,7 +86,7 @@ void gimbal_send_task(void const *parmas);
 
 const UI_need_data_t *get_UI_need_data_point(void);
 const visuals_need_data_t *get_Visual_need_data_point(void);
- void self_control_measure(const ext_self_control_t self_control , elf_measure_t*self_measure  );
+void self_control_measure(const ext_self_control_t self_control , elf_measure_t*self_measure  );
 static uint16_t merge_uint8_to_uint16(uint8_t a, uint8_t b) ;
 static void split_uint8_to_uint8(uint8_t input, uint8_t *output1, uint8_t *output2, uint8_t *output3);
 static void gimbal_data_allocate_to_UI_or_Visual(const gimbal_to_chassis_t chassis_rx , UI_need_data_t* UI_need , visuals_need_data_t* Visual_need );

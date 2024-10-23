@@ -68,7 +68,6 @@ const visuals_need_data_t *get_Visual_need_data_point(void)
 
 void chassis_receive_task(void const *parmas)
 {
-    #if chassisControlBorad
     CircBuf_Init(&chassis_can2_rxcbuf , chassis_can2_rxbuf , 4096);
     vTaskDelay(100);
     while(1)
@@ -129,7 +128,6 @@ void chassis_receive_task(void const *parmas)
        }
         vTaskDelay(15);
     }
-    #endif
 }
 
 

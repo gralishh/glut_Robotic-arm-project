@@ -255,6 +255,8 @@ typedef struct
 #define hollow_encoder_pi 3.14151f
 #define holoow_TIM_value  65536
 
+/*用于修改传递给微机或另一个主控电机状态的数值*/
+/*公式为:raw_value*kkkX+bbbX*/
 #define kkkk3 1.0f
 #define bbbb3 0.0f
 #define kkkk4 1.0f
@@ -300,6 +302,9 @@ typedef enum
 
 
 /******************************************************************/
+/**
+ * @brief 关节电机句柄，包括反馈信息与反馈报文结构体
+ */
 typedef struct
 {
 		const motor_measure_t *hand_motor_measure;
@@ -342,8 +347,6 @@ typedef struct
 
 
 
-
-
 typedef struct
 {
 
@@ -363,7 +366,7 @@ typedef struct
 {
 		// const ENCODER_uart_t *hand_encoder_3_measure;
 		MOTOR_recv *rData;
-	    MOTOR_send GM_Send_Data;
+	  MOTOR_send GM_Send_Data;
 		Hand_Motor_t hand_motor_measure_all;
 } Hand_roll_3_Motor_t;
 
@@ -406,13 +409,13 @@ typedef enum
 
 typedef struct
 {
-		const RC_ctrl_t *gimbal_rc_ctrl;
-		elf_measure_t*              hand_custom_control;//自定义控制器
+		const RC_ctrl_t    *gimbal_rc_ctrl;
+		elf_measure_t*           hand_custom_control;//自定义控制器
 		visuals_rx_data_t*		   hand_visual_control;//
 
-		hand_behaviour_e hand_behaviour;//表示当前机械手的行为状??
-		hand_behaviour_e hand_behaviour_last;//表示上一次机械手的行为状??
-		hand_position_e	hand_position;//表示当前机械手的位置
+		hand_behaviour_e  hand_behaviour;//表示当前机械手的行为状态
+		hand_behaviour_e  hand_behaviour_last;//表示上一次机械手的行为状态
+		hand_position_e	  hand_position;//表示当前机械手的位置
 		hand_point_e      hand_point;//表示路点
 
 	  float roll_1_angle;
@@ -421,15 +424,15 @@ typedef struct
 		float roll_1_angle_fact;
 		float pitch_2_angle_fact;
 
-
-		Hand_roll_1_Motor_t 		hand_roll_1_motor;//表示机械手的五个电机
-
+    /*机械臂电机结构体,表示机械手的五个电机*/
+		Hand_roll_1_Motor_t 		hand_roll_1_motor;
 		Hand_pitch_2_Motor_t 		hand_pitch_2_motor;
 		Hand_roll_3_Motor_t 		hand_roll_3_motor;
 		Hand_x_4_Motor_t          	hand_x_4_motor;
 		Hand_yaw_5_Motor_t      	hand_yaw_5_motor;	
 	
-		first_order_filter_type_t hand_cmd_slow_set_1;//表示两个一阶滤波器类型的变量。它们用于实现机械手指令的缓慢更新??
+    /*两个一阶滤波器类型的变量。它们用于实现机械手指令的缓慢更新*/
+		first_order_filter_type_t hand_cmd_slow_set_1;
 		first_order_filter_type_t hand_cmd_slow_set_2;
 } Hand_Control_t;
 
