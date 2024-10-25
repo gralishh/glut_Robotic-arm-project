@@ -13,6 +13,7 @@
 #include "MCU_communicaton_task.h"
 #include "cmsis_armcc.h"
 #include "bsp_usart.h"
+#include "motor_timer_ctrl.h"
 //Readme:
 //由于关节电机编码器属于增量式
 //不要用下载器对单片机单独供电
@@ -66,12 +67,22 @@
 		PID_clear(&(gimbal_clear)->hand_yaw_5_motor.hand_motor_measure_all.hand_motor_relative_pid);    			\
         PID_clear(&(gimbal_clear)->hand_yaw_5_motor.hand_motor_measure_all.hand_motor_speed_pid);                    \
     }
+
+// 电机反馈与输出使能控制
+#define FEEDBACK_ON() (motor_ctrl_feedback_cmd(HAND_MOTOR,MOTOR_CMD_ENABLE));
+#define FEEDBACK_OFF() (motor_ctrl_feedback_cmd(HAND_MOTOR,MOTOR_CMD_DISABLE));
+#define OUTPUT_ON() (motor_ctrl_output_cmd(HAND_MOTOR,MOTOR_CMD_ENABLE));
+#define OUTPUT_OFF() (motor_ctrl_output_cmd(HAND_MOTOR,MOTOR_CMD_DISABLE));
+
+
 extern float joint_angles[JOINTS][POSITIONS_PER_JOINT][ANGLES_PER_POSITION];
 Hand_Control_t	hand_control;
 hand_status_t hand_status;
+
+
 const hand_status_t *get_hand_status_point(void)
 {
-return &hand_status;
+  return &hand_status;
 }
 
 //初始化电机参数
@@ -109,8 +120,10 @@ void vTimerAngleCallback(TimerHandle_t xTimer)
 }
 
 
-/// @brief 机械臂主任务
-/// @param pvParameters 
+/**
+ * @brief 机械臂主任务
+ * @param pvParameters 
+ */
 void Hand_task(void const *pvParameters)
 {
 	#if gimbalControlBoard
@@ -155,61 +168,46 @@ void Hand_task(void const *pvParameters)
 	//hand_yaw_5_position_Init(&hand_control);	
 
 		
+  FEEDBACK_ON();
+  OUTPUT_ON();
 
 	while(1)
     {
 	    Hand_Set_Mode(&hand_control); 	                   //机械臂遥控器设置模式
 		  Hand_Set_Contorl(&hand_control);                   //设置机械臂控制
-		  Hand_Feedback_Update(&hand_control);               //机械臂数据反馈
+		  //Hand_Feedback_Update(&hand_control);               //机械臂数据反馈
 		  Hand_Set_Position(&hand_control);                  //机械臂遥控器，键鼠设置位置
 		  HAND_Mode_Change_Control_Transit(&hand_control);   //控制模式切换 控制数据过渡
-		  Hand_Control_loop(&hand_control);                  //机械臂控制PID计算
+		  //Hand_Control_loop(&hand_control);                  //机械臂控制PID计算
 // 		Hand_Temperature_control(&hand_control);
 		  View_steering_engine_control(&hand_control);
 		  Get_Hand_Status(hand_control);//只进行值传递
 
 	
-	        if (toe_is_error(DBUSTOE))
-            {
-						 for(char i = 0;i<4;i++)
-							{
-								hand_set_current1_4[i]  = 0;
-		 		                
-
-							} 
-					    CanSendMess(&hfdcan2,SEND_ID201_204,hand_set_current1_4);
-						  hand_control.hand_yaw_5_motor.GM_Send_Data.mode=0;
-						  hand_control.hand_roll_3_motor.GM_Send_Data.mode=0;
-
-            }
-            else
-            {
-
-					#if roll_1_TURN
-						hand_set_current1_4[0] = - hand_control.hand_roll_1_motor.hand_motor_measure_all.given_current;
-					#else    
-						hand_set_current1_4[0] =   hand_control.hand_roll_1_motor.hand_motor_measure_all.given_current;
-					#endif					
-					#if pitch_2_TURN
-						hand_set_current1_4[1] = - hand_control.hand_pitch_2_motor.hand_motor_measure_all.given_current;
-					#else 
-						hand_set_current1_4[1] =   hand_control.hand_pitch_2_motor.hand_motor_measure_all.given_current;
-					#endif
-				    #if    x_4_TURN
-						hand_set_current1_4[2] = - hand_control.hand_x_4_motor.hand_motor_measure_all.given_current;
-					#else 
-						hand_set_current1_4[2] =   hand_control.hand_x_4_motor.hand_motor_measure_all.given_current;
-					#endif
-					// 	#if yaw_5_TURN
-					// #else 
-					// #endif    
+      if (toe_is_error(DBUSTOE))
+      {
+        OUTPUT_OFF();
+        for(char i = 0;i<4;i++)
+        {
+          hand_set_current1_4[i]  = 0;
+				} 
+			  hand_control.hand_yaw_5_motor.GM_Send_Data.mode=0;
+			  hand_control.hand_roll_3_motor.GM_Send_Data.mode=0;
+        Hand_Current_Output();
+      }
+      else
+      {
+        //Hand_Set_Reverse();
+        OUTPUT_ON();
 			}
+
+      //Hand_Current_Output();
 			
-      SERVO1_RS485_Send(&hand_control.hand_yaw_5_motor.GM_Send_Data , hand_control.hand_yaw_5_motor.rData);
-      SERVO2_RS485_Send(&hand_control.hand_roll_3_motor.GM_Send_Data , hand_control.hand_roll_3_motor.rData);
-      CanSendMess(&hfdcan2,SEND_ID201_204,hand_set_current1_4); 
+      //SERVO1_RS485_Send(&hand_control.hand_yaw_5_motor.GM_Send_Data , hand_control.hand_yaw_5_motor.rData);
+      //SERVO2_RS485_Send(&hand_control.hand_roll_3_motor.GM_Send_Data , hand_control.hand_roll_3_motor.rData);
+      //CanSendMess(&hfdcan2,SEND_ID201_204,hand_set_current1_4); 
 			
-       vTaskDelay(1);
+      vTaskDelay(1);
 	}
 	#endif
 }
@@ -278,7 +276,8 @@ static void Hand_Init(Hand_Control_t *hand_init)
   hand_init->hand_yaw_5_motor.rData                                                = (MOTOR_recv *)get_hand_yaw_5_motor_rx_point();
 
   /*初值设置*/
-	Hand_Feedback_Update(hand_init);
+	//Hand_Feedback_Update(hand_init);
+  FEEDBACK_ON();
 	
 	hand_init->hand_yaw_5_motor.hand_motor_measure_all.relative_angle_set	                
     =hand_init->hand_yaw_5_motor.hand_motor_measure_all.lock_angle	            
@@ -383,10 +382,11 @@ static void hand_position_Init(Hand_Control_t *gimbal_init)
 	int16_t hand_current_init1[4]={4000,-4000,-4000,2000};
 	int16_t hand_current_init0[4]={0,0,0,0};
 
+  FEEDBACK_ON();
   /*****等待停止发送电流*****/
 	do
 	{
-		Hand_Feedback_Update(&hand_control);
+		//Hand_Feedback_Update(&hand_control);
 		CanSendMess(&hfdcan2,SEND_ID201_204,hand_current_init1);	
 		vTaskDelay(1);
 		if(gimbal_init->hand_roll_1_motor.hand_motor_measure_all.hand_motor_measure->given_current != 0     ||\
@@ -406,6 +406,7 @@ static void hand_position_Init(Hand_Control_t *gimbal_init)
 				|| gimbal_init->hand_x_4_motor.hand_motor_measure_all.hand_motor_measure->given_current == 0				
 	 				);
 		vTaskDelay(50);
+  FEEDBACK_ON();
 
   /*等待编码值稳定(机械结构卡在限位处)*/
 	for(;;)
@@ -414,14 +415,12 @@ static void hand_position_Init(Hand_Control_t *gimbal_init)
 		if (fabs(hand_roll_1_last_ecd - gimbal_init->hand_roll_1_motor.hand_motor_measure_all.hand_motor_measure->ecd)<5)
 		{
 			CanSendMess(&hfdcan2,CAN_2006_roll_1_ID,hand_current_init0);
-			Hand_Feedback_Update(&hand_control);
 			gimbal_init->hand_roll_1_motor.hand_motor_measure_all.relative_init_angle += - gimbal_init->hand_roll_1_motor.hand_motor_measure_all.relative_angle;
 			hand_roll_1_init = 1;
 		}
 		if (fabs(hand_pitch_2_last_ecd - gimbal_init->hand_pitch_2_motor.hand_motor_measure_all.hand_motor_measure->ecd)<5)
 		{
 			CanSendMess(&hfdcan2,CAN_2006_HAND_pitch_2_ID,hand_current_init0);
-			Hand_Feedback_Update(&hand_control);
 			gimbal_init->hand_pitch_2_motor.hand_motor_measure_all.relative_init_angle += gimbal_init->hand_pitch_2_motor.hand_motor_measure_all.relative_angle;
 			hand_pitch_2_init = 1;
 		}	
@@ -431,7 +430,6 @@ static void hand_position_Init(Hand_Control_t *gimbal_init)
 			hand_x_4_init = 1;
 		}
 
-		Hand_Feedback_Update(&hand_control);
 		
 
 		
@@ -458,14 +456,13 @@ static void hand_roll_3_position_Init(Hand_Control_t *gimbal_init)
 	hand_GoM8010_init0.mode = 0;
 	hand_GoM8010_init0.GM_Send_Effort = 0;
 
+  FEEDBACK_ON();
 	do
 	{
 		hand_GoM8010_init1.id = 1;
 		hand_GoM8010_init1.GM_Send_Effort = 0.6;//3.0
-		Hand_Feedback_Update(&hand_control);
 		modify_data(&hand_GoM8010_init1);
 	    USART1_Send((uint8_t *)&hand_GoM8010_init1,sizeof(hand_GoM8010_init1.motor_send_data));
-		Hand_Feedback_Update(&hand_control);
 		vTaskDelay(15);
 		wait_time++;
 		if(wait_time > 100)
@@ -482,14 +479,13 @@ static void hand_roll_3_position_Init(Hand_Control_t *gimbal_init)
 		{
 			hand_GoM8010_init0.id = 1;
 			vTaskDelay(2);
-			Hand_Feedback_Update(&hand_control);
+			Hand_Feedback_Update();
 			gimbal_init->hand_roll_3_motor.hand_motor_measure_all.relative_init_angle += gimbal_init->hand_roll_3_motor.rData->Pos;
 			modify_data(&hand_GoM8010_init0);
 			USART1_Send((uint8_t *)&hand_GoM8010_init0,sizeof(hand_GoM8010_init0.motor_send_data));				
 			hand_roll_3_init = 1;
 		}
 		vTaskDelay(40);
-		Hand_Feedback_Update(&hand_control);
 		hand_roll_3_last_pos   = gimbal_init->hand_roll_3_motor.rData->Pos;
 
 		if(hand_roll_3_init)
@@ -520,7 +516,7 @@ static void hand_yaw_5_position_Init(Hand_Control_t *gimbal_init)
 		
 	do
 		{
-			Hand_Feedback_Update(&hand_control);
+			Hand_Feedback_Update();
 			hand_GoM8010_init1.id = 3;
 			hand_GoM8010_init1.GM_Send_Effort = -1.5;//3.0
 			modify_data(&hand_GoM8010_init1);
@@ -544,7 +540,7 @@ static void hand_yaw_5_position_Init(Hand_Control_t *gimbal_init)
 				{
 					hand_GoM8010_init0.id = 3;					
 					vTaskDelay(2);
-					Hand_Feedback_Update(&hand_control);
+					Hand_Feedback_Update();
 					gimbal_init->hand_yaw_5_motor.hand_motor_measure_all.relative_init_angle += gimbal_init->hand_yaw_5_motor.rData->Pos;
 					modify_data(&hand_GoM8010_init0);
           SERVO2_RS485_Send((uint8_t *)&hand_GoM8010_init0,sizeof(hand_GoM8010_init0.motor_send_data));
@@ -552,7 +548,7 @@ static void hand_yaw_5_position_Init(Hand_Control_t *gimbal_init)
 					hand_yaw_5_init = 1;
 				}
 			vTaskDelay(40);
-			Hand_Feedback_Update(&hand_control);
+			Hand_Feedback_Update();
 			hand_yaw_5_last_pos = gimbal_init->hand_yaw_5_motor.rData->Pos;
 
 			if (hand_yaw_5_init )
@@ -626,23 +622,24 @@ static void Hand_Set_Contorl( Hand_Control_t *hand_set_control)
 		rc_add_channel_3 =   channel_3 * hand_4_channel_RC_SEN 	;
 		rc_add_channel_4 = 	 channel_4 * hand_5_channel_RC_SEN 	;
 			
-		HAND_relative_angle_limit(&hand_set_control->hand_yaw_5_motor.hand_motor_measure_all	,/**/rc_add_channel_0	,yaw_5_relative_angle_set_max	,yaw_5_relative_angle_set_min);
-		HAND_relative_angle_limit(&hand_set_control->hand_x_4_motor.hand_motor_measure_all	  ,/**/rc_add_channel_1	,x_4_relative_angle_set_max	    ,x_4_relative_angle_set_min);
-		HAND_relative_angle_limit(&hand_set_control->hand_roll_3_motor.hand_motor_measure_all	,/**/rc_add_channel_2	,roll_3_relative_angle_set_max	,roll_3_relative_angle_set_min);
+		//HAND_relative_angle_limit(&hand_set_control->hand_yaw_5_motor.hand_motor_measure_all	,/**/rc_add_channel_0	,yaw_5_relative_angle_set_max	,yaw_5_relative_angle_set_min);
+		HAND_relative_angle_limit(&hand_set_control->hand_yaw_5_motor.hand_motor_measure_all	,/**/rc_add_channel_0	,0.0	,0.0);
+		HAND_relative_angle_limit(&hand_set_control->hand_x_4_motor.hand_motor_measure_all	  ,/**/rc_add_channel_1	,0.0	,0.0);
+		HAND_relative_angle_limit(&hand_set_control->hand_roll_3_motor.hand_motor_measure_all	,/**/rc_add_channel_2	,0.0	,0.0);
 		
-		hand_set_control->pitch_2_angle = fangle_limit(hand_set_control->roll_1_angle , rc_add_channel_3 , 100.0 , 10.0); //只用调试
+		hand_set_control->pitch_2_angle = fangle_limit(hand_set_control->roll_1_angle , rc_add_channel_3 , 0.0 , 0.0); //只用调试
 		
 		//根据电机角度值计算出的高度值进行限位，旋转后不精确
 			if((hand_set_control->pitch_2_angle_fact > -95.0f && hand_set_control->pitch_2_angle_fact < -2.0f) ||
 					(hand_set_control->pitch_2_angle_fact < -2.0f && rc_add_channel_3 > 0)||
 						(hand_set_control->pitch_2_angle_fact > -95.0f && rc_add_channel_3 < 0))
 			{
-				HAND_relative_angle_limit(&hand_set_control->hand_pitch_2_motor.hand_motor_measure_all	,/**/rc_add_channel_3	,pitch_2_relative_angle_set_max	,pitch_2_relative_angle_set_min);
-				HAND_relative_angle_limit(&hand_set_control->hand_roll_1_motor.hand_motor_measure_all	,/**/rc_add_channel_3	,roll_1_relative_angle_set_max	,roll_1_relative_angle_set_min);
+				HAND_relative_angle_limit(&hand_set_control->hand_pitch_2_motor.hand_motor_measure_all	,/**/rc_add_channel_3	,0.0	,0.0);
+				HAND_relative_angle_limit(&hand_set_control->hand_roll_1_motor.hand_motor_measure_all	,/**/rc_add_channel_3	,0.0	,0.0);
 			}
 			
-			HAND_relative_angle_limit(&hand_set_control->hand_pitch_2_motor.hand_motor_measure_all	,/**/rc_add_channel_4	,pitch_2_relative_angle_set_max	,pitch_2_relative_angle_set_min);
-			HAND_relative_angle_limit(&hand_set_control->hand_roll_1_motor.hand_motor_measure_all	,/**/-1.0*rc_add_channel_4	,roll_1_relative_angle_set_max	,roll_1_relative_angle_set_min);
+			HAND_relative_angle_limit(&hand_set_control->hand_pitch_2_motor.hand_motor_measure_all	,/**/rc_add_channel_4	,0.0	,0.0);
+			HAND_relative_angle_limit(&hand_set_control->hand_roll_1_motor.hand_motor_measure_all	,/**/-1.0*rc_add_channel_4	,0.0	,0.0);
 			
 	}	
 }
@@ -653,15 +650,16 @@ static void Hand_Set_Contorl( Hand_Control_t *hand_set_control)
  * @param add 角度增量
  * @param max_limit 
  * @param min_limit 
+ * @note max_limit与min_limit为0时为无限制
  */
 static void HAND_relative_angle_limit(Hand_Motor_t *hand_Motor_t,fp32 add,fp32 max_limit,fp32 min_limit)
 {
-	    if (hand_Motor_t == NULL)
-    {
-        return;
-    }
+	if (hand_Motor_t == NULL)
+  {
+    return;
+  }
 	
-    hand_Motor_t->relative_angle_set += add;
+  hand_Motor_t->relative_angle_set += add;
 	if(max_limit==min_limit&&min_limit==0.0f)
 	{
 		return ;
@@ -994,10 +992,14 @@ static void HAND_combination_control(Hand_Control_t *hand_combination_control,fp
 		}
 }
 
-/// @brief 机械臂控制PID计算
-/// @param hand_control_loop 
-static void Hand_Control_loop(Hand_Control_t *hand_control_loop)
+/**
+ * @brief 机械臂控制PID计算
+ * @param hand_control_loop 
+ */
+void Hand_Control_loop(void)
 {			
+  Hand_Control_t *hand_control_loop=&hand_control;
+
 	if(hand_control_loop == NULL)   return; 
 
 	if(hand_control_loop->hand_behaviour==HAND_CUSTOM)
@@ -1005,7 +1007,7 @@ static void Hand_Control_loop(Hand_Control_t *hand_control_loop)
 
 		hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_yaw_5_motor.GM_Send_Data                      ,&hand_control_loop->hand_yaw_5_motor.hand_motor_measure_all);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_x_4_motor.hand_motor_measure_all	            ,x_4_3508_SPEED_RATE);
-        hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_roll_3_motor.GM_Send_Data                     ,&hand_control_loop->hand_roll_3_motor.hand_motor_measure_all);
+    hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_roll_3_motor.GM_Send_Data                     ,&hand_control_loop->hand_roll_3_motor.hand_motor_measure_all);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_pitch_2_motor.hand_motor_measure_all	        ,pitch_2_3508_SPEED_RATE);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_roll_1_motor.hand_motor_measure_all	        ,roll_1_2006_SPEED_RATE);
 
@@ -1023,7 +1025,7 @@ static void Hand_Control_loop(Hand_Control_t *hand_control_loop)
     {
 		hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_yaw_5_motor.GM_Send_Data                      ,&hand_control_loop->hand_yaw_5_motor.hand_motor_measure_all);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_x_4_motor.hand_motor_measure_all	            ,x_4_3508_SPEED_RATE);
-        hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_roll_3_motor.GM_Send_Data                     ,&hand_control_loop->hand_roll_3_motor.hand_motor_measure_all);
+    hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_roll_3_motor.GM_Send_Data                     ,&hand_control_loop->hand_roll_3_motor.hand_motor_measure_all);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_pitch_2_motor.hand_motor_measure_all			,pitch_2_3508_SPEED_RATE);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_roll_1_motor.hand_motor_measure_all			,roll_1_2006_SPEED_RATE);
 
@@ -1032,15 +1034,18 @@ static void Hand_Control_loop(Hand_Control_t *hand_control_loop)
 	{
 		hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_yaw_5_motor.GM_Send_Data                      ,&hand_control_loop->hand_yaw_5_motor.hand_motor_measure_all);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_x_4_motor.hand_motor_measure_all	            ,x_4_3508_SPEED_RATE);
-        hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_roll_3_motor.GM_Send_Data                     ,&hand_control_loop->hand_roll_3_motor.hand_motor_measure_all);
+    hand_motor_GM_relative_angle_control        (&hand_control_loop->hand_roll_3_motor.GM_Send_Data                     ,&hand_control_loop->hand_roll_3_motor.hand_motor_measure_all);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_pitch_2_motor.hand_motor_measure_all			,pitch_2_3508_SPEED_RATE);
 		hand_motor_relative_angle_control			(&hand_control_loop->hand_roll_1_motor.hand_motor_measure_all	        ,roll_1_2006_SPEED_RATE);
 	}
 	
 }
-/// @brief RM电机速度环
-/// @param hand_motor 
-/// @param SPEED_RATE 速度比例
+
+/**
+ * @brief RM电机速度环
+ * @param hand_motor 
+ * @param SPEED_RATE 速度比例
+ */
 static void hand_motor_speed_control(Hand_Motor_t *hand_motor,fp32 SPEED_RATE)
 {
     if (hand_motor == NULL)
@@ -1086,7 +1091,7 @@ static void hand_motor_relative_angle_control(Hand_Motor_t *hand_motor,fp32 SPEE
         return;
     }
     hand_motor->motor_position_set =  PID_Calc(&hand_motor->hand_motor_relative_pid , hand_motor->relative_angle, hand_motor->relative_angle_set);
-	hand_motor->current_set        =  PID_Calc(&hand_motor->hand_motor_speed_pid, hand_motor->hand_motor_measure->speed_rpm*SPEED_RATE, hand_motor->motor_position_set);
+	  hand_motor->current_set        =  PID_Calc(&hand_motor->hand_motor_speed_pid, hand_motor->hand_motor_measure->speed_rpm*SPEED_RATE, hand_motor->motor_position_set);
     hand_motor->given_current      =  (int16_t)(hand_motor->current_set);
 }
 
@@ -1163,8 +1168,9 @@ static void hand_motor_GM_lock_angle_control(MOTOR_send *motor_send , Hand_Motor
  * @brief 机械臂数据反馈
  * @param hand_motor_feedback_update 
  */
-static void Hand_Feedback_Update(Hand_Control_t *hand_motor_feedback_update) //0.0000271314538043478
+void Hand_Feedback_Update(void) //0.0000271314538043478
 {
+  Hand_Control_t *hand_motor_feedback_update=&hand_control;
 
   if (hand_motor_feedback_update == NULL)
   {
@@ -1447,6 +1453,11 @@ static void Hand_Temperature_control(Hand_Control_t *hand_control)
 static float calculateResult(float inputNumber, float k, float b) {
     return inputNumber * k + b;
 }
+
+/**
+ * @brief 对电机数据变量赋值
+ * @note 赋值的变量用于传递给其它MCU或微机
+ */
 void Get_Hand_Status(const Hand_Control_t hand_control)//只进行值传递
 {
 	hand_status.motor_position3 = calculateResult(hand_control.hand_yaw_5_motor.hand_motor_measure_all.relative_angle , kkkk3 , bbbb3);
@@ -1455,8 +1466,11 @@ void Get_Hand_Status(const Hand_Control_t hand_control)//只进行值传递
 	hand_status.motor_position6 = calculateResult(hand_control.hand_pitch_2_motor.hand_motor_measure_all.relative_angle , kkkk6 , bbbb6);
 	hand_status.motor_position7 = calculateResult(hand_control.hand_roll_1_motor.hand_motor_measure_all.relative_angle , kkkk7 , bbbb7);
 }
-/// @brief 视角舵机控制 舵机角度值的值等于初值 + 操作手调整值 + 自动角度值(kx+b)
-/// @param gimbal_control_loop 
+
+/**
+ * @brief 视角舵机控制 舵机角度值的值等于初值 + 操作手调整值 + 自动角度值(kx+b)
+ * @param gimbal_control_loop 
+ */
 static void View_steering_engine_control(Hand_Control_t *gimbal_control_loop )
 {
 	/*
@@ -1511,3 +1525,28 @@ static void View_steering_engine_control(Hand_Control_t *gimbal_control_loop )
 
 }
 
+void Hand_Set_Reverse(void)
+{
+	#if roll_1_TURN
+	  hand_set_current1_4[0] = - hand_control.hand_roll_1_motor.hand_motor_measure_all.given_current;
+	#else    
+		hand_set_current1_4[0] =   hand_control.hand_roll_1_motor.hand_motor_measure_all.given_current;
+	#endif					
+	#if pitch_2_TURN
+		hand_set_current1_4[1] = - hand_control.hand_pitch_2_motor.hand_motor_measure_all.given_current;
+	#else 
+		hand_set_current1_4[1] =   hand_control.hand_pitch_2_motor.hand_motor_measure_all.given_current;
+	#endif
+	  #if    x_4_TURN
+		hand_set_current1_4[2] = - hand_control.hand_x_4_motor.hand_motor_measure_all.given_current;
+	#else 
+		hand_set_current1_4[2] =   hand_control.hand_x_4_motor.hand_motor_measure_all.given_current;
+	#endif
+}
+
+void Hand_Current_Output(void)
+{
+  SERVO1_RS485_Send(&hand_control.hand_yaw_5_motor.GM_Send_Data , hand_control.hand_yaw_5_motor.rData);
+  SERVO2_RS485_Send(&hand_control.hand_roll_3_motor.GM_Send_Data , hand_control.hand_roll_3_motor.rData);
+  CanSendMess(&hfdcan2,SEND_ID201_204,hand_set_current1_4); 
+}

@@ -27,13 +27,14 @@ enum PID_MODE
 typedef struct
 {
     uint8_t mode;
-    //PID 涓夊弬鏁?
+    
     fp32 Kp;
     fp32 Ki;
     fp32 Kd;
 
-    fp32 max_out;  //鏈€澶ц緭�??
-    fp32 max_iout; //鏈€澶хН鍒嗚緭�??
+    fp32 max_out;  
+    fp32 max_iout;
+    fp32 dead_band;/*??dead_band??????0*/
 
     fp32 set;
     fp32 fdb;
@@ -43,106 +44,67 @@ typedef struct
     fp32 Iout;
     fp32 LastDout;
     fp32 Dout;
-    fp32 Dbuf[3];  //�??鍒嗛�? 0鏈€�?? 1涓婁竴娆? 2涓婁笂娆?
-    fp32 error[3]; //�??�??�?? 0鏈€�?? 1涓婁竴娆? 2涓婁笂娆?
+    fp32 Dbuf[3];  
+    fp32 error[3]; 
     fp32 ref[3];
     
-    fp32 v_set; //????
-    fp32 x1,x2; //????
-    fp32 y_out; //????
-    fp32 timing; //????
-    fp32 speeding; //????
+    fp32 v_set; 
+    fp32 x1,x2; 
+    fp32 y_out; 
+    fp32 timing; 
+    fp32 speeding; 
 
 } PidTypeDef;
 
 
 
 void PID_Init(PidTypeDef *pid, uint8_t mode, const fp32 PID[3], fp32 max_out, fp32 max_iout,fp32 timing,fp32 speeding);
+void PID_Set_Deadbound(PidTypeDef *pid,fp32 dead_band);
 extern fp32 PID_Calc(PidTypeDef *pid, fp32 ref, fp32 set);
 extern void PID_clear(PidTypeDef *pid);
 
 
+/*TODO: ?????????*/
+//typedef enum
+//{
+  //LLAST = 0,
+  //LAST,
+  //NOW,
+  //POSITION_PID,
+  //DELTA_PID,
+//};
 
+//typedef struct PID_t
+//{
+  //float p;
+  //float i;
+  //float d;
+  //float err[3];
+  //float pout;
+  //float iout;
+  //float dout;
+  //float out;
 
+  //float input_max_err;    //input max err;
+  //float output_deadband;  //output deadband; 
 
-enum
+  //uint32_t pid_mode; 
+  //uint32_t max_out;
+  //uint32_t integral_limit;
 
-{
+  //void (*f_param_init)(struct PID_t *pid, 
+                       //uint32_t      pid_mode,
+                       //uint32_t      max_output,
+                       //uint32_t      inte_limit,
+                       //float         p,
+                       //float         i,
+                       //float         d);
 
-  LLAST = 0,
+  //void (*f_pid_reset)(struct PID_t *pid, float p, float i, float d);
 
-  LAST,
+//} pid_t;
 
-  NOW,
-
-  POSITION_PID,
-
-  DELTA_PID,
-
-};
-
-typedef struct PID_t
-
-{
-
-  float p;
-
-  float i;
-
-  float d;
-	
-  float err[3];
-
-
-
-  float pout;
-
-  float iout;
-
-  float dout;
-
-  float out;
-
-
-
-  float input_max_err;    //input max err;
-
-  float output_deadband;  //output deadband; 
-
-  
-
-  uint32_t pid_mode;
-
-  uint32_t max_out;
-
-  uint32_t integral_limit;
-
-
-
-  void (*f_param_init)(struct PID_t *pid, 
-
-                       uint32_t      pid_mode,
-
-                       uint32_t      max_output,
-
-                       uint32_t      inte_limit,
-
-                       float         p,
-
-                       float         i,
-
-                       float         d);
-
-  void (*f_pid_reset)(struct PID_t *pid, float p, float i, float d);
-
-} pid_t;
-
-extern pid_t CAN1_Motor_PID[8];
-extern pid_t CAN2_Motor_PID[8];
-extern pid_t CAN1_Motor_Position_PID[1];
-extern pid_t power_linit_s;
-
-void PID_struct_init( pid_t*   pid,uint32_t mode,uint32_t maxout, uint32_t intergral_limit,float kp, float ki, float kd);
-float pid_calc(pid_t *pid,int16_t set,int16_t get);
+//void PID_struct_init(pid_t*   pid,uint32_t mode,uint32_t maxout, uint32_t intergral_limit,float kp, float ki, float kd);
+//float pid_calc(pid_t *pid,int16_t set,int16_t get);
 
 #endif

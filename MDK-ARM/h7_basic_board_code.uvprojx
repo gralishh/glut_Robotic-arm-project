@@ -1132,6 +1132,11 @@
               <FileType>1</FileType>
               <FilePath>..\application\Referee_DispatchTask.c</FilePath>
             </File>
+            <File>
+              <FileName>motor_timer_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\motor_timer_ctrl.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

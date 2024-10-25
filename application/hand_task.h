@@ -102,10 +102,10 @@
 #define yaw_5_relative_angle_PID_MAX_OUT 500.0f
 #define yaw_5_relative_angle_PID_MAX_IOUT 2.0f
 
-#define  hand_Yaw_5_GM_Send_Kp_Pos         0.8f
-#define  hand_Yaw_5_GM_Send_Kd_Speed       0
-#define  hand_Yaw_5_GM_Send_Effort         0
-#define  GM_Yaw_5_ID					   3
+#define hand_Yaw_5_GM_Send_Kp_Pos         0.8f
+#define hand_Yaw_5_GM_Send_Kd_Speed       0
+#define hand_Yaw_5_GM_Send_Effort         0
+#define GM_Yaw_5_ID					   3
 
 /***********************************************************
 **********************************************************/
@@ -436,19 +436,23 @@ typedef struct
 		first_order_filter_type_t hand_cmd_slow_set_2;
 } Hand_Control_t;
 
-
+/*机械臂主任务*/
 void Hand_task(void const *pvParameters);//机械臂主任务
 
+/*机械臂结构体初始化*/
 static void Hand_Init(Hand_Control_t *gimbal_init);//机械臂初始化 主要是pid初始化
 
+/*机械臂位置初始化*/
 static void hand_position_Init(Hand_Control_t *gimbal_init);//机械臂初始化位置
 static void hand_yaw_5_position_Init(Hand_Control_t *gimbal_init);
 static void hand_roll_3_position_Init(Hand_Control_t *gimbal_init);
 
 static void Hand_Set_Mode(Hand_Control_t *hand_motor_get);//云台遥控器设置模式与控制
 
+/*更新电机设定值*/
 static void Hand_Set_Contorl( Hand_Control_t *hand_set_control);//机械臂遥控器控制
 
+/*设置机械臂位置*/
 static void	Hand_Set_Position(Hand_Control_t *hand_set_position);//机械臂遥控器，键鼠设置位置
 static void Hand_Custom_Set(Hand_Control_t *hand_set_position);
 
@@ -458,16 +462,21 @@ static void HAND_combination_control(Hand_Control_t *hand_combination_control,fp
 static void HAND_relative_angle_limit(Hand_Motor_t *hand_Motor_t,fp32 add,fp32 max_limit,fp32 min_limit);//电机角度限制
 static fp32 fangle_limit(fp32 angle_mount,fp32 add,fp32 max_limit,fp32 min_limit);
 
-static void Hand_Control_loop(Hand_Control_t *hand_control_loop);//机械臂控制PID计算
-static void hand_motor_speed_control(Hand_Motor_t *hand_motor,fp32 SPEED_RATE);//RM电机速度环
+/*机械臂PID计算(获取电流输出)*/
+void Hand_Control_loop(void);//机械臂控制PID计算
+static void hand_motor_speed_control(Hand_Motor_t *hand_motor,fp32 SPEED_RATE);//RM电机速度环(note:abandon)
+/*电机停止(电流设为0)*/
 static void hand_motor_raw_angle_control(Hand_Motor_t *hand_motor);//RM电机停止
 static void hand_motor_GM_raw_angle_control(MOTOR_send *motor_send);//GM电机停止
+/*电机'角度'串级pid计算*/
 static void hand_motor_relative_angle_control(Hand_Motor_t *hand_motor,fp32 SPEED_RATE);//RM电机相对角度串级控制
 static void hand_motor_GM_relative_angle_control(MOTOR_send *motor_send , Hand_Motor_t *hand_motor);
+/*电机'自锁'串级pid计算*/
 static void hand_motor_lock_angle_angle_control(Hand_Motor_t *hand_motor,fp32 SPEED_RATE);//RM电机自锁角度串级控制
 static void hand_motor_GM_lock_angle_control(MOTOR_send *motor_send , Hand_Motor_t *hand_motor);
 
-static void Hand_Feedback_Update(Hand_Control_t *hand_motor_feedback_update);//机械臂数据反馈
+/*机械臂电机反馈*/
+void Hand_Feedback_Update(void);//机械臂数据反馈
 static fp32 encoder_ecd_to_relative_expansion(uint16_t ecd, int32_t circle_measure ,float last_relative_angle , int32_t offset_ecd , float offect_height);
 static fp32 hand_motor_ecd_to_angle_change(int16_t ecd, int32_t offset_ecd , fp32 offset_angle);
 static fp32 hand_motor_ecd_to_angle_2PI(int16_t ecd, int32_t offset_ecd , fp32 offset_angle);
@@ -479,6 +488,13 @@ static void View_steering_engine_control(Hand_Control_t *gimbal_control_loop );
 
 static void Hand_Temperature_control(Hand_Control_t *hand_control);//用于调试控温
 
+/*电机反转赋值*/
+void Hand_Set_Reverse(void);
+
+/*机械臂电机输出*/
+void Hand_Current_Output(void);
+
+/*上位机传递数据处理*/
 void Get_Hand_Status(const Hand_Control_t hand_control);//只进行值传递
 const hand_status_t *get_hand_status_point(void);
 

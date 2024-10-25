@@ -33,6 +33,7 @@
 #include "hand_task.h"
 #include "usart_measure_task.h"/*??????*/
 #include "GO_M8010_control.h"
+#include "motor_timer_ctrl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -120,6 +121,11 @@ const osThreadAttr_t USART3_measure_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for motor_timer_ctrl */
+osTimerId_t motor_timer_ctrlHandle;
+const osTimerAttr_t motor_timer_ctrl_attributes = {
+  .name = "motor_timer_ctrl"
+};
 /* USER CODE BEGIN PV */
 /*task????*/
 osThreadId chassis_task_handle;
@@ -148,6 +154,7 @@ void __usart2_measure_task(void *argument);
 void __gimbal_task(void *argument);
 void __hand_task(void *argument);
 void __usart3_measure_task(void *argument);
+void __motor_timr_ctrl_callback(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -226,7 +233,12 @@ int main(void)
   /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
+  /* Create the timer(s) */
+  /* creation of motor_timer_ctrl */
+  motor_timer_ctrlHandle = osTimerNew(__motor_timr_ctrl_callback, osTimerPeriodic, NULL, &motor_timer_ctrl_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
+  motor_ctrl_init();
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
@@ -239,13 +251,13 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of USART2_measure */
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
 
   /* creation of GimbalTask */
-  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+  //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
@@ -1029,7 +1041,7 @@ static void MX_DMA_Init(void)
   HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
   /* DMA2_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
@@ -1184,6 +1196,14 @@ void __usart3_measure_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __usart3_measure_task */
+}
+
+/* __motor_timr_ctrl_callback function */
+void __motor_timr_ctrl_callback(void *argument)
+{
+  /* USER CODE BEGIN __motor_timr_ctrl_callback */
+  motor_timer_ctrl_callback();
+  /* USER CODE END __motor_timr_ctrl_callback */
 }
 
 /**
