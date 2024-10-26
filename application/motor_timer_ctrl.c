@@ -1,6 +1,7 @@
 #include "motor_timer_ctrl.h"
 // 提供电机反馈,pid计算以及输出函数
 #include "hand_task.h"
+#include "gimbal_task.h"
 
 #define get_feedback_statue(grp_index) \
   (motor_ctrl_handler.feedback_cmd_list[(motor_group_index_t)grp_index])
@@ -45,5 +46,14 @@ void motor_timer_ctrl_callback(void)
 
 
 
-  /*****...*****/
+  /*****gimbal_task*****/
+  if(get_feedback_statue(GIMBAL_MOTOR))
+  {
+    gimbal_Feedback_Update();
+    if(get_output_statue(GIMBAL_MOTOR))
+    {
+      gimbal_Control_loop();
+      gimbal_current_out();
+    }
+  }
 }
