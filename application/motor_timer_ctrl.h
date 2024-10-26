@@ -13,6 +13,7 @@
 /*电机分组下标*/
 typedef enum{
   HAND_MOTOR=0,
+  GIMBAL_MOTOR,
 }motor_group_index_t;
 
 typedef enum{

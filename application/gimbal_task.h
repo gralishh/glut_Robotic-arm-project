@@ -310,7 +310,7 @@ static void gimbal_Set_Mode(Gimbal_Control_t *gimbal_set_mode);//ÔÆÌ¨Ò£¿ØÆ÷ÉèÖÃÄ
 static void gimbal_Set_Control(Gimbal_Control_t *gimbal_set_control);//ÔÆÌ¨Ò£¿ØÆ÷ÒÔ¼°¼üÊóÉèÖÃ¿ØÖÆÁ¿
 static void gimbal_relative_angle_limit(Gimbal_Motor_t *gimbal_Motor,fp32 add,fp32 max_limit,fp32 min_limit);//ÔÆÌ¨Ïà¶Ô½Ç¶ÈÏŞÖÆ
 
-static void gimbal_Feedback_Update(Gimbal_Control_t *gimbal_feedback_update);//ÔÆÌ¨Êı¾İ·´À¡
+void gimbal_Feedback_Update(void);//ÔÆÌ¨Êı¾İ·´À¡
 static fp32 motor_ecd_to_angle_change(uint16_t ecd, uint16_t offset_ecd);//RMµç»ú½Ç¶ÈÖµ×ª»»ÎªÏà¶Ô½Ç¶ÈÖµ
 static fp32 encoder_ecd_to_relative_height(uint16_t ecd, int32_t offset_ecd, float offect_height);
 static fp32 encoder_ecd_to_relative_distance(uint16_t ecd, int32_t offset_ecd, float offect_height);
@@ -323,7 +323,7 @@ static void gimbal_Set_Position(Gimbal_Control_t *gimbal_set_position);//ÉèÖÃÔÆÌ
 static void GIMBAL_combination_control(Gimbal_Control_t *gimbal_combination_control,fp32 relative_angle_set_5,fp32 relative_angle_set_4,fp32 relative_angle_set_3);
 static void Gimbal_Custom_Set(Gimbal_Control_t *gimbal_set_position);
 
-static void gimbal_Control_loop(Gimbal_Control_t *gimbal_control_loop);//ÔÆÌ¨¿ØÖÆPID¼ÆËã
+void gimbal_Control_loop(void);//ÔÆÌ¨¿ØÖÆPID¼ÆËã
 static void gimbal_motor_relative_angle_control(Gimbal_Motor_t *gimbal_motor,fp32 SPEED_RATE);//RMµç»úÏà¶Ô½Ç¶È´®¼¶pid
 static void gimbal_motor_raw_angle_control(Gimbal_Motor_t *gimbal_motor);//RMµç»úÍ£Ö¹
 static void gimbal_motor_lock_angle_angle_control(Gimbal_Motor_t *gimbal_motor,fp32 SPEED_RATE);//RMµç»ú×ÔËø½Ç¶È´®¼¶pid
@@ -331,6 +331,9 @@ static void gimbal_motor_difference_relative_angle_control(Gimbal_Control_t *gim
 
 
 static void gimbal_temperature_control(Gimbal_Control_t *gimbal_temperature_control); //ÓÃÓÚµ÷ÊÔ¿ØÎÂ
+
+/*µç»úÊä³ö*/
+void gimbal_current_out(void);
 
 void Get_Gimbal_Status(const Gimbal_Control_t gimbal_control);//Ö»½øĞĞÖµ´«µİ
 const gimbal_status_t *get_gimbal_status_point(void);

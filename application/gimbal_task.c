@@ -20,6 +20,7 @@
 #include "cmsis_os.h"
 #include "MCU_communicaton_task.h"
 #include "hand_task.h"
+#include "motor_timer_ctrl.h"
 int16_t gimbal_set_current1_4[4]  = {0,0,0,0};
 int16_t gimbal_set_current5_8[4]  = {0,0,0,0};
 
@@ -72,6 +73,13 @@ uint32_t gimbal_high_water;
             (output) = 0;                                \
         }                                                \
     }
+
+// 电机反馈与输出使能控制
+#define FEEDBACK_ON() (motor_ctrl_feedback_cmd(GIMBAL_MOTOR,MOTOR_CMD_ENABLE));
+#define FEEDBACK_OFF() (motor_ctrl_feedback_cmd(GIMBAL_MOTOR,MOTOR_CMD_DISABLE));
+#define OUTPUT_ON() (motor_ctrl_output_cmd(GIMBAL_MOTOR,MOTOR_CMD_ENABLE));
+#define OUTPUT_OFF() (motor_ctrl_output_cmd(GIMBAL_MOTOR,MOTOR_CMD_DISABLE));
+
 int aaaaaa;
 
 extern TIM_HandleTypeDef htim8;//servo
@@ -97,20 +105,19 @@ TimerHandle_t xTimerStorage;
 /// @param pvParameters 
 void gimbal_task(void const *pvParameters)
 {
-#if gimbalControlBoard
 
-gimbal_set[0]=0x04;
-gimbal_set[1]=0x01;
-gimbal_set[2]=0x03;
-gimbal_set[3]=0x04;
-/**********************vTaskDelayUntil()所用参数********************/	
-//	TickType_t PreviousWakeTime;
-//	const TickType_t TimerIncrement =  pdMS_TO_TICKS(gimbal_CONTROL_TIME);
-//	PreviousWakeTime = xTaskGetTickCount();
-/*******************************************************************/	
-	taskENTER_CRITICAL();//用于初始化避免中断
-//test		IO_Read_Init();//初始化高度传感器io口
-//test		IO_Out_Init();//初始化io引脚输出
+  gimbal_set[0]=0x04;
+  gimbal_set[1]=0x01;
+  gimbal_set[2]=0x03;
+  gimbal_set[3]=0x04;
+  /**********************vTaskDelayUntil()所用参数********************/	
+  //	TickType_t PreviousWakeTime;
+  //	const TickType_t TimerIncrement =  pdMS_TO_TICKS(gimbal_CONTROL_TIME);
+  //	PreviousWakeTime = xTaskGetTickCount();
+  /*******************************************************************/	
+  	taskENTER_CRITICAL();//用于初始化避免中断
+  //test		IO_Read_Init();//初始化高度传感器io口
+  //test		IO_Out_Init();//初始化io引脚输出
 
 
 		//等待IO口任务任务更新io数据
@@ -118,16 +125,17 @@ gimbal_set[3]=0x04;
 		vTaskDelay(gimbal_TASK_INIT_TIME);
 	//云台初始化
 	taskENTER_CRITICAL();//用于初始化避免中断
-		gimbal_Init(&gimbal_control);
-		xTimerStorage = xTimerCreate("TimerStorage", pdMS_TO_TICKS(3000), pdFALSE, (void *)1, vTimerStorageCallback);	
-    taskEXIT_CRITICAL();
+  FEEDBACK_OFF();
+	gimbal_Init(&gimbal_control);
+	xTimerStorage = xTimerCreate("TimerStorage", pdMS_TO_TICKS(3000), pdFALSE, (void *)1, vTimerStorageCallback);	
+  taskEXIT_CRITICAL();
 	do
 	{
 		gimbal_Set_Mode(&gimbal_control); 	                   //机械臂遥控器设置模式
 		vTaskDelay(10);
 	}while( gimbal_control.gimbal_behaviour != gimbal_ZERO_FORCE);
 
-    gimbal_position_Init(&gimbal_control); 
+  gimbal_position_Init(&gimbal_control); 
 	/*判断电机是否都上线*/
 //	if(		toe_is_error(TOE_3508_RISE1_height_L_5_ID)			|| toe_is_error(TOE_3508_RISE2_height_R_6_ID)\
 //		||	toe_is_error(TOE_3508_LeftRight_7_ID)			|| toe_is_error(TOE_2006_Storage_mechanism_7_ID)\
@@ -145,16 +153,16 @@ gimbal_set[3]=0x04;
 //        vTaskDelay(gimbal_CONTROL_TIME);
 //        gimbal_Feedback_Update(&gimbal_control);             //云台数据反馈
 //    }						
-
+  FEEDBACK_ON();
 	while(1)  
 	{	 
 		/********************************************************************************************/		 
 		gimbal_Set_Mode(&gimbal_control);    				 //云台遥控器设置模式
 		gimbal_Set_Control(&gimbal_control);                 //云台遥控器以及键鼠设置控制量
-		gimbal_Feedback_Update(&gimbal_control);             //云台数据反馈
+		//gimbal_Feedback_Update();             //云台数据反馈
 	  gimbal_Mode_Change_Control_Transit(&gimbal_control); //控制模式切换 控制数据过渡
 		gimbal_Set_Position(&gimbal_control);                 //设置云台位置
-		gimbal_Control_loop(&gimbal_control);                //云台控制PID计算				
+		//gimbal_Control_loop(&gimbal_control);                //云台控制PID计算				
 		Get_Gimbal_Status(gimbal_control);//只进行值传递
 		
 		aaaaaa++;
@@ -163,53 +171,27 @@ gimbal_set[3]=0x04;
 
 //		Steering_engine_init();
 		//云台在遥控器掉线状态即relax 状态，can指令为0，不使用current设置为零的方法，是保证遥控器掉线一定使得云台停止
-            if (toe_is_error(DBUSTOE))
-            {			
-				 for(char i = 0;i<4;i++)
-				  {
-						gimbal_set_current1_4[i]  = 0;
-				  } 
-            }
-            else
-            {
-				#if _3508_RISE1_height_L_TURN
-				   gimbal_set_current1_4[0] = - gimbal_control._3508_RISE1_height_L_motor.given_current; 
-				#else
-				   gimbal_set_current1_4[0] = 600 + gimbal_control._3508_RISE1_height_L_motor.given_current; 
-				#endif
-				
-				#if _3508_RISE2_height_R_TURN
-				  gimbal_set_current1_4[1] = -600 - gimbal_control._3508_RISE2_height_R_motor.given_current;
-				#else 
-				  gimbal_set_current1_4[1] =   gimbal_control._3508_RISE2_height_R_motor.given_current;
-				#endif
-							
-				#if _3508_LeftRight_TURN	
-				  gimbal_set_current1_4[2] = - gimbal_control._3508_LeftRight_motor.given_current;
-				#else 
-				  gimbal_set_current1_4[2] =   gimbal_control._3508_LeftRight_motor.given_current;
-				#endif
-				
-               if (gimbal_set_current1_4[0] < 200) 
-				   gimbal_set_current1_4[0] = 200; 
-			   if (gimbal_set_current1_4[1] > -200) 
-				   gimbal_set_current1_4[1] = 200; 
-            } 
-		
-     	CanSendMess(&hfdcan3,SEND_ID201_204,gimbal_set_current1_4); 
-		//	CanSendMess(&hfdcan1,SEND_ID205_208,gimbal_set_current5_8); 
-//			u8CanSendMess(&hfdcan2,CAN_EXTER_ENCODER_HEIGHT_R ,gimbal_set);
-
-						
+    if (toe_is_error(DBUSTOE))
+    {			
+      OUTPUT_OFF();
+      for(char i = 0;i<4;i++)
+      {
+        gimbal_set_current1_4[i]  = 0;
+      } 
+    }
+    else
+    {
+      OUTPUT_ON();
+    } 
+    //gimbal_current_out();
 
 		vTaskDelay(2);
 //      vTaskDelayUntil(&PreviousWakeTime,TimerIncrement);
 			
-#if INCLUDE_uxTaskGetStackHighWaterMark
+  #if INCLUDE_uxTaskGetStackHighWaterMark
         gimbal_high_water = uxTaskGetStackHighWaterMark(NULL);
 	#endif	
     }	
-	#endif // gimbalControlBorad
 }
 
 
@@ -283,7 +265,7 @@ static void gimbal_Init(Gimbal_Control_t *gimbal_init)
 
 		gimbal_init->Hand_Vacuum_set                        = Vacuum_Pump_NONE;
 
-		gimbal_Feedback_Update(gimbal_init);
+		gimbal_Feedback_Update();
 		
     /*气泵*/
     //gimbal_init->IO_value.Storage_mechanism_Open_Value  =   !HAL_GPIO_ReadPin(GPIOI, GPIO_PIN_6);
@@ -385,7 +367,7 @@ static void gimbal_position_Init(Gimbal_Control_t *gimbal_init)
 	int16_t gimbal_current_init0[4]={0,0,0,0};
 	do
 		{
-			gimbal_Feedback_Update(gimbal_init);
+			gimbal_Feedback_Update();
 			CanSendMess(&hfdcan3,SEND_ID201_204,gimbal_current_init1);	
 			vTaskDelay(1);
 		}
@@ -400,7 +382,7 @@ static void gimbal_position_Init(Gimbal_Control_t *gimbal_init)
 				CanSendMess(&hfdcan3,SEND_ID201_204,gimbal_current_init0);
 				gimbal_liftright_init = 1;
 			}
-			gimbal_Feedback_Update(gimbal_init);
+			gimbal_Feedback_Update();
 			
 
 			gimbal_liftright_ecd   = gimbal_init->_3508_LeftRight_motor.gimbal_motor_measure->ecd;
@@ -526,12 +508,14 @@ static void gimbal_relative_angle_limit(Gimbal_Motor_t *gimbal_Motor,fp32 add,fp
 
 /// @brief 云台数据反馈
 /// @param gimbal_feedback_update 
-static void gimbal_Feedback_Update(Gimbal_Control_t *gimbal_feedback_update)
+void gimbal_Feedback_Update(void)
 {
-    if (gimbal_feedback_update == NULL)
-    {
-        return;
-    }
+  Gimbal_Control_t *gimbal_feedback_update=&gimbal_control;
+
+  if (gimbal_feedback_update == NULL)
+  {
+      return;
+  }
 
 	gimbal_feedback_update->_3508_RISE1_height_L_motor.encoder_angle	=	motor_ecd_to_angle_change(gimbal_feedback_update->_3508_RISE1_height_L_motor.gimbal_motor_measure->ecd,4096);
 	gimbal_feedback_update->_3508_RISE1_height_L_motor.relative_angle   =   encoder_ecd_to_relative_height(gimbal_feedback_update->_3508_RISE1_height_L_motor.gimbal_encoder_measure->ecd , height_L_encoder_offset_ecd , height_L_encoder_offset_height);
@@ -815,8 +799,9 @@ static void GIMBAL_combination_control(Gimbal_Control_t *gimbal_combination_cont
 
 /// @brief 云台控制PID计算
 /// @param gimbal_control_loop 
-static void gimbal_Control_loop(Gimbal_Control_t *gimbal_control_loop)
+void gimbal_Control_loop(void)
 {
+  Gimbal_Control_t *gimbal_control_loop=&gimbal_control;
 	if(gimbal_control_loop == NULL)   return; 
 /***************************************************升降，滑台************************************************/
 	if(gimbal_control_loop->gimbal_behaviour==gimbal_CUSTIM)
@@ -1265,4 +1250,32 @@ float joint_angles[JOINTS][POSITIONS_PER_JOINT][ANGLES_PER_POSITION] = {
 // 	// 	arr_hand_transition_flag = 2;
 // 	// }
 
+void gimbal_current_out(void)
+{
+
+	#if _3508_RISE1_height_L_TURN
+	   gimbal_set_current1_4[0] = - gimbal_control._3508_RISE1_height_L_motor.given_current; 
+	#else
+	   gimbal_set_current1_4[0] = 600 + gimbal_control._3508_RISE1_height_L_motor.given_current; 
+	#endif
+	
+	#if _3508_RISE2_height_R_TURN
+	  gimbal_set_current1_4[1] = -600 - gimbal_control._3508_RISE2_height_R_motor.given_current;
+	#else 
+	  gimbal_set_current1_4[1] =   gimbal_control._3508_RISE2_height_R_motor.given_current;
+	#endif
+				
+	#if _3508_LeftRight_TURN	
+	  gimbal_set_current1_4[2] = - gimbal_control._3508_LeftRight_motor.given_current;
+	#else 
+	  gimbal_set_current1_4[2] =   gimbal_control._3508_LeftRight_motor.given_current;
+	#endif
+	
+  if (gimbal_set_current1_4[0] < 200) 
+	  gimbal_set_current1_4[0] = 200; 
+	if (gimbal_set_current1_4[1] > -200) 
+	   gimbal_set_current1_4[1] = 200; 
+
+  CanSendMess(&hfdcan3,SEND_ID201_204,gimbal_set_current1_4); 
+}
 
