@@ -206,8 +206,7 @@ typedef struct
 
     fp32 out;
 } Hand_PID_t;
-/*******************************************************************/
-#define HAND_CONTROL_TIME 10
+
 /*******************************************************************/
 //云台校准中值的时候，发送原始电流值，以及堵转时间，通过陀螺仪判断堵转
 #define Channel_0 0
@@ -217,13 +216,7 @@ typedef struct
 #define Channel_4 4
 #define ModeChannel 0
 
-
-//#define	hand_1_channel_RC_SEN  -0.00000030f   //-0.00000008f
-//#define	hand_2_channel_RC_SEN   0.000005f
-//#define	hand_3_channel_RC_SEN   0.0000001f
-//#define	hand_4_channel_RC_SEN  -0.000001f
-//#define	hand_5_channel_RC_SEN  -0.0000030f
-
+/*控制器控制电机角度单位时间的变化幅度比例*/
 #define	hand_1_channel_RC_SEN  -0.0000030f   //-0.00000008f
 #define	hand_2_channel_RC_SEN   0.0000001f
 #define	hand_3_channel_RC_SEN  -0.000005f

@@ -95,16 +95,9 @@ extern UART_HandleTypeDef huart1;
 
 
 
-// 软件定时器回调函数
+// 圈数计量计时器
 void vTimerAngleCallback(TimerHandle_t xTimer)
 {
-//    hand_control.hand_roll_1_motor.hand_motor_measure_all.last_encoder_angle = hand_control.hand_roll_1_motor.hand_motor_measure_all.motor_encoder_angle;
-//	hand_control.hand_pitch_2_motor.hand_motor_measure_all.last_encoder_angle = hand_control.hand_pitch_2_motor.hand_motor_measure_all.motor_encoder_angle;
-
-//	hand_motor_circle_measure(&hand_control.hand_roll_1_motor.hand_motor_measure_all);
-//	hand_motor_circle_measure(&hand_control.hand_pitch_2_motor.hand_motor_measure_all);
-//	hand_motor_circle_measure(&hand_control.hand_x_4_motor.hand_motor_measure_all);
-	
 	if(hand_control.hand_x_4_motor.hand_motor_measure_all.last_ecd >30000 && hand_control.hand_x_4_motor.hand_encoder_4_measure->ecd < 7000)
 	{
 		hand_control.hand_x_4_motor.hand_motor_measure_all.motor_circle = 1;
@@ -114,9 +107,6 @@ void vTimerAngleCallback(TimerHandle_t xTimer)
 		hand_control.hand_x_4_motor.hand_motor_measure_all.motor_circle = 0;	
 	}
 	hand_control.hand_x_4_motor.hand_motor_measure_all.last_ecd = hand_control.hand_x_4_motor.hand_encoder_4_measure->ecd;
-
-
-	
 }
 
 
@@ -126,21 +116,10 @@ void vTimerAngleCallback(TimerHandle_t xTimer)
  */
 void Hand_task(void const *pvParameters)
 {
-	#if gimbalControlBoard
-	//__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_1, 1670);	//控制占空比
-	//__HAL_TIM_SetCompare(&htim8, TIM_CHANNEL_2, 1775);	//控制占空比
 	vTaskDelay(1000);
 	taskENTER_CRITICAL();
 	Hand_Init(&hand_control);	
 	TimerHandle_t xTimer = xTimerCreate("Timer", pdMS_TO_TICKS(1), pdTRUE, 0, vTimerAngleCallback);
-//	if (xTimer != NULL)
-//    {
-//        // 启动定时器
-//        if (xTimerStart(xTimer, 0) == pdPASS)
-//        {
-//            // 定时器成功启动
-//        }
-//    }
 	taskEXIT_CRITICAL();
 	
 	
@@ -151,65 +130,43 @@ void Hand_task(void const *pvParameters)
 	}while( hand_control.hand_behaviour != HAND_ZERO_FORCE);
 	vTaskDelay(150);//延迟一段时间之后在进行校准 目的是先让滑台进行校准
 
-	////进行多次校准，一次有误差
-	//hand_position_Init(&hand_control);                 //机械臂位置初始化
-	//hand_position_Init(&hand_control);                 //机械臂位置初始化
-	//hand_position_Init(&hand_control);                 //机械臂位置初始化
-	//hand_position_Init(&hand_control);                 //机械臂位置初始化
-	//hand_position_Init(&hand_control);                 //机械臂位置初始化
-	////hand_roll_3_position_Init(&hand_control);
-	//vTaskDelay(10);
-	//hand_yaw_5_position_Init(&hand_control);			//先逼近位置
-	//hand_control.hand_roll_3_motor.hand_motor_measure_all.relative_init_angle = 0.0f;
-	//hand_control.hand_yaw_5_motor.hand_motor_measure_all.relative_init_angle = 0.0f;
-	//vTaskDelay(40);
-	////hand_roll_3_position_Init(&hand_control);
-	//vTaskDelay(20);
-	//hand_yaw_5_position_Init(&hand_control);	
-
-		
+  /*启动电机反馈与输出刷新*/
   FEEDBACK_ON();
   OUTPUT_ON();
 
 	while(1)
-    {
-	    Hand_Set_Mode(&hand_control); 	                   //机械臂遥控器设置模式
-		  Hand_Set_Contorl(&hand_control);                   //设置机械臂控制
-		  //Hand_Feedback_Update(&hand_control);               //机械臂数据反馈
-		  Hand_Set_Position(&hand_control);                  //机械臂遥控器，键鼠设置位置
-		  HAND_Mode_Change_Control_Transit(&hand_control);   //控制模式切换 控制数据过渡
-		  //Hand_Control_loop(&hand_control);                  //机械臂控制PID计算
-// 		Hand_Temperature_control(&hand_control);
-		  View_steering_engine_control(&hand_control);
-		  Get_Hand_Status(hand_control);//只进行值传递
+  {
+	  Hand_Set_Mode(&hand_control); 	                   //机械臂遥控器设置模式
+		Hand_Set_Contorl(&hand_control);                   //设置机械臂控制
+		//Hand_Feedback_Update(&hand_control);               //机械臂数据反馈
+		Hand_Set_Position(&hand_control);                  //机械臂遥控器，键鼠设置位置
+		HAND_Mode_Change_Control_Transit(&hand_control);   //控制模式切换 控制数据过渡
+		//Hand_Control_loop(&hand_control);                  //机械臂控制PID计算
+		View_steering_engine_control(&hand_control);
+		Get_Hand_Status(hand_control);//只进行值传递
 
 	
-      if (toe_is_error(DBUSTOE))
+    //控制器掉线判断
+    if (toe_is_error(DBUSTOE))
+    {
+      OUTPUT_OFF();
+      for(char i = 0;i<4;i++)
       {
-        OUTPUT_OFF();
-        for(char i = 0;i<4;i++)
-        {
-          hand_set_current1_4[i]  = 0;
-				} 
-			  hand_control.hand_yaw_5_motor.GM_Send_Data.mode=0;
-			  hand_control.hand_roll_3_motor.GM_Send_Data.mode=0;
-        Hand_Current_Output();
-      }
-      else
-      {
-        //Hand_Set_Reverse();
-        OUTPUT_ON();
-			}
-
-      //Hand_Current_Output();
-			
-      //SERVO1_RS485_Send(&hand_control.hand_yaw_5_motor.GM_Send_Data , hand_control.hand_yaw_5_motor.rData);
-      //SERVO2_RS485_Send(&hand_control.hand_roll_3_motor.GM_Send_Data , hand_control.hand_roll_3_motor.rData);
-      //CanSendMess(&hfdcan2,SEND_ID201_204,hand_set_current1_4); 
-			
-      vTaskDelay(1);
-	}
-	#endif
+        hand_set_current1_4[i]  = 0;
+      } 
+      /*TODO:添加一个电机自锁函数*/
+      hand_control.hand_yaw_5_motor.GM_Send_Data.mode=0;
+      hand_control.hand_roll_3_motor.GM_Send_Data.mode=0;
+      Hand_Current_Output();
+    }
+    else
+    {
+      OUTPUT_ON();
+		
+		
+    vTaskDelay(1);
+	  }
+  }
 }
 /// @brief 机械臂初始化 主要是pid初始化
 /// @param hand_init 
@@ -589,6 +546,7 @@ static void Hand_Set_Mode(Hand_Control_t *hand_motor_get)
 /**
  * @brief 机械臂遥控器控制
  * @param hand_set_control
+ * @note 会修改设定角度
  */
 static void Hand_Set_Contorl( Hand_Control_t *hand_set_control)
 {
@@ -650,7 +608,8 @@ static void Hand_Set_Contorl( Hand_Control_t *hand_set_control)
  * @param add 角度增量
  * @param max_limit 
  * @param min_limit 
- * @note max_limit与min_limit为0时为无限制
+ * @note max_limit与min_limit为0时为无限制,
+ *  同时包含修改角度值的操作
  */
 static void HAND_relative_angle_limit(Hand_Motor_t *hand_Motor_t,fp32 add,fp32 max_limit,fp32 min_limit)
 {
@@ -790,8 +749,11 @@ static void HAND_Mode_Change_Control_Transit(Hand_Control_t *hand_mode_change)
 	}
 }
 
-/// @brief 机械臂遥控器，键鼠设置位置
-/// @param  
+/**
+ * @brief 机械臂遥控器，键鼠设置位置
+ * @param  
+ * @note 会修改电机角度设定值
+ */
 static void	Hand_Set_Position(Hand_Control_t *hand_set_position)
 {
 	if (hand_set_position == NULL)
@@ -908,6 +870,7 @@ static void HAND_combination_control(Hand_Control_t *hand_combination_control,fp
 
 	static fp32 add_1 , add_2 , add_3 , add_4, add_5 ;
 	double epsilon = 1e-9;
+  //判断
     if (fabs(relative_angle_set_5) < epsilon && fabs(relative_angle_set_4) < epsilon && fabs(relative_angle_set_3) < epsilon && fabs(relative_angle_set_2) < epsilon && fabs(relative_angle_set_1) < epsilon) 
 		{
 			hand_combination_control->hand_yaw_5_motor.hand_motor_measure_all.lock_angle	            =hand_combination_control->hand_yaw_5_motor.hand_motor_measure_all.relative_angle;
@@ -931,17 +894,6 @@ static void HAND_combination_control(Hand_Control_t *hand_combination_control,fp
 			
 		}
 		
-		// if(fabs(hand_combination_control->hand_x_4_motor.hand_motor_measure_all.relative_angle-relative_angle_set_4)>HAND_ANGLE_ERROR4)
-		// {
-		// 	if((relative_angle_set_4-hand_combination_control->hand_x_4_motor.hand_motor_measure_all.relative_angle)>=0.0f)
-		// 	{
-		// 	add_4 = Keyboard_set_Angle_increment_hand_4;
-		// 	}
-		// 	else add_4 = -Keyboard_set_Angle_increment_hand_4;
-			
-		// 	HAND_relative_angle_limit(&hand_combination_control->hand_x_4_motor.hand_motor_measure_all	,/**/add_4,x_4_relative_angle_set_max	,x_4_relative_angle_set_min);
-		// }
-		
 		if(fabs(hand_combination_control->hand_roll_3_motor.hand_motor_measure_all.relative_angle-relative_angle_set_3)>HAND_ANGLE_ERROR3)
 		{
 			if((relative_angle_set_3-hand_combination_control->hand_roll_3_motor.hand_motor_measure_all.relative_angle)>=0.0f)
@@ -954,34 +906,10 @@ static void HAND_combination_control(Hand_Control_t *hand_combination_control,fp
 		
 		}
 	
-//		if(fabs(hand_combination_control->hand_pitch_2_motor.hand_motor_measure_all.relative_angle-relative_angle_set_2)>HAND_ANGLE_ERROR2)
-//		{
-//			if((relative_angle_set_2-hand_combination_control->hand_pitch_2_motor.hand_motor_measure_all.relative_angle)>=0.0f)
-//			{
-//				add_2 = Keyboard_set_Angle_increment_hand_2;
-//			}
-//			else add_2 = -Keyboard_set_Angle_increment_hand_2;
-//			
-//			HAND_relative_angle_limit(&hand_combination_control->hand_pitch_2_motor.hand_motor_measure_all	,/**/add_2	,pitch_2_relative_angle_set_max	,pitch_2_relative_angle_set_min);
-//		
-//		}
-//		if(fabs(hand_combination_control->hand_roll_1_motor.hand_motor_measure_all.relative_angle-relative_angle_set_1)>HAND_ANGLE_ERROR1)
-//		{
-//			if((relative_angle_set_1-hand_combination_control->hand_roll_1_motor.hand_motor_measure_all.relative_angle)>=0.0f)
-//			{
-//				add_1 = Keyboard_set_Angle_increment_hand_1;
-//			}
-//			else add_1 = -Keyboard_set_Angle_increment_hand_1;
-//			
-//			HAND_relative_angle_limit(&hand_combination_control->hand_roll_1_motor.hand_motor_measure_all	,/**/add_1	,roll_1_relative_angle_set_max	,roll_1_relative_angle_set_min);
-//		
-//		}
 		
 		if((fabs(hand_combination_control->hand_yaw_5_motor.hand_motor_measure_all.relative_angle-relative_angle_set_5)<=HAND_ANGLE_ERROR5)\
 			&&(fabs(hand_combination_control->hand_x_4_motor.hand_motor_measure_all.relative_angle-relative_angle_set_4)<=HAND_ANGLE_ERROR4)\
 			&&(fabs(hand_combination_control->hand_roll_3_motor.hand_motor_measure_all.relative_angle-relative_angle_set_3)<=HAND_ANGLE_ERROR3))
-//			&&(fabs(hand_combination_control->hand_pitch_2_motor.hand_motor_measure_all.relative_angle-relative_angle_set_2)<=HAND_ANGLE_ERROR2)\
-//			&&(fabs(hand_combination_control->hand_roll_1_motor.hand_motor_measure_all.relative_angle-relative_angle_set_1)<=HAND_ANGLE_ERROR1))
 		{
 			hand_combination_control->hand_yaw_5_motor.hand_motor_measure_all.lock_angle	            =hand_combination_control->hand_yaw_5_motor.hand_motor_measure_all.relative_angle;
 			hand_combination_control->hand_x_4_motor.hand_motor_measure_all.lock_angle	                =hand_combination_control->hand_x_4_motor.hand_motor_measure_all.relative_angle;
