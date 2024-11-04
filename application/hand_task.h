@@ -187,26 +187,6 @@
 #define arr_Y_limit_max 2500
 #define arr_Y_limit_min 500
 
-typedef struct
-{
-    fp32 kp;
-    fp32 ki;
-    fp32 kd;
-
-    fp32 set;
-    fp32 get;
-    fp32 err;
-
-    fp32 max_out;
-    fp32 max_iout;
-
-    fp32 Pout;
-    fp32 Iout;
-    fp32 Dout;
-
-    fp32 out;
-} Hand_PID_t;
-
 /*******************************************************************/
 //云台校准中值的时候，发送原始电流值，以及堵转时间，通过陀螺仪判断堵转
 #define Channel_0 0
