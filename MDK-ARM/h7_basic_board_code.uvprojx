@@ -1093,11 +1093,6 @@
               <FilePath>..\application\chassis_task.c</FilePath>
             </File>
             <File>
-              <FileName>GO_M8010_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\GO_M8010_control.c</FilePath>
-            </File>
-            <File>
               <FileName>usart_measure_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\usart_measure_task.c</FilePath>
@@ -1111,11 +1106,6 @@
               <FileName>hand_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\hand_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>External_encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\External_encoder.c</FilePath>
             </File>
             <File>
               <FileName>MCU_communicaton_task.c</FileName>
@@ -1137,6 +1127,11 @@
               <FileType>1</FileType>
               <FilePath>..\application\motor_timer_ctrl.c</FilePath>
             </File>
+            <File>
+              <FileName>hand_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\hand_task_interface.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1146,6 +1141,16 @@
               <FileName>ws2812.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\devices\ws2812.c</FilePath>
+            </File>
+            <File>
+              <FileName>External_encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\devices\External_encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>GO_M8010_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\devices\GO_M8010_control.c</FilePath>
             </File>
           </Files>
         </Group>
