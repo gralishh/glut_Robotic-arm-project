@@ -3,7 +3,7 @@
  * @date 24/11/9
  * @note DJI_Motor_Bus_t仅针对CAN端口
  * 上层代码仅对电机句柄操作
- * @todo 添加电机输出转轴速度控制
+ * @todo 添加电机输出转轴位置环控制
  */
 #ifndef __DJI_MOTOR_MODULE__
 #define __DJI_MOTOR_MODULE__
@@ -13,15 +13,30 @@
 #include "pid.h"
 
 #define MAX_MOTOR_MOUNTED 6
-#define IS_OUTPUT_ID_200H(id) ((id>=0x201)&&(id<=0x204))
-#define IS_OUTPUT_ID_1FFH(id) ((id>=0x205)&&(id<=0x208))
 
 typedef enum{
   M2006=0,
   M3508,
   ANY_MOTOR,
-} Motor_Type_t;
+} Motor_Type_e;
 
+// 电机控制模式,由电机控制函数设置
+typedef enum{
+  NON_FORCE=0,
+  SPEED_LOOP,
+  POS_LOOP,
+  EX_ECD_POS_LOOP,
+  GIVING_CURRENT,
+  LOCK
+} Motor_Ctrl_mode_e
+
+// 表示电机初始化状态，
+//限制条件不足时电机的控制
+typedef enum{
+  MOTOR_SPEED_PID_INIT=0,
+  MOTOR_POS_PID_INIT,
+  EXTERN_ENCODER_INIT,
+} Motor_Ctrl_init_state_e;
 
 typedef struct{
 
@@ -35,65 +50,97 @@ typedef struct{
 typedef struct{
   FDCAN_HandleTypeDef* can;
   DJI_Motor_Ctrl_t* mounted_motor[MAX_MOTOR_MOUNTED];
+  uint16_t mounted_motor_count;
 
   uint16_t output_current200H[4];
   uint16_t output_current1FFH[4];
 } DJI_Motor_Bus_t;
 
 typedef struct{
+/*电机结构体*/
   DJI_Motor_Bus_t* mounted_bus;
   PidTypeDef pid_speed_loop;
+  PidTypeDef pid_pos_loop;
   dji_recv_pack recv_pack;
 
-  Motor_Type_t type;
+/*电机属性*/
+  Motor_Type_e type;
   uint16_t id;
 
-  uint8_t enable_flag;//电机启动标志
+/*标志*/
+  Motor_Ctrl_mode_e mode;
+  Motor_Ctrl_init_state_e init_state;
+  uint8_t reverse_flag;//电机反转标志,会使发送的电流置为负值
+  uint8_t circle_count_flag;//电机转子计数标志
 
-  fp32 set_speed;
-  fp32 set_angle;//
+/*目标值*/
+  fp32 set_speed;//目标速度
+  fp32 set_angle;//目标角度
+  int16_t set_current;
 
+/*角度反馈*/
+  fp32 *ref_ptr;// 反馈变量指针,可以为该结构体的angle成员
+  fp32 ecd_angle;// 转子角度反馈
   fp32 circle_count;//转子圈数
+
+/*初始角度*/
+  fp32 reset_angle;
+
 } DJI_Motor_Ctrl_t;
 
 /*反馈报文*/
-typedef __packed struct{
+#pragma pack(1)
+typedef struct{
   uint16_t ecd;
-  uint16_t speed_rpm;
+  int16_t speed_rpm;
   uint16_t torque;
   uint8_t temp;
   uint8_t REMAIN;
 } dji_recv_pack;
+#pragma pack()
 
 /*DJI_CANBus*/
 void DJI_CANBus_init(DJI_Motor_Bus_t* bus,FDCAN_HandleTypeDef* can);
 void DJI_CANBus_config_init(DJI_Motor_Bus_t* bus, DJI_Motor_Config_t* config);
-void DJI_CANBus_add_motor(DJI_Motor_Bus_t* bus);
+void DJI_CANBus_add_motor(DJI_Motor_Bus_t* bus,DJI_Motor_Ctrl_t* motor);
 
-void DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus);
-void DJI_CANBus_feedback_update(DJI_Motor_Bus_t* bus, uint16_t rx_id);
+/*DJI_CANBus循环控制接口*/
+void __DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus);
+int8_t __DJI_CANBus_feedback_update(DJI_Motor_Bus_t* bus, uint16_t rx_id);
 
 
-/*DJI_Motor*/
+/**********DJI_Motor*********/
+/*DJI_Motor初始化设置*/
 void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,Motor_Type_t motor_type,uint16_t id);
-void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, uint16_t speed_rpm);
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle);
-void DJI_Motor_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
+void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
+  fp32 Kp,fp32 Ki,fp32 Kd,
+  fp32 max_out,fp32 max_iout);
+void DJI_Motor_Speed_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,
   fp32 max_out,fp32 max_iout);
 void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband);
 
-void DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor);
-void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg);
+/*电机控制接口*/
+void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle);//
+void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, uint16_t speed_rpm);//速度设置
+void DJI_Motor_set_current(DJI_Motor_Ctrl_t* motor, int16_t current);
+void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
 
-/*****PRIVATE*****/
+/*DJI_Motor循环控制接口*/
+void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor);
+void __DJI_Motor_pos_ctrl_loop(DJI_Motor_Ctrl_t* motor);
+void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor);
+void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg);
+
+/**********PRIVATE**********/
 /*预设pid值*/
 static void __DJI_Motor_preset_pid_m2006(DJI_Motor_Ctrl_t* motor);
 static void __DJI_Motor_preset_pid_m3508(DJI_Motor_Ctrl_t* motor);
 
-static void __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor);
-static void __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor,);
+static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor);
+static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor);
 
-static void __DJI_Motor_circle_
+//static void __DJI_Motor_circle_
 
 #endif
