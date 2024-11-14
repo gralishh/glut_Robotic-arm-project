@@ -1,4 +1,5 @@
 #include "DJI_motor_canbus.h"
+#include "CAN_receive.h"
 
 // CANBusºêº¯Êı
 #define __DJI_CANBus_get_motor_instance(bus_ptr,index) ((bus_ptr->mounted_motor)[index])
@@ -11,6 +12,7 @@ void DJI_CANBus_init(DJI_Motor_Bus_t* bus,FDCAN_HandleTypeDef* can)
 {
   bus->can=can;
   bus->mounted_motor_count=0;
+  bus->enable=0;
 }
 
 void DJI_CANBus_config_init(DJI_Motor_Bus_t* bus, DJI_Motor_Config_t* config)
@@ -48,13 +50,20 @@ void __DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus)
       case LOCK:
       case POS_LOOP:
         __DJI_Motor_pos_ctrl_loop(motor);
+        break;
 
       default:
       case NON_FORCE:
       case GIVING_CURRENT:
         __DJI_Motor_current_ctrl_loop(__DJI_CANBus_get_motor_instance(bus,index));
-      break;
+        break;
     }
+  }
+
+  if(bus->enable)
+  {
+    CanSendMess(bus->can,0x200,bus->output_current200H);
+    CanSendMess(bus->can,0x1ff,bus->output_current1FFH);
   }
 }
 

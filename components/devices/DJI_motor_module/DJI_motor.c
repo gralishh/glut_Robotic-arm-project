@@ -7,14 +7,14 @@
 // 电流输出数组宏函数
 #define IS_OUTPUT_ID_200H(id) ((id>=0x201)&&(id<=0x204))
 #define IS_OUTPUT_ID_1FFH(id) ((id>=0x205)&&(id<=0x208))
-#define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x200)%4)
+#define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x200)%4-1)
 
 // Motor_Ctrl宏函数
 #define __DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current) (motor_ptr->reverse_flag?-current:current)
 #define __DJI_Motor_Ctrl_get_speed(motor_ptr) ((motor_ptr->recv_pack).speed_rpm)
 #define __DJI_Motor_Ctrl_get_ecd(motor_ptr) ((motor_ptr->recv_pack).ecd)
 #define __DJI_Motor_Ctrl_get_ecd_angle(motor_ptr) (motor_ptr->ecd_angle)
-#define __DJI_Motor_Ctrl_get_angle(motor_ptr) ((motor_ptr->circle_count)*PI+*(motor_ptr->ref_ptr))
+#define __DJI_Motor_Ctrl_get_angle(motor_ptr) ((motor_ptr->circle_count)*PI*2+*(motor_ptr->ref_ptr))
 #define __DJI_Motor_Ctrl_get_init_state(motor_ptr,state_flag) ((motor_ptr->init_state)&(state_flag))
 #define __DJI_Motor_Ctrl_set_init_state(motor_ptr,state_flag) ((motor_ptr->init_state)|=(state_flag))
 
@@ -33,6 +33,7 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,Motor_Type_e mo
   motor->mounted_bus=bus;
   motor->ref_ptr=&(motor->ecd_angle);
 
+  DJI_CANBus_add_motor(bus,motor);
   DJI_Motor_set_nonforce(motor);
 }
 
@@ -156,7 +157,32 @@ void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 
 void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
 {
-  memcpy((void*)&(motor->recv_pack),rx_msg,sizeof(uint8_t)*8);
+  //memcpy((void*)&(motor->recv_pack),rx_msg,sizeof(uint8_t)*8);//报文高低8位方向相反，不能直接memcpy
+  // 报文赋值
+  motor->recv_pack.ecd=rx_msg[0]<<8;
+  motor->recv_pack.ecd|=rx_msg[1];
+  motor->recv_pack.speed_rpm=rx_msg[2]<<8;
+  motor->recv_pack.speed_rpm|=rx_msg[3];
+  motor->recv_pack.torque=rx_msg[4]<<8;
+  motor->recv_pack.torque|=rx_msg[5];
+  motor->recv_pack.temp=rx_msg[6];
+
+  // 刷新角度值
+  motor->last_ecd_angle=motor->ecd_angle;
+  motor->ecd_angle=NORMALIZE_TO_2PI(ecd_to_angle(motor->recv_pack.ecd,8191,0,0.0));
+
+  // 刷新圈数
+  if(motor->circle_count_flag)
+  {
+    if(motor->ecd_angle>(2*PI*2/4)&&motor->last_ecd_angle<(2*PI*1/4))
+    {
+      motor->circle_count--;
+    }
+    else if(motor->last_ecd_angle>(2*PI*2/4)&&motor->ecd_angle<(2*PI*1/4))
+    {
+      motor->circle_count++;
+    }
+  }
 }
 
 static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor)
@@ -166,13 +192,27 @@ static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor)
 
 static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor)
 {
-  return PID_Calc(&(motor->pid_speed_loop),
-    __DJI_Motor_Ctrl_get_speed(motor),
-    PID_Calc(
-      &(motor->pid_pos_loop),
-      0,
-      angle_normalize(motor->set_angle,-__DJI_Motor_Ctrl_get_angle(motor))
-    )
-  );
+  if(motor->circle_count_flag)
+  {
+    return PID_Calc(&(motor->pid_speed_loop),
+      __DJI_Motor_Ctrl_get_speed(motor),
+      PID_Calc(
+          &(motor->pid_pos_loop),
+          __DJI_Motor_Ctrl_get_angle(motor),
+          motor->set_angle
+      )
+    );
+  }
+  else
+  {
+    return PID_Calc(&(motor->pid_speed_loop),
+      __DJI_Motor_Ctrl_get_speed(motor),
+      PID_Calc(
+        &(motor->pid_pos_loop),
+        0,
+        angle_normalize(motor->set_angle,-__DJI_Motor_Ctrl_get_angle(motor))
+      )
+    );
+  }
 }
 
