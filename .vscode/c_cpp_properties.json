@@ -3,7 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${default}"
+                "${default}",
+                "D:/wolfsDoc/wolfsProgram/stm32Project/h7_basic_board_code"
             ],
             "defines": [
                 "_DEBUG",
