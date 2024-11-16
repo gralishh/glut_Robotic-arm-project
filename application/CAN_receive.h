@@ -68,6 +68,7 @@ typedef enum
 
 }can2_msg_id_e;
 
+/*??????*/
 typedef struct
 {
     uint16_t ecd;
@@ -78,6 +79,7 @@ typedef struct
 	  int64_t crc;
 } motor_measure_t;
 
+/*???????*/
 typedef struct
 {
 	  

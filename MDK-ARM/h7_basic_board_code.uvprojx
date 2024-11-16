@@ -81,7 +81,7 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
+            <RunUserProg2>0</RunUserProg2>
             <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;../components/devices;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;../components/devices;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/;..\components\devices\DJI_motor_module\</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1152,6 +1152,16 @@
               <FileType>1</FileType>
               <FilePath>..\components\devices\GO_M8010_control.c</FilePath>
             </File>
+            <File>
+              <FileName>DJI_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\devices\DJI_motor_module\DJI_motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>DJI_motor_canbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\devices\DJI_motor_module\DJI_motor_canbus.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1176,6 +1186,11 @@
               <FileName>mem_mang4.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\support\mem_mang4.c</FilePath>
+            </File>
+            <File>
+              <FileName>angle_process.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\support\angle_process.c</FilePath>
             </File>
           </Files>
         </Group>
