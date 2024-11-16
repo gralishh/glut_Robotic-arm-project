@@ -18,10 +18,11 @@ typedef struct __DJI_Motor_Ctrl_t DJI_Motor_Ctrl_t;
 typedef struct __DJI_Motor_Bus_t{
   FDCAN_HandleTypeDef* can;
   DJI_Motor_Ctrl_t* mounted_motor[MAX_MOTOR_MOUNTED];
+  uint8_t enable;//总线输出使能
   uint16_t mounted_motor_count;
 
-  uint16_t output_current200H[4];
-  uint16_t output_current1FFH[4];
+  int16_t output_current200H[4];
+  int16_t output_current1FFH[4];
 } DJI_Motor_Bus_t;
 
 

@@ -73,13 +73,14 @@ typedef struct __DJI_Motor_Ctrl_t{
   uint8_t circle_count_flag;
 
 /*目标值*/
-  fp32 set_speed;//目标速度
+  fp32 set_speed;//目标速度 range:0~2PI 下同
   fp32 set_angle;//目标角度
   int16_t set_current;
 
 /*角度反馈*/
   fp32 *ref_ptr;// 反馈变量指针,可以为该结构体的angle成员
   fp32 ecd_angle;// 转子角度反馈
+  fp32 last_ecd_angle;// 上一转子角度反馈
   fp32 circle_count;//转子圈数
 
 } DJI_Motor_Ctrl_t;
