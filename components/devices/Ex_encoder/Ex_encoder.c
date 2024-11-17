@@ -31,8 +31,13 @@ uint32_t External_ecd_get_value(External_ecd_handler_t* ecd)
 
 fp32 External_ecd_get_angle(External_ecd_handler_t* ecd)
 {
-  return NORMALIZE_TO_2PI(ecd_to_angle(ecd->ecd,ecd->max_ecd,0,0.0));
+  return ecd->angle;
 } 
+
+fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd)
+{
+  return &(ecd->angle);
+}
 
 void __External_ecd_can_feedback_hook(uint16_t id,uint8_t* msg)
 {
@@ -45,6 +50,7 @@ void __External_ecd_can_feedback_hook(uint16_t id,uint8_t* msg)
     {
       case OID_ECD:
         ecd->ecd=((OID_ECD_FEEDBACK_T*)(void*)msg).ecd;
+        ecd->angle=NORMALIZE_TO_2PI(ecd_to_angle(ecd->ecd,ecd->max_ecd,0,0.0));
         break
       default
     }

@@ -26,6 +26,7 @@ struct __External_ecd_handler_t{
   ecd_type_e type;
 
   uint32_t ecd;
+  fp32 angle;
   uint32_t max_ecd;
 
   /*CAN总线专用*/
@@ -52,8 +53,10 @@ void External_ecd_init_on_can(External_ecd_handler_t* ecd,uint32_t max_ecd,ecd_t
 
 uint32_t External_ecd_get_value(External_ecd_handler_t* ecd);
 fp32 External_ecd_get_angle(External_ecd_handler_t* ecd);
+fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd);
+
 
 void __External_ecd_usart_feedback_hook(void);
-void __External_ecd_can_feedback_hook(uint16_t id);
+void __External_ecd_can_feedback_hook(uint16_t id,uint8_t* msg);
 
 #endif
