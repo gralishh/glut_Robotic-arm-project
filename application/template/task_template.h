@@ -1,4 +1,8 @@
 /**
+ * @brief 机构任务模板
+ * @author C_XIAOBAI
+ * @details
+ * 运行框图:
  * feedback(flash feedback value)->mode_select->mode_ctrl(set target state)->output
  *                                                   |
  *                                                   V
@@ -11,12 +15,15 @@
 #include <stdint.h>
 #include "task.h"
 
-#define MOTOR_COUNT 
-
 typedef enum{
   first_joint=0x00,
   JOINT_COUNT,
 }JOINT_INDEX;
+
+typedef enum{
+  first_motor,
+  MOTOR_COUNT,
+}MOTOR_INDEX;
 
 typedef enum{
   first_mode=0x00,
@@ -54,7 +61,5 @@ TASK_HANDLER_TYPE task_handler;/*unique structure*/
 TASK_HANDLER_TYPE* task_handler_ptr=&task_handler;
 
 void template_task(void *argument);
-
-#undef MOTOR_COUNT
 
 #endif

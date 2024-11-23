@@ -35,7 +35,7 @@ void temp_task_init()
 
 /**
  * @brief 刷新句柄的反馈值
- * @note 遍历电机控制句柄，针对点击类型刷新反馈
+ * @details 遍历电机控制句柄，针对点击类型刷新反馈
  * @code 
  */
 void temp_task_get_feedback()
@@ -72,7 +72,7 @@ void temp_task_get_feedback()
 
 /**
  * @brief 模式状态刷新
- * @note 根据控制器拨杆刷新模式(二级模式会与UI耦合)
+ * @details 根据控制器拨杆刷新模式(二级模式会与UI耦合)
  */
 void temp_task_mode_flash()
 {
@@ -100,13 +100,14 @@ void temp_task_set_output()
 
 /**
  * @brief 控制输出
- * @note 根据电机种类与控制状态设定输出
+ * @details 根据电机种类与控制状态设定输出
  */
 void temp_task_output()
 {
   uint16_t index;
+  /*joint map to motor state*/
 
-  /*motor*/
+  /*motor output*/
   for(index=0;index<MOTOR_COUNT;index++)
   {
     switch(__GET_MOTOR_TYPE(index))
