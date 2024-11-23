@@ -17,7 +17,7 @@ typedef enum{
   M2006=0,
   M3508,
   ANY_MOTOR,
-} Motor_Type_e;
+} DJI_Motor_Type_e;
 
 // 电机控制模式,由电机控制函数设置
 typedef enum{
@@ -61,7 +61,7 @@ typedef struct __DJI_Motor_Ctrl_t{
   dji_recv_pack recv_pack;
 
 /*电机属性*/
-  Motor_Type_e type;
+  DJI_Motor_Type_e type;
   uint16_t id;
 
 /*标志*/
@@ -88,7 +88,7 @@ typedef struct __DJI_Motor_Ctrl_t{
 
 /**********DJI_Motor*********/
 /*DJI_Motor初始化设置*/
-void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,Motor_Type_e motor_type,uint16_t id);
+void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id);
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle);
 void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,
