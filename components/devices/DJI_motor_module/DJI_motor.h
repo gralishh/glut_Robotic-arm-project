@@ -3,6 +3,13 @@
  * @date 24/11/9
  * @note DJI_Motor_Bus_t仅针对CAN端口
  * 上层代码仅对电机句柄操作
+ * @details 
+ * 使用方法:
+ * ||添加电机
+ * 1. 声明DJI_Motor_Ctrl_t变量
+ * 2. 调用DJI_Motor_init初始化
+ * 3. 调用DJI_Motor_<Item>_PID_init初始化pid
+ * 
  * @todo 添加电机输出转轴位置环控制
  */
 #ifndef __DJI_MOTOR_MODULE__
@@ -11,6 +18,7 @@
 #include "main.h"
 #include "DJI_motor_canbus.h"
 #include "struct_typedef.h"
+#include "general_motor_typedef.h"
 #include "pid.h"
 
 typedef enum{
@@ -18,15 +26,6 @@ typedef enum{
   M3508,
   ANY_MOTOR,
 } DJI_Motor_Type_e;
-
-// 电机控制模式,由电机控制函数设置
-typedef enum{
-  NON_FORCE=0,
-  SPEED_LOOP,
-  POS_LOOP,
-  GIVING_CURRENT,
-  LOCK
-} Motor_Ctrl_mode_e;
 
 // 表示电机初始化状态，
 //限制条件不足时电机的控制
