@@ -11,6 +11,7 @@
 
 // Motor_Ctrl宏函数
 #define __DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current) (motor_ptr->reverse_flag?-current:current)
+#define __DJI_Motor_Ctrl_get_torque(motor_ptr) ((motor_ptr->recv_pack).torque)
 #define __DJI_Motor_Ctrl_get_speed(motor_ptr) ((motor_ptr->recv_pack).speed_rpm)
 #define __DJI_Motor_Ctrl_get_ecd(motor_ptr) ((motor_ptr->recv_pack).ecd)
 #define __DJI_Motor_Ctrl_get_ecd_angle(motor_ptr) (motor_ptr->ecd_angle)
@@ -25,7 +26,7 @@
     (motor_ptr->mounted_bus->output_current1FFH)[GET_OUTPUT_CURRENT_INDEX(motor_ptr->id)]=__DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current); \
 
 
-void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,Motor_Type_e motor_type,uint16_t id)
+void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id)
 {
   memset((void*)motor,0x0,sizeof(DJI_Motor_Ctrl_t));
   motor->type=motor_type;
@@ -121,6 +122,21 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor)
 
   motor->mode=LOCK;
   motor->set_angle=__DJI_Motor_Ctrl_get_ecd_angle(motor);
+}
+
+/**
+ * @brief 获取反馈数值
+ * @param[in]  motor  电机控制句柄
+ * @param[out] torque 力矩/电流
+ * @param[out] speed  速度(rpm)
+ * @param[out] angle  角度(rad)
+ */
+void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle)
+{
+  *torque=__DJI_Motor_Ctrl_get_torque(motor);
+  *speed=__DJI_Motor_Ctrl_get_speed(motor);
+  *angle=__DJI_Motor_Ctrl_get_angle(motor);
+  return;
 }
 
 void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor)

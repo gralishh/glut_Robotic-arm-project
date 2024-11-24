@@ -3,6 +3,13 @@
  * @date 24/11/9
  * @note DJI_Motor_Bus_t仅针对CAN端口
  * 上层代码仅对电机句柄操作
+ * @details 
+ * 使用方法:
+ * ||添加电机
+ * 1. 声明DJI_Motor_Ctrl_t变量
+ * 2. 调用DJI_Motor_init初始化
+ * 3. 调用DJI_Motor_<Item>_PID_init初始化pid
+ * 
  * @todo 添加电机输出转轴位置环控制
  */
 #ifndef __DJI_MOTOR_MODULE__
@@ -11,22 +18,14 @@
 #include "main.h"
 #include "DJI_motor_canbus.h"
 #include "struct_typedef.h"
+#include "general_motor_typedef.h"
 #include "pid.h"
 
 typedef enum{
   M2006=0,
   M3508,
   ANY_MOTOR,
-} Motor_Type_e;
-
-// 电机控制模式,由电机控制函数设置
-typedef enum{
-  NON_FORCE=0,
-  SPEED_LOOP,
-  POS_LOOP,
-  GIVING_CURRENT,
-  LOCK
-} Motor_Ctrl_mode_e;
+} DJI_Motor_Type_e;
 
 // 表示电机初始化状态，
 //限制条件不足时电机的控制
@@ -61,7 +60,7 @@ typedef struct __DJI_Motor_Ctrl_t{
   dji_recv_pack recv_pack;
 
 /*电机属性*/
-  Motor_Type_e type;
+  DJI_Motor_Type_e type;
   uint16_t id;
 
 /*标志*/
@@ -88,7 +87,7 @@ typedef struct __DJI_Motor_Ctrl_t{
 
 /**********DJI_Motor*********/
 /*DJI_Motor初始化设置*/
-void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,Motor_Type_e motor_type,uint16_t id);
+void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id);
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle);
 void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,
@@ -104,6 +103,9 @@ void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, uint16_t speed_rpm);//速度设置
 void DJI_Motor_set_current(DJI_Motor_Ctrl_t* motor, int16_t current);
 void DJI_Motor_set_nonforce(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
+
+/*电机反馈接口*/
+void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32 torque,fp32 speed,fp32 angle);
 
 /*DJI_Motor循环控制接口*/
 void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor);
