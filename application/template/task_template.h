@@ -13,6 +13,7 @@
 
 #include "main.h"
 #include <stdint.h>
+#include "general_motor_typedef.h"
 #include "task.h"
 
 typedef enum{
@@ -29,10 +30,6 @@ typedef enum{
   first_mode=0x00,
   MODE_COUNT,
 }CTRL_MODE;
-
-typedef enum{
-  first_motor_type=0x00,
-}MOTOR_TYPE_E;
 
 typedef struct{
   /*instance array*/

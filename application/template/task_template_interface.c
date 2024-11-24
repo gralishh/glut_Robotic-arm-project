@@ -47,16 +47,24 @@ void temp_task_get_feedback()
   {
     switch(__GET_MOTOR_TYPE(index))
     {
-      case first_motor_type:
-        /*
-        __GET_MOTOR_ANGLE(index,
+      case DJI_MOTOR:
+        DJI_Motor_get_feedback(
+          (DJI_Motor_Ctrl_t*)__GET_MOTOR_INSTANCE(index),
+          &__GET_MOTOR_CURRENT(index),
+          &__GET_MOTOR_SPEED(index),
+          &__GET_MOTOR_ANGLE(index)
+        );
+        break;
+      /*
+      case motor_type:
+        __GET_MOTOR_ANGLE(index)=
           get_motor_anlge_func(
             __GET_MOTOR_INSTANCE(index)
           )
-        )
         ...
-        */
+        
         break;
+      */
       default:
     }
   }
