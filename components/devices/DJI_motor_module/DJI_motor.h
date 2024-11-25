@@ -18,7 +18,7 @@
 #include "main.h"
 #include "DJI_motor_canbus.h"
 #include "struct_typedef.h"
-#include "general_motor_typedef.h"
+#include "general_motor_module.h"
 #include "pid.h"
 
 typedef enum{
