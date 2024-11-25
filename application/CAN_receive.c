@@ -134,7 +134,10 @@ const external_encoder_t *get_gimbal_encoder_leftRight_Point(void)
 
 
 
-
+/**
+ * @brief CAN接收钩子
+ * @note 执行方式:判断对应CAN总线的对应ID，直接将报文赋值给对应电机的反馈报文结构体
+ */
 void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uint8_t* rx_message) 
 {
 	if(CANx == &hfdcan2)
@@ -200,7 +203,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 			}	
     }
 	}
-	else
+	else//CAN3
 	{
 		switch (rx_header->Identifier)
 		{	

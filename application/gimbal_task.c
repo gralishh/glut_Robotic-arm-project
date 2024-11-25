@@ -396,8 +396,11 @@ static void gimbal_position_Init(Gimbal_Control_t *gimbal_init)
 		}
 	
 }
-/// @brief 云台遥控器以及键鼠设置控制量
-/// @param gimbal_set_control 
+
+/**
+ * @brief 云台遥控器以及键鼠设置控制量
+ * @param gimbal_set_control 
+ */
 static void gimbal_Set_Control(Gimbal_Control_t *gimbal_set_control)
 {
     if (gimbal_set_control == NULL)
@@ -405,7 +408,8 @@ static void gimbal_Set_Control(Gimbal_Control_t *gimbal_set_control)
         return;
     }
 	static fp32 	rc_add_channel_0, rc_add_channel_1,rc_add_channel_2,rc_add_channel_3,rc_add_channel_4;
-    static int16_t 	channel_0 = 0,channel_1 = 0,channel_2 = 0,channel_3 = 0,channel_4 = 0;
+
+  static int16_t 	channel_0 = 0,channel_1 = 0,channel_2 = 0,channel_3 = 0,channel_4 = 0;
 	
 	rc_deadline_limit(gimbal_set_control->gimbal_rc_ctrl->rc.ch[Channel_0], channel_0, RC_deadband);
 	rc_deadline_limit(gimbal_set_control->gimbal_rc_ctrl->rc.ch[Channel_1], channel_1, RC_deadband);

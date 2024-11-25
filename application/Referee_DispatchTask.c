@@ -1,3 +1,6 @@
+/**
+ * @brief 裁判系统解包代码
+ */
 #include "Referee_DispatchTask.h"
 #include "string.h"
 #include "stdbool.h"
@@ -473,7 +476,7 @@ void Draw_grahic(uint16_t cmd_id, uint16_t data_id, uint16_t tx_id, uint16_t rx_
 {
 	unsigned char CliendTxBuffer[send_max_len];
 	static ext_draw_ui draw;
-	static uint32_t alllength, i;
+	static uint32_t alllength;
 	static uint8_t seq=0;
 	draw.head.sof = 0xA5;  
 	draw.head.data_length=6+custom_graphic_seven_lenth; //画七个图形数据长??
@@ -812,7 +815,7 @@ void Draw_grahic_char_1(uint16_t cmd_id, uint16_t data_id, uint16_t tx_id, uint1
 	uint8_t text4[]="up: close  down: close";
 		
 	static ext_draw_ui_character draw;
-	static uint32_t alllength, i;
+	static uint32_t alllength;
 	static uint8_t seq=0;
 	draw.head.sof = 0xA5;  
 	draw.head.data_length=6+45;
