@@ -49,7 +49,7 @@
 
 void temp_task_init(void);
 void temp_task_get_feedback(void);
-void temp_task_mode_flash(void);
+void temp_task_mode_flush(void);
 void temp_task_set_output(void);
 void temp_task_output(void);
 

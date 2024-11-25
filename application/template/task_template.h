@@ -7,29 +7,30 @@
  *                                                   |
  *                                                   V
  *                                      rc_ctrl,auto,lock,non_force
+ * @warning 任何模板文件不该被编译
  */
 #ifndef __TASK_TEMPLATE__
 #define __TASK_TEMPLATE__
 
 #include "main.h"
 #include <stdint.h>
-#include "general_motor_typedef.h"
+#include "general_motor_module.h"
 #include "task.h"
 
 typedef enum{
   first_joint=0x00,
   JOINT_COUNT,
-}JOINT_INDEX;
+}TEMP_JOINT_INDEX;
 
 typedef enum{
   first_motor,
   MOTOR_COUNT,
-}MOTOR_INDEX;
+}TEMP_MOTOR_INDEX;
 
 typedef enum{
   first_mode=0x00,
   MODE_COUNT,
-}CTRL_MODE;
+}TEMP_CTRL_MODE;
 
 typedef struct{
   /*instance array*/
@@ -37,8 +38,8 @@ typedef struct{
 
   /*state value*/
   uint8_t ctrl_mode;
-  int16_t motor_type[MOTOR_COUNT];
-  int16_t motor_ctrl_mode[MOTOR_COUNT];
+  Motor_Type_e motor_type[MOTOR_COUNT];
+  Motor_Ctrl_mode_e motor_ctrl_mode[MOTOR_COUNT];
 
   /*feedback value*/
   fp32 feedback_motor_angle[MOTOR_COUNT];

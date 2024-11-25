@@ -1,4 +1,5 @@
 #include "task_template_interface.h"
+#include "general_motor_module.h"
 #include "remote_control.h"
 
 #define HANDLER task_handler
@@ -45,28 +46,12 @@ void temp_task_get_feedback()
   /*motor feedback*/
   for(index=0;index<MOTOR_COUNT;index++)
   {
-    switch(__GET_MOTOR_TYPE(index))
-    {
-      case DJI_MOTOR:
-        DJI_Motor_get_feedback(
-          (DJI_Motor_Ctrl_t*)__GET_MOTOR_INSTANCE(index),
-          &__GET_MOTOR_CURRENT(index),
-          &__GET_MOTOR_SPEED(index),
-          &__GET_MOTOR_ANGLE(index)
-        );
-        break;
-      /*
-      case motor_type:
-        __GET_MOTOR_ANGLE(index)=
-          get_motor_anlge_func(
-            __GET_MOTOR_INSTANCE(index)
-          )
-        ...
-        
-        break;
-      */
-      default:
-    }
+    GENERAL_MOTOR_GET_FEEDBACK(__GET_MOTOR_INSTANCE(index),
+      __GET_MOTOR_TYPE(index),
+      &__GET_MOTOR_CURRENT(index),
+      &__GET_MOTOR_SPEED(index),
+      &__GET_MOTOR_ANGLE(index)
+    )
   }
 
   /*joint angle map*/
@@ -82,7 +67,7 @@ void temp_task_get_feedback()
  * @brief 模式状态刷新
  * @details 根据控制器拨杆刷新模式(二级模式会与UI耦合)
  */
-void temp_task_mode_flash()
+void temp_task_mode_flush()
 {
   /*
   if(get_remote_control_point()->rc.s[0]==0 && get_remote_control_point()->rc.s[1]==0)
@@ -118,22 +103,12 @@ void temp_task_output()
   /*motor output*/
   for(index=0;index<MOTOR_COUNT;index++)
   {
-    switch(__GET_MOTOR_TYPE(index))
-    {
-      case first_motor_type:
-        if(__GET_MOTOR_CTRL_MODE==POS_LOOP)
-        {
-          /*
-          __GET_MOTOR_ANGLE(index,
-            get_motor_anlge_func(
-              __GET_MOTOR_INSTANCE(index)
-            )
-          )
-          ...
-          */
-        }
-        break;
-      default:
-    }
+    GENERAL_MOTOR_SET_OUTPUT(__GET_MOTOR_INSTANCE(index),
+    __GET_MOTOR_TYPE(index),
+    __GET_MOTOR_CTRL_MODE(index),
+    __GET_MOTOR_CURRENT(index),
+    __GET_MOTOR_SPEED(index),
+    __GET_MOTOR_ANGLE(index)
+    )
   }
 }
