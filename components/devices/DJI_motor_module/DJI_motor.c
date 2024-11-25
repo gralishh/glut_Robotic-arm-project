@@ -133,9 +133,12 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor)
  */
 void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle)
 {
-  *torque=__DJI_Motor_Ctrl_get_torque(motor);
-  *speed=__DJI_Motor_Ctrl_get_speed(motor);
-  *angle=__DJI_Motor_Ctrl_get_angle(motor);
+  if(torque!=NULL)
+    *torque=__DJI_Motor_Ctrl_get_torque(motor);
+  if(speed!=NULL)
+    *speed=__DJI_Motor_Ctrl_get_speed(motor);
+  if(angle!=NULL)
+    *angle=__DJI_Motor_Ctrl_get_angle(motor);
   return;
 }
 
