@@ -38,6 +38,15 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_
   DJI_Motor_set_nonforce(motor);
 }
 
+void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle)
+{
+  if(motor==NULL)
+    return;
+  motor->max_angle=max_angle;
+  motor->min_angle=min_angle;
+  __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_ANGLE_LIMIT_INIT);
+}
+
 /**
  * @brief 设置外部角度反馈
  */
@@ -82,6 +91,14 @@ void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle)
   {
     __DJI_Motor_Ctrl_set_init_state(motor,NON_FORCE);
     return ;
+  }
+
+  if(__DJI_Motor_Ctrl_get_init_state(motor))
+  {
+    if(motor->max_angle<angle)
+      angle=max_angle;
+    else if(motor->min_angle>angle)
+      angle=min_angle;
   }
 
   motor->mode=POS_LOOP;

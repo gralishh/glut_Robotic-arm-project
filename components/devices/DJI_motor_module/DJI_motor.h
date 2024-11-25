@@ -30,9 +30,10 @@ typedef enum{
 // 表示电机初始化状态，
 //限制条件不足时电机的控制
 typedef enum{
-  MOTOR_SPEED_PID_INIT  =0x01<<0,
-  MOTOR_POS_PID_INIT    =0x01<<1,
-  EXTERN_ENCODER_INIT   =0x01<<2,
+  MOTOR_SPEED_PID_INIT   =0x01<<0,
+  MOTOR_POS_PID_INIT     =0x01<<1,
+  EXTERN_ENCODER_INIT    =0x01<<2,
+  MOTOR_ANGLE_LIMIT_INIT =0x01<<3,
 } Motor_Ctrl_init_state_e;
 
 typedef struct __DJI_Motor_Bus_t DJI_Motor_Bus_t;
@@ -76,6 +77,10 @@ typedef struct __DJI_Motor_Ctrl_t{
   fp32 set_angle;//目标角度
   int16_t set_current;
 
+/*角度位置限制*/
+  fp32 max_angle;
+  fp32 min_angle;
+
 /*角度反馈*/
   fp32 *ref_ptr;// 反馈变量指针,可以为该结构体的angle成员
   fp32 ecd_angle;// 转子角度反馈
@@ -88,6 +93,7 @@ typedef struct __DJI_Motor_Ctrl_t{
 /**********DJI_Motor*********/
 /*DJI_Motor初始化设置*/
 void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id);
+void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle);
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle);
 void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,
