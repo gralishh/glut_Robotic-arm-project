@@ -67,7 +67,7 @@ typedef struct __DJI_Motor_Ctrl_t{
 /*标志*/
   Motor_Ctrl_mode_e mode;
   Motor_Ctrl_init_state_e init_state;
-  //电机反转标志,会使发送的电流置为负值
+  //电机反转标志,会使发送的电流与反馈的速度，转矩，角度置为负值
   uint8_t reverse_flag;
   //电机转子计数标志,启用圈速计数反馈
   uint8_t circle_count_flag;
@@ -80,6 +80,7 @@ typedef struct __DJI_Motor_Ctrl_t{
 /*角度位置限制*/
   fp32 max_angle;
   fp32 min_angle;
+  fp32 braking_angle;
 
 /*角度反馈*/
   fp32 *ref_ptr;// 反馈变量指针,可以为该结构体的angle成员
@@ -93,7 +94,8 @@ typedef struct __DJI_Motor_Ctrl_t{
 /**********DJI_Motor*********/
 /*DJI_Motor初始化设置*/
 void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id);
-void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle);
+void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle,fp32 braking_angle);
+void DJI_Motor_set_reverse(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle);
 void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,

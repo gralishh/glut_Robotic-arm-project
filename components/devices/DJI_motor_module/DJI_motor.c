@@ -4,12 +4,12 @@
 #include "angle_process.h"
 #include <string.h>
 
-// µçÁ÷Êä³öÊý×éºêº¯Êý
+// ç”µæµè¾“å‡ºæ•°ç»„å®å‡½æ•°
 #define IS_OUTPUT_ID_200H(id) ((id>=0x201)&&(id<=0x204))
 #define IS_OUTPUT_ID_1FFH(id) ((id>=0x205)&&(id<=0x208))
 #define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x200)%4-1)
 
-// Motor_Ctrlºêº¯Êý
+// Motor_Ctrlå®å‡½æ•°
 #define __DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current) (motor_ptr->reverse_flag?-current:current)
 #define __DJI_Motor_Ctrl_get_torque(motor_ptr) ((motor_ptr->recv_pack).torque)
 #define __DJI_Motor_Ctrl_get_speed(motor_ptr) ((motor_ptr->recv_pack).speed_rpm)
@@ -38,17 +38,34 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_
   DJI_Motor_set_nonforce(motor);
 }
 
-void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle)
+/**
+ * @brief è§’åº¦é™åˆ¶è®¾ç½®
+ * @param[in,out] motor ç”µæœºæŽ§åˆ¶å¥æŸ„
+ * @param[in] max_angle æœ€å¤§è§’åº¦
+ * @param[in] min_angle æœ€å°è§’åº¦
+ * @param[in] braking_angle è¾¹ç•Œåˆ¹è½¦è§’åº¦
+ * @note åŠ›çŸ©(ç”µæµ)ä¸Žé€Ÿåº¦æŽ§åˆ¶æ—¶ï¼Œå½“è§’åº¦åœ¨
+ * max_angle-braking_angle ~ max_angle
+ * æˆ–min_angle ~ min_angle+braking_angle
+ * çš„èŒƒå›´æ—¶ï¼Œè®¾ç½®ä¸ºæœ€å€¼çš„ä½ç½®çŽ¯æŽ§åˆ¶
+ */
+void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle,fp32 braking_angle)
 {
   if(motor==NULL)
     return;
   motor->max_angle=max_angle;
   motor->min_angle=min_angle;
+  motor->braking_angle=braking_angle
   __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_ANGLE_LIMIT_INIT);
 }
 
+void inline DJI_Motor_set_reverse(DJI_Motor_Ctrl_t* motor)
+{
+  motor->reverse_flag=1;
+}
+
 /**
- * @brief ÉèÖÃÍâ²¿½Ç¶È·´À¡
+ * @brief è®¾ç½®å¤–éƒ¨è§’åº¦åé¦ˆ
  */
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle)
 {
@@ -57,7 +74,7 @@ void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle)
 }
 
 /**
- * @brief µç»úÎ»ÖÃ»·PID³õÊ¼»¯
+ * @brief ç”µæœºä½ç½®çŽ¯PIDåˆå§‹åŒ–
  */
 void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mode,
   fp32 Kp,fp32 Ki,fp32 Kd,
@@ -69,7 +86,7 @@ void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mode,
 }
 
 /**
- * @brief µç»úËÙ¶È»·PID³õÊ¼»¯
+ * @brief ç”µæœºé€Ÿåº¦çŽ¯PIDåˆå§‹åŒ–
  */
 void DJI_Motor_Speed_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mode,
   fp32 Kp,fp32 Ki,fp32 Kd,
@@ -142,11 +159,11 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor)
 }
 
 /**
- * @brief »ñÈ¡·´À¡ÊýÖµ
- * @param[in]  motor  µç»ú¿ØÖÆ¾ä±ú
- * @param[out] torque Á¦¾Ø/µçÁ÷
- * @param[out] speed  ËÙ¶È(rpm)
- * @param[out] angle  ½Ç¶È(rad)
+ * @brief èŽ·å–åé¦ˆæ•°å€¼
+ * @param[in]  motor  ç”µæœºæŽ§åˆ¶å¥æŸ„
+ * @param[out] torque åŠ›çŸ©/ç”µæµ
+ * @param[out] speed  é€Ÿåº¦(rpm)
+ * @param[out] angle  è§’åº¦(rad)
  */
 void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle)
 {
@@ -183,8 +200,8 @@ void __DJI_Motor_pos_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 }
 
 /**
- * @brief µç»úµçÁ÷¿ØÖÆÑ­»·
- * ÓÃÓÚÔÚ¶¨Ê±Æ÷ÖÐË¢ÐÂµçÁ÷Êä³ö
+ * @brief ç”µæœºç”µæµæŽ§åˆ¶å¾ªçŽ¯
+ * ç”¨äºŽåœ¨å®šæ—¶å™¨ä¸­åˆ·æ–°ç”µæµè¾“å‡º
  */
 void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 {
@@ -193,8 +210,8 @@ void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 
 void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
 {
-  //memcpy((void*)&(motor->recv_pack),rx_msg,sizeof(uint8_t)*8);//±¨ÎÄ¸ßµÍ8Î»·½ÏòÏà·´£¬²»ÄÜÖ±½Ómemcpy
-  // ±¨ÎÄ¸³Öµ
+  //memcpy((void*)&(motor->recv_pack),rx_msg,sizeof(uint8_t)*8);//æŠ¥æ–‡é«˜ä½Ž8ä½æ–¹å‘ç›¸åï¼Œä¸èƒ½ç›´æŽ¥memcpy
+  // æŠ¥æ–‡èµ‹å€¼
   motor->recv_pack.ecd=rx_msg[0]<<8;
   motor->recv_pack.ecd|=rx_msg[1];
   motor->recv_pack.speed_rpm=rx_msg[2]<<8;
@@ -203,11 +220,17 @@ void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
   motor->recv_pack.torque|=rx_msg[5];
   motor->recv_pack.temp=rx_msg[6];
 
-  // Ë¢ÐÂ½Ç¶ÈÖµ
+  // åˆ·æ–°è§’åº¦å€¼
   motor->last_ecd_angle=motor->ecd_angle;
   motor->ecd_angle=NORMALIZE_TO_2PI(ecd_to_angle(motor->recv_pack.ecd,8191,0,0.0));
 
-  // Ë¢ÐÂÈ¦Êý
+  // åé¦ˆåè½¬(å¦‚æžœå¯ç”¨åè½¬)
+  /*note: ä¸Šç”µè§’åº¦å¯èƒ½ä¸æ˜¯0.0ï¼Œæˆ‘ä¹Ÿä¸çŸ¥é“æ...*/
+  motor->recv_pack.speed_rpm=__DJI_Motor_Ctrl_get_reverse_current(motor,motor->recv_pack.speed_rpm);
+  motor->recv_pack.torque=__DJI_Motor_Ctrl_get_reverse_current(motor,motor->recv_pack.torque);
+  motor->ecd_angle=NORMALIZE_TO_2PI(angle_normalize(2*PI-motor->ecd_angle));
+
+  // åˆ·æ–°åœˆæ•°
   if(motor->circle_count_flag)
   {
     if(motor->ecd_angle>(2*PI*2/4)&&motor->last_ecd_angle<(2*PI*1/4))
