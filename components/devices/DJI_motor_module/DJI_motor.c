@@ -243,9 +243,12 @@ void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
 
   // 反馈反转(如果启用反转)
   /*note: 上电角度可能不是0.0，我也不知道捏...*/
-  motor->recv_pack.speed_rpm=__DJI_Motor_Ctrl_get_reverse_current(motor,motor->recv_pack.speed_rpm);
-  motor->recv_pack.torque=__DJI_Motor_Ctrl_get_reverse_current(motor,motor->recv_pack.torque);
-  motor->ecd_angle=NORMALIZE_TO_2PI(angle_normalize(2*PI-motor->ecd_angle,0.0));
+  if(motor->reverse_flag)
+  {
+    motor->recv_pack.speed_rpm  =  -motor->recv_pack.speed_rpm;
+    motor->recv_pack.torque     =  -motor->recv_pack.torque;
+    motor->ecd_angle=NORMALIZE_TO_2PI(angle_normalize(2*PI-motor->ecd_angle,0.0));
+  }
 
   // 刷新圈数
   if(motor->circle_count_flag)
