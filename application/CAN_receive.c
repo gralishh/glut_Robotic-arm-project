@@ -6,6 +6,7 @@
 //#include "PC_communication_task.h"
 #include "string.h"
 #include "detect_task.h"
+#include "Ex_encoder.h"
 
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
@@ -140,6 +141,7 @@ const external_encoder_t *get_gimbal_encoder_leftRight_Point(void)
  */
 void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uint8_t* rx_message) 
 {
+  __External_ecd_can_feedback_hook(CANx,rx_header->Identifier,rx_message);
 	if(CANx == &hfdcan2)
 	{
 		switch (rx_header->Identifier)
@@ -268,7 +270,10 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 
 
 
-
+/**
+ * @brief CAN发送混乱 XD
+ * @details 以DJI电机特有的颠倒方式发送数据
+ */
 void CanSendMess(FDCAN_HandleTypeDef* CANx,uint32_t SendID,int16_t *message)
 {
 	
@@ -293,6 +298,16 @@ void CanSendMess(FDCAN_HandleTypeDef* CANx,uint32_t SendID,int16_t *message)
 
   fdcanx_send_data(CANx,SendID,can_send_data,0x08);
   	
+}
+
+/**
+ * @brief CAN发送消息
+ */
+void CanSendMsg(FDCAN_HandleTypeDef* CANx,uint32_t SendID,uint8_t *message)
+{
+  uint8_t can_send_data[8];
+  memcpy(can_send_data,(void*)message,0x08);
+  fdcanx_send_data(CANx,SendID,can_send_data,0x08);
 }
 
 //允许发送任意长度的数据，并在不足8个字节的部分用0填充
