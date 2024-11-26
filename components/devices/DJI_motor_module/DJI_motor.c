@@ -73,6 +73,18 @@ void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_a
   __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_ANGLE_LIMIT_INIT);
 }
 
+void DJI_Motor_set_speed_limit(DJI_Motor_Ctrl_t* motor,fp32 max_speed)
+{
+  motor->speed_limit=max_speed;
+  __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_SPEED_LIMIT_INIT);
+}
+
+void DJI_Motor_set_current_limit(DJI_Motor_Ctrl_t* motor,uint16_t max_current)
+{
+  motor->current_limit=max_current;
+  __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_CURRENT_LIMIT_INIT);
+}
+
 void inline DJI_Motor_set_reverse(DJI_Motor_Ctrl_t* motor)
 {
   motor->reverse_flag=1;
@@ -136,12 +148,20 @@ void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle)
   motor->set_angle=angle;
 }
 
-void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, uint16_t speed_rpm)
+void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, fp32 speed_rpm)
 {
   if(!__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_SPEED_PID_INIT))
   {
     __DJI_Motor_Ctrl_set_init_state(motor,NON_FORCE);
     return ;
+  }
+
+  if(__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_SPEED_LIMIT_INIT))
+  {
+    if(speed_rpm>motor->speed_limit)
+      speed_rpm=motor->speed_limit;
+    else if(speed_rpm<-motor->speed_limit)
+      speed_rpm=-motor->speed_limit;
   }
 
   motor->mode=SPEED_LOOP;
@@ -150,6 +170,14 @@ void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, uint16_t speed_rpm)
 
 void DJI_Motor_set_current(DJI_Motor_Ctrl_t* motor, int16_t current)
 {
+  if(__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_CURRENT_LIMIT_INIT))
+  {
+    if(current>motor->current_limit)
+      current=motor->current_limit;
+    else if(current<-motor->current_limit)
+      current=-motor->current_limit;
+  }
+
   motor->mode=GIVING_CURRENT;
   motor->set_current=current;
 }

@@ -101,6 +101,8 @@ typedef struct __DJI_Motor_Ctrl_t{
 /*DJI_Motor初始化设置*/
 void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id);
 void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_angle,fp32 braking_angle);
+void DJI_Motor_set_speed_limit(DJI_Motor_Ctrl_t* motor,fp32 max_speed);
+void DJI_Motor_set_current_limit(DJI_Motor_Ctrl_t* motor,uint16_t max_current);
 void DJI_Motor_set_reverse(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle);
 void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
@@ -113,7 +115,7 @@ void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband);
 
 /*电机控制接口*/
 void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle);//
-void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, uint16_t speed_rpm);//速度设置
+void DJI_Motor_set_speed(DJI_Motor_Ctrl_t* motor, fp32 speed_rpm);//速度设置
 void DJI_Motor_set_current(DJI_Motor_Ctrl_t* motor, int16_t current);
 void DJI_Motor_set_nonforce(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
