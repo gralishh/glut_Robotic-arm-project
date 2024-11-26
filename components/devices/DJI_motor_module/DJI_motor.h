@@ -10,6 +10,7 @@
  * 2. 调用DJI_Motor_init初始化
  * 3. 调用DJI_Motor_<Item>_PID_init初始化pid
  * 
+ * 模块工作流程图见obsidian文档
  * @todo 添加电机输出转轴位置环控制
  */
 #ifndef __DJI_MOTOR_MODULE__
@@ -30,10 +31,12 @@ typedef enum{
 // 表示电机初始化状态，
 //限制条件不足时电机的控制
 typedef enum{
-  MOTOR_SPEED_PID_INIT   =0x01<<0,
-  MOTOR_POS_PID_INIT     =0x01<<1,
-  EXTERN_ENCODER_INIT    =0x01<<2,
-  MOTOR_ANGLE_LIMIT_INIT =0x01<<3,
+  MOTOR_SPEED_PID_INIT       =0x01<<0,
+  MOTOR_POS_PID_INIT         =0x01<<1,
+  EXTERN_ENCODER_INIT        =0x01<<2,
+  MOTOR_ANGLE_LIMIT_INIT     =0x01<<3,
+  MOTOR_SPEED_LIMIT_INIT     =0x01<<4,
+  MOTOR_CURRENT_LIMIT_INIT   =0x01<<5,
 } Motor_Ctrl_init_state_e;
 
 typedef struct __DJI_Motor_Bus_t DJI_Motor_Bus_t;
@@ -77,10 +80,13 @@ typedef struct __DJI_Motor_Ctrl_t{
   fp32 set_angle;//目标角度
   int16_t set_current;
 
-/*角度位置限制*/
+/*限制*/
+  //除了braking_angle其它都在设置目标值时使用
   fp32 max_angle;
   fp32 min_angle;
   fp32 braking_angle;
+  fp32 speed_limit;
+  fp32 current_limit;
 
 /*角度反馈*/
   fp32 *ref_ptr;// 反馈变量指针,可以为该结构体的angle成员
