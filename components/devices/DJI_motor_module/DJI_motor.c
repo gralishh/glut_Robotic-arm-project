@@ -29,7 +29,7 @@
 /*靠近角度边界且被监测值(速度，电流)仍向边界行去时触发*/
 #define __DJI_Motor_Ctrl_boundary_ctrl(motor_ptr,detected_value) \
 { \
-  if(__DJI_Motor_Ctrl_get_init_state(motor)) \
+  if(__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_ANGLE_LIMIT_INIT)) \
   { \
     if((motor->max_angle-motor->braking_angle)>__DJI_Motor_Ctrl_get_angle(motor) && \
     detected_value>0) \
@@ -69,7 +69,7 @@ void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t* motor,fp32 max_angle,fp32 min_a
     return;
   motor->max_angle=max_angle;
   motor->min_angle=min_angle;
-  motor->braking_angle=braking_angle
+  motor->braking_angle=braking_angle;
   __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_ANGLE_LIMIT_INIT);
 }
 
@@ -124,12 +124,12 @@ void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle)
     return ;
   }
 
-  if(__DJI_Motor_Ctrl_get_init_state(motor))
+  if(__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_ANGLE_LIMIT_INIT))
   {
     if(motor->max_angle<angle)
-      angle=max_angle;
+      angle=motor->max_angle;
     else if(motor->min_angle>angle)
-      angle=min_angle;
+      angle=motor->min_angle;
   }
 
   motor->mode=POS_LOOP;
@@ -245,7 +245,7 @@ void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
   /*note: 上电角度可能不是0.0，我也不知道捏...*/
   motor->recv_pack.speed_rpm=__DJI_Motor_Ctrl_get_reverse_current(motor,motor->recv_pack.speed_rpm);
   motor->recv_pack.torque=__DJI_Motor_Ctrl_get_reverse_current(motor,motor->recv_pack.torque);
-  motor->ecd_angle=NORMALIZE_TO_2PI(angle_normalize(2*PI-motor->ecd_angle));
+  motor->ecd_angle=NORMALIZE_TO_2PI(angle_normalize(2*PI-motor->ecd_angle,0.0));
 
   // 刷新圈数
   if(motor->circle_count_flag)

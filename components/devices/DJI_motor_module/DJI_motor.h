@@ -113,7 +113,7 @@ void DJI_Motor_set_nonforce(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
 
 /*电机反馈接口*/
-void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32 torque,fp32 speed,fp32 angle);
+void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle);
 
 /*DJI_Motor循环控制接口*/
 void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor);
