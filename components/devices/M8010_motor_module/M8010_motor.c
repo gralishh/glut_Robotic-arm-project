@@ -1,4 +1,6 @@
 #include "M8010_motor.h"
+#include "bsp_usart.h"
+#include <string.h>
 
 #define SATURATE(_IN, _MIN, _MAX) {\
  if (_IN < _MIN)\
@@ -7,92 +9,98 @@
  _IN = _MAX;\
  } 
 
-#define M8010_RECV() \
-    next_usart2:\
-    usart2_length = USART2_GetDataCount();  \
-    if(usart2_length >= 10)\
-    {\
-        if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  \
-        {\
-            USART2_Recv(Transmission_usart2, FEEDBACK_DATA_SIZE);  \
-            yaw_5_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart2);\
-            USART2_Drop(4096);\
-        }\
-        else\
-        {\
-            USART2_Drop(1);\
-            vTaskDelay(1);\
-            usart2_length = USART2_GetDataCount();\
-            if(usart2_length > 3000)\
-            {\
-                USART2_Drop(4096);\
-            }\
-            goto next_usart2;\
-        }\
-    }\
-    else\
-    {\
-        USART2_Drop(1);\
-        for(;;)\
-        {\
-            usart2_length =  USART2_GetDataCount();\
-            if( usart2_length > 0)\
-            {\
-                if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  \
-                {\
-                    break;\
-                }\
-                else\
-                {\
-                    USART2_Drop(1);\
-                    vTaskDelay(1);\
-                }\
-                 usart2_length =  USART2_GetDataCount();\
-                if(usart2_length > 3000)\
-                {\
-                    USART2_Drop(4096);\
-                    break;\
-                }\
-            }\
-            else\
-            {\
-                break;\
-            }\
-        }\
-    }\
+#define __M8010_SET_OUTPUT_KP_KD(motor_ptr,KP,KD) \
+{ \
+  motor_ptr->send_data.GM_Send_Kp_Pos=KP; \
+  motor_ptr->send_data.GM_Send_Kd_Speed=KD; \
+} \
 
+M8010_motor_t joint1_motor;
 
-void M8010_motor_init(M8010_motor_t motor,uint8_t id,float Kp,float Kd)
+void M8010_motor_init(M8010_motor_t* motor,uint8_t id,float Kp,float Kd)
 {
   motor->send_data.id=id;
+  motor->Kp=Kp;
+  motor->Kd=Kd;
+}
+
+void M8010_motor_change_param(M8010_motor_t* motor,float Kp,float Kd)
+{
+  motor->Kp=Kp;
+  motor->Kd=Kd;
+}
+
+void M8010_motor_set_anlge(M8010_motor_t* motor,float angle)
+{
+  M8010_motor_set_output(motor,
+    1,
+    0,
+    angle,
+    0,
+    motor->Kp,
+    0
+  );
+}
+
+void M8010_motor_set_angle_speed(M8010_motor_t* motor, float angle, float speed)
+{
+  M8010_motor_set_output(motor,
+    1,
+    speed,
+    angle,
+    0,
+    motor->Kp,
+    motor->Kd 
+  );
+}
+
+void M8010_motor_lock(M8010_motor_t* motor)
+{
+  M8010_motor_set_output(motor,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  );
+}
+
+void M8010_motor_nonforce(M8010_motor_t* motor)
+{
+  M8010_motor_set_output(motor,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0
+  );
+}
+
+void M8010_motor_set_output(M8010_motor_t* motor,unsigned short mode,float speed,float pos,float torque,float Kp,float Kd)
+{
+  motor->send_data.mode=mode;
+  motor->send_data.GM_Send_speed=speed;
+  motor->send_data.GM_Send_Pos=pos;
+  motor->send_data.GM_Send_Effort=torque;
   motor->send_data.GM_Send_Kp_Pos=Kp;
   motor->send_data.GM_Send_Kd_Speed=Kd;
 }
 
-void M8010_motor_change_param(M8010_motor_t motor,float Kp,float Kd)
+MOTOR_recv* SERVO_Recv(M8010_motor_t* motor,uint8_t* rx_data)
 {
-  motor->send_data.GM_Send_Kp_Pos=Kp;
-  motor->send_data.GM_Send_Kd_Speed=Kd;
+  memcpy((void*)&(motor->recv_data.motor_recv_data),(void*)rx_data,sizeof(MotorData_t));
+  __extract_data(&(motor->recv_data));
+  return &(motor->recv_data);
 }
 
-void M8010_motor_lock(M8010_motor_t motor)
+HAL_StatusTypeDef SERVO_Send(M8010_motor_t* motor)
 {
-
-}
-
-void M8010_motor_set_output(M8010_motor_t motor,float speed,float pos,float torque)
-{
-
-}
-
-MOTOR_recv* SERVO_Recv(M8010_motor_t motor)
-{
-
-}
-
-HAL_StatusTypeDef SERVO_Send(M8010_motor_t motor)
-{
-
+  __modify_data(&(motor->send_data));
+  USART2_Send((uint8_t*)(void*)&(motor->send_data.motor_send_data),
+    sizeof(motor->send_data.motor_send_data));
+  return HAL_OK;
 }
 
 /**

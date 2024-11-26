@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "main.h"
 #include "ris_protocol.h"
+#include "crc_ccitt.h"
 
 #pragma pack(1)
 typedef struct
@@ -69,6 +70,9 @@ typedef struct{
   MOTOR_recv recv_data;
   MOTOR_send send_data;
 
+  float Kp;
+  float Kd;
+ 
   float MAX_SPEED;
 
   float MAX_POS;
@@ -77,15 +81,19 @@ typedef struct{
   float MAX_TORQUE;
 } M8010_motor_t;
 
-void M8010_motor_init(M8010_motor_t motor,uint8_t id,float Kp,float Kd);
-void M8010_motor_change_param(M8010_motor_t motor,float Kp,float Kd);
+extern M8010_motor_t joint1_motor;
 
-void M8010_motor_lock(M8010_motor_t motor);
-void M8010_motor_nonforce(M8010_motor_t motor);
-void M8010_motor_set_output(M8010_motor_t motor,float speed,float pos,float torque);
+void M8010_motor_init(M8010_motor_t* motor,uint8_t id,float Kp,float Kd);
+void M8010_motor_change_param(M8010_motor_t* motor,float Kp,float Kd);
 
-MOTOR_recv* SERVO_Recv(M8010_motor_t motor);
-HAL_StatusTypeDef SERVO_Send(M8010_motor_t motor);
+void M8010_motor_set_anlge(M8010_motor_t* motor,float angle);
+void M8010_motor_set_angle_speed(M8010_motor_t* motor, float angle, float speed);
+void M8010_motor_lock(M8010_motor_t* motor);
+void M8010_motor_nonforce(M8010_motor_t* motor);
+void M8010_motor_set_output(M8010_motor_t* motor,unsigned short mode,float speed,float pos,float torque,float Kp,float Kd);
+
+MOTOR_recv* SERVO_Recv(M8010_motor_t* motor,uint8_t* rx_data);
+HAL_StatusTypeDef SERVO_Send(M8010_motor_t* motor);
 
 void __M8010_motor_control_hook(void);
 int __modify_data(MOTOR_send *motor_s);

@@ -10,7 +10,6 @@
 #include "detect_task.h"
 #include "user_lib.h"
 #include "chassis_task.h"
-#include "GO_M8010_control.h"
 #include "math.h"
 #include "MCU_communicaton_task.h"
 #include "cmsis_armcc.h"
@@ -140,12 +139,11 @@ void Hand_Init(Hand_Control_t *hand_init)
   /*同上*/
   //hand_init->hand_pitch_2_motor.hollowEncoderMotor                               =  (EncoderHollowMotor_t *)get_hand_encoder_hand_pitch_2_CapVal_Point();	
 
-	hand_init->hand_roll_3_motor.rData													                     =  (MOTOR_recv *)get_hand_roll_3_motor_rx_point();
+
 
 	hand_init->hand_x_4_motor.hand_motor_measure_all.hand_motor_measure              =  get_2006_HAND_x_4_Measure_Point();
 	hand_init->hand_x_4_motor.hand_encoder_4_measure                                 =  get_encoder_HAND_x_4_Measure_Point();
 
-  hand_init->hand_yaw_5_motor.rData                                                = (MOTOR_recv *)get_hand_yaw_5_motor_rx_point();
 
   /*初值设置*/
 	//Hand_Feedback_Update(hand_init);
@@ -333,7 +331,6 @@ void hand_roll_3_position_Init(Hand_Control_t *gimbal_init)
 	{
 		hand_GoM8010_init1.id = 1;
 		hand_GoM8010_init1.GM_Send_Effort = 0.6;//3.0
-		modify_data(&hand_GoM8010_init1);
 	    USART1_Send((uint8_t *)&hand_GoM8010_init1,sizeof(hand_GoM8010_init1.motor_send_data));
 		vTaskDelay(15);
 		wait_time++;
@@ -353,7 +350,6 @@ void hand_roll_3_position_Init(Hand_Control_t *gimbal_init)
 			vTaskDelay(2);
 			Hand_Feedback_Update();
 			gimbal_init->hand_roll_3_motor.hand_motor_measure_all.relative_init_angle += gimbal_init->hand_roll_3_motor.rData->Pos;
-			modify_data(&hand_GoM8010_init0);
 			USART1_Send((uint8_t *)&hand_GoM8010_init0,sizeof(hand_GoM8010_init0.motor_send_data));				
 			hand_roll_3_init = 1;
 		}
@@ -1373,7 +1369,7 @@ void View_steering_engine_control(Hand_Control_t *gimbal_control_loop )
 void Hand_Set_Reverse(void)
 {
 	#if roll_1_TURN
-	  hand_set_current1_4[0] = - hand_control.hand_roll_1_motor.hand_motor_measure_all.given_current;
+	  hand_set_current1_4[0] = - hand_control.hand_roll_1_motor.hand_motor_measure_a--------ll.given_current;
 	#else    
 		hand_set_current1_4[0] =   hand_control.hand_roll_1_motor.hand_motor_measure_all.given_current;
 	#endif					
@@ -1391,8 +1387,6 @@ void Hand_Set_Reverse(void)
 
 void Hand_Current_Output(void)
 {
-  SERVO1_RS485_Send(&hand_control.hand_yaw_5_motor.GM_Send_Data , hand_control.hand_yaw_5_motor.rData);
-  SERVO2_RS485_Send(&hand_control.hand_roll_3_motor.GM_Send_Data , hand_control.hand_roll_3_motor.rData);
   CanSendMess(&hfdcan2,SEND_ID201_204,hand_set_current1_4); 
 }
 

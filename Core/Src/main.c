@@ -32,7 +32,6 @@
 #include "gimbal_task.h"
 #include "hand_task.h"
 #include "usart_measure_task.h"/*??????*/
-#include "GO_M8010_control.h"
 #include "motor_timer_ctrl.h"
 /* USER CODE END Includes */
 
@@ -260,10 +259,10 @@ int main(void)
   //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
-  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+  //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
-  USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
+  //USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
