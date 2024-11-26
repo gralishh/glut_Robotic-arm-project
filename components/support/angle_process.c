@@ -16,7 +16,7 @@ fp32 ecd_to_angle(int16_t ecd,int16_t max_ecd, int32_t offset_ecd , fp32 offset_
 
 	relative_angle = (relative_ecd*1.0/max_ecd - 0.5) *2* PI + offset_angle;
 
-  if (relative_angle > PI)
+  if (relative_angle >= PI)
 	{
 		relative_angle = relative_angle - 2*PI;
 	}
@@ -30,16 +30,16 @@ fp32 ecd_to_angle(int16_t ecd,int16_t max_ecd, int32_t offset_ecd , fp32 offset_
 }
 
 /**
- * @brief 角度规则化
+ * @brief 角度归一化
  * @param angle 0~2PI的角度值
  * @param offset 角度偏移量
- * @retval 规则化后-PI~PI的角度值
+ * @retval 归一化后-PI~PI的角度值
  */
 fp32 angle_normalize(fp32 angle,fp32 offset)
 {
   angle=angle-PI+offset;
 
-  if (angle > PI)
+  if (angle >= PI)
 	{
 		angle = angle - 2*PI;
 	}
