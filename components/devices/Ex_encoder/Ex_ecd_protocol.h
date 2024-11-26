@@ -10,4 +10,12 @@ typedef __packed struct{
   uint8_t REMAIN;
 } OID_ECD_FEEDBACK_T;
 
+typedef __packed struct {
+    uint8_t data_length;   // 数据长度
+    uint8_t encoder_addr;  // 编码器地址
+    uint8_t command_code;  // 指令码
+    uint8_t new_id;        // 新的ID值
+    uint8_t reserved[4];   // 保留字节，用于填充
+} OID_ECD_CMD_T;
+
 #endif

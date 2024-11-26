@@ -24,6 +24,7 @@ typedef enum{
 struct __External_ecd_handler_t{
   ecd_protocol_type_e protocol_type;
   ecd_type_e type;
+  uint16_t device_id;
 
   uint32_t ecd;
   fp32 angle;
@@ -31,7 +32,7 @@ struct __External_ecd_handler_t{
 
   /*CAN总线专用*/
   FDCAN_HandleTypeDef* can;
-  uint16_t id;
+  uint16_t bus_id;
 
   /*usart专用*/
   unsigned int (*USART_Recv)(uint8_t *,unsigned short);
@@ -49,14 +50,15 @@ struct __External_ecd_bus_handler_t{
 extern External_ecd_bus_handler_t Ex_ecd_bus;
 
 void External_ecd_bus_init(void);
-void External_ecd_init_on_can(External_ecd_handler_t* ecd,uint32_t max_ecd,ecd_type_e type,FDCAN_HandleTypeDef* can,uint16_t id);
+void External_ecd_init_on_can(External_ecd_handler_t* ecd,uint32_t max_ecd,ecd_type_e type,uint16_t device_id,FDCAN_HandleTypeDef* can,uint16_t bus_id);
 
 uint32_t External_ecd_get_value(External_ecd_handler_t* ecd);
 fp32 External_ecd_get_angle(External_ecd_handler_t* ecd);
 fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd);
 
+void External_ecd_oid_set_id(FDCAN_HandleTypeDef* CANx,uint16_t oid_id,uint16_t new_id);
 
 void __External_ecd_usart_feedback_hook(void);
-void __External_ecd_can_feedback_hook(uint16_t id,uint8_t* msg);
+void __External_ecd_can_feedback_hook(FDCAN_HandleTypeDef* CANX,uint16_t id,uint8_t* msg);
 
 #endif
