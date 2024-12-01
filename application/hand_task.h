@@ -8,12 +8,20 @@
 #include "task.h"
 
 typedef enum{
-  first_joint=0x00,
+  HAND_J1=0x00,
+  HAND_J2,
+  HAND_J3,
+  HAND_PITCH,
+  HAND_ROLL,
   HAND_JOINT_COUNT,
 }HAND_JOINT_INDEX;
 
 typedef enum{
-  first_motor,
+  M8010_J1,
+  DM_J2,
+  DJI_J3,
+  DJI_HE_L,
+  DJI_HE_R,
   HAND_MOTOR_COUNT,
 }HAND_MOTOR_INDEX;
 

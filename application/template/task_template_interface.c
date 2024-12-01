@@ -11,10 +11,12 @@
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
+#define __SET_MOTOR_INSTANCE(index,instance_ptr) (HANDLER_PTR->motor_instance[index]=((void*)instance_ptr))
 #define __GET_STRUCT_MODE() (HANDLER_PTR->ctrl_mode)
 #define __SET_STRUCT_MODE(value) (HANDLER_PTR->ctrl_mode=value)
 
 #define __GET_MOTOR_TYPE(index) (HANDLER_PTR->motor_type[index])
+#define __SET_MOTOR_TYPE(index,type) (HANDLER_PTR->motor_type[index]=(type))
 #define __GET_MOTOR_CTRL_MODE(index) (HANDLER_PTR->motor_ctrl_mode[index])
 
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])

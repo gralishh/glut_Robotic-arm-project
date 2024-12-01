@@ -10,6 +10,11 @@
 #define HAND_CTRL_CAN 
 
 /*global motor handler*/
+extern M8010_motor_t joint1_motor;
+extern Joint_Motor_t DM_Motor_J2;
+DJI_Motor_Ctrl_t DJI_Motor_J3;
+DJI_Motor_Ctrl_t DJI_Motor_headendL;
+DJI_Motor_Ctrl_t DJI_Motor_headendR;
 
 /*general handler method*/
 /** 
@@ -17,10 +22,12 @@
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
+#define __SET_MOTOR_INSTANCE(index,instance_ptr) (HANDLER_PTR->motor_instance[index]=((void*)instance_ptr))
 #define __GET_STRUCT_MODE() (HANDLER_PTR->ctrl_mode)
 #define __SET_STRUCT_MODE(value) (HANDLER_PTR->ctrl_mode=value)
 
 #define __GET_MOTOR_TYPE(index) (HANDLER_PTR->motor_type[index])
+#define __SET_MOTOR_TYPE(index,type) (HANDLER_PTR->motor_type[index]=(type))
 #define __GET_MOTOR_CTRL_MODE(index) (HANDLER_PTR->motor_ctrl_mode[index])
 
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
@@ -37,7 +44,30 @@
 
 void hand_task_init()
 {
+  __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
+  __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
+  M8010_motor_init(&joint1_motor,1,10,0.075);
 
+  __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
+  __SET_MOTOR_TYPE(DM_J2,M4310_MOTOR);
+  enable_motor_mode(hfdcan2,1,MIT_MODE);
+  joint_motor_init(&DM_Motor_J2,1,MIT_MODE,10.0,1.0);
+
+  __SET_MOTOR_INSTANCE(DJI_J3,&DJI_Motor_J3);
+  __SET_MOTOR_TYPE(DJI_J3,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,2);
+  //DJI_Motor_set_angle_limit()
+  //DJI_Motor_set_speed_limit()
+  //DJI_Motor_Speed_PID_init()
+  //DJI_Motor_Pos_PID_init()
+
+  __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
+  __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,3);
+
+  __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
+  __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,4);
 }
 
 /**
