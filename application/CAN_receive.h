@@ -58,6 +58,7 @@ typedef struct
 
 const motor_measure_t *get_Chassis_Motor_Measure_Point(uint8_t i);
 void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uint8_t* rx_message); 
+void CanSendMsg(FDCAN_HandleTypeDef* CANx,uint32_t SendID,uint8_t *message);
 void CanSendMess(FDCAN_HandleTypeDef* CANx,uint32_t SendID,int16_t *message);
 void CanSendMoreMess(FDCAN_HandleTypeDef* CANx, uint32_t SendID, uint8_t *message, uint8_t messageLength);
 
