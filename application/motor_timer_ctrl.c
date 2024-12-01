@@ -6,6 +6,7 @@
 #include "cmsis_os2.h"
 #include "timers.h"
 #include "M8010_motor.c"
+#include "DJI_motor_canbus.h"
 
 #define get_feedback_statue(grp_index) \
   (motor_ctrl_handler.feedback_cmd_list[(motor_group_index_t)grp_index])
@@ -38,6 +39,9 @@ void motor_timer_ctrl_callback(void)
 {
   /*****standalone_motor_ctrl*****/
   __M8010_motor_control_hook();
+  __DJI_CANBus_ctrl_loop(&DJI_CAN1_Bus_ctrl);
+  __DJI_CANBus_ctrl_loop(&DJI_CAN2_Bus_ctrl);
+  __DJI_CANBus_ctrl_loop(&DJI_CAN3_Bus_ctrl);
 
   /*****hand_task*****/
   if(get_feedback_statue(HAND_MOTOR))

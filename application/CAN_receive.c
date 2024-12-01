@@ -7,6 +7,7 @@
 #include "string.h"
 #include "detect_task.h"
 #include "Ex_encoder.h"
+#include "DJI_motor_canbus.h"
 
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
@@ -83,8 +84,11 @@ const motor_measure_t *get_Chassis_Motor_Measure_Point(uint8_t i)
 void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uint8_t* rx_message) 
 {
   __External_ecd_can_feedback_hook(CANx,rx_header->Identifier,rx_message);
+
+
 	if(CANx == &hfdcan2)
 	{
+    __DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl,rx_message,rx_header->Identifier);
 		switch (rx_header->Identifier)
 		{
       default:
@@ -93,6 +97,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
   }
   else if(CANx == &hfdcan1)
   {
+    __DJI_CANBus_feedback_update(&DJI_CAN1_Bus_ctrl,rx_message,rx_header->Identifier);
     switch(rx_header->Identifier)
     {
 			case CAN_3508_M1_ID:
@@ -115,6 +120,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 	}
 	else//CAN3
 	{
+    __DJI_CANBus_feedback_update(&DJI_CAN3_Bus_ctrl,rx_message,rx_header->Identifier);
 		switch (rx_header->Identifier)
 		{	
       default:

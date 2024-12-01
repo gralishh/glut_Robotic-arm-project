@@ -5,6 +5,24 @@
 #define __DJI_CANBus_get_motor_instance(bus_ptr,index) ((bus_ptr->mounted_motor)[index])
 #define __DJI_CANBus_get_motor_count(bus_ptr) (bus_ptr->mounted_motor_count)
 
+DJI_Motor_Bus_t DJI_CAN1_Bus_ctrl;
+DJI_Motor_Bus_t DJI_CAN2_Bus_ctrl;
+DJI_Motor_Bus_t DJI_CAN3_Bus_ctrl;
+
+extern FDCAN_HandleTypeDef hcan1;
+extern FDCAN_HandleTypeDef hcan2;
+extern FDCAN_HandleTypeDef hcan3;
+
+/**
+ * @brief 预定义的CANBus初始化
+ */
+void DJI_CANBus_init_all(void)
+{
+  DJI_CANBus_init(&DJI_CAN1_Bus_ctrl,&hcan1);
+  DJI_CANBus_init(&DJI_CAN2_Bus_ctrl,&hcan2);
+  DJI_CANBus_init(&DJI_CAN3_Bus_ctrl,&hcan3);
+}
+
 /**
  * @brief CANBus初始化
  */

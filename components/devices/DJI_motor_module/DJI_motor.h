@@ -22,6 +22,11 @@
 #include "general_motor_module.h"
 #include "pid.h"
 
+/*preset_bus_handler*/
+extern DJI_Motor_Bus_t DJI_CAN1_Bus_ctrl;
+extern DJI_Motor_Bus_t DJI_CAN2_Bus_ctrl;
+extern DJI_Motor_Bus_t DJI_CAN3_Bus_ctrl;
+
 typedef enum{
   M2006=0,
   M3508,

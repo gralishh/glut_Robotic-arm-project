@@ -25,6 +25,12 @@ typedef struct __DJI_Motor_Bus_t{
   int16_t output_current1FFH[4];
 } DJI_Motor_Bus_t;
 
+extern DJI_Motor_Bus_t DJI_CAN1_Bus_ctrl;
+extern DJI_Motor_Bus_t DJI_CAN2_Bus_ctrl;
+extern DJI_Motor_Bus_t DJI_CAN3_Bus_ctrl;
+
+/*preset_interface*/
+void DJI_CANBus_init_all(void);
 
 /*DJI_CANBus*/
 void DJI_CANBus_init(DJI_Motor_Bus_t* bus,FDCAN_HandleTypeDef* can);
