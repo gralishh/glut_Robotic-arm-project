@@ -86,7 +86,7 @@ extern M8010_motor_t joint1_motor;
 void M8010_motor_init(M8010_motor_t* motor,uint8_t id,float Kp,float Kd);
 void M8010_motor_change_param(M8010_motor_t* motor,float Kp,float Kd);
 
-void M8010_motor_set_anlge(M8010_motor_t* motor,float angle);
+void M8010_motor_set_angle(M8010_motor_t* motor,float angle);
 void M8010_motor_set_angle_speed(M8010_motor_t* motor, float angle, float speed);
 void M8010_motor_lock(M8010_motor_t* motor);
 void M8010_motor_nonforce(M8010_motor_t* motor);

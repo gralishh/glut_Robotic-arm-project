@@ -91,9 +91,10 @@ void hand_task_set_output()
   switch(__GET_STRUCT_MODE())
   {
     case first_mode:
-      __first_mode_ctrl_func();
+      //__first_mode_ctrl_func();
       break;
     default:
+      ;
   }
 }
 

@@ -30,7 +30,7 @@ void M8010_motor_change_param(M8010_motor_t* motor,float Kp,float Kd)
   motor->Kd=Kd;
 }
 
-void M8010_motor_set_anlge(M8010_motor_t* motor,float angle)
+void M8010_motor_set_angle(M8010_motor_t* motor,float angle)
 {
   M8010_motor_set_output(motor,
     1,

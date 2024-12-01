@@ -4,6 +4,7 @@
 #include "main.h"
 #include <stdint.h>
 #include "general_motor_module.h"
+#include "FreeRTOS.h"
 #include "task.h"
 
 typedef enum{
@@ -44,8 +45,8 @@ typedef struct{
   fp32 feedback_joint_angle[JOINT_COUNT];
   fp32 joint_angle[JOINT_COUNT];
 } HAND_TASK_HANDLER_TYPE; 
-HAND_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
-HAND_TASK_HANDLER_TYPE* hand_task_handler_ptr=&hand_task_handler;
+extern HAND_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
+extern HAND_TASK_HANDLER_TYPE* hand_task_handler_ptr;
 
 void hand_task(void *argument);
 
