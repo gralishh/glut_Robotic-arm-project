@@ -38,6 +38,11 @@ typedef enum{
       *current_ptr = ((M8010_motor_t*)instance_ptr)->recv_data.T; \
       *speed_ptr   = ((M8010_motor_t*)instance_ptr)->recv_data.W; \
       *angle_ptr   = ((M8010_motor_t*)instance_ptr)->recv_data.Pos; \
+      break; \
+    case M4310_MOTOR: \
+      *current_ptr =((Joint_Motor_t*)instance_ptr)->para.tor; \
+      *speed_ptr   =((Joint_Motor_t*)instance_ptr)->para.vel; \
+      *angle_ptr   =((Joint_Motor_t*)instance_ptr)->para.pos; \
     default: \
   } \
 } \
@@ -80,8 +85,24 @@ typedef enum{
         default: \
           M8010_motor_nonforce(instance_ptr); \
           break; \
-      }
-      break;
+      } \
+      break; \
+    case M4310_MOTOR: \
+      switch(ctrl_state) \
+      { \
+        case POS_LOOP: \
+          mit_ctrl((Joint_Motor_t*)instance_ptr,angle,speed,(Joint_Motor_t*)instance_ptr->Kp,(Joint_Motor_t*)instance_ptr->Kd,0.0); \
+          break; \
+        case LOCK: \
+          mit_ctrl((Joint_Motor_t*)instance_ptr,(Joint_Motor_t*)instance_ptr->para.pos,0.0, \
+            (Joint_Motor_t*)instance_ptr->Kp,(Joint_Motor_t*)instance_ptr->Kd,0.0); \
+          break; \
+        case NON_FORCE: \
+        default: \
+          mit_ctrl((Joint_Motor_t*)instance_ptr,0.0,0.0,0.0,0.0,0.0); \
+          break; \
+      } \
+    break; \
     default: \
   } \
 } \

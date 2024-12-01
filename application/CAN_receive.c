@@ -8,6 +8,7 @@
 #include "detect_task.h"
 #include "Ex_encoder.h"
 #include "DJI_motor_canbus.h"
+#include "dm4310_drv.h"
 
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;

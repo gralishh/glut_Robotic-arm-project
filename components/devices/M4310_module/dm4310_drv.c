@@ -2,6 +2,8 @@
 
 #include "arm_math.h"
 
+Joint_Motor_t DM_Motor_J2={0};
+
 float Hex_To_Float(uint32_t *Byte,int num)//十六进制到浮点数
 {
 	return *((float*)Byte);
@@ -49,10 +51,12 @@ float uint_to_float(int x_int, float x_min, float x_max, int bits)
 	return ((float)x_int)*span/((float)((1<<bits)-1)) + offset;
 }
 
-void joint_motor_init(Joint_Motor_t *motor,uint16_t id,uint16_t mode)
+void joint_motor_init(Joint_Motor_t *motor,uint16_t id,uint16_t mode,float Kp,float Kd)
 {
   motor->mode=mode;
   motor->para.id=id;
+  motor->Kp=Kp;
+  motor->Kd=Kd;
 }
 
 
@@ -141,11 +145,11 @@ void disable_motor_mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id)
 * @details:    	通过CAN总线向电机发送MIT模式下的控制帧。
 ************************************************************************
 **/
-void mit_ctrl(hcan_t* hcan, uint16_t motor_id, float pos, float vel,float kp, float kd, float torq)
+void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, float kd, float torq)
 {
-	uint8_t data[8];
+	uint8_t* data=&(motor_ptr->output);
 	uint16_t pos_tmp,vel_tmp,kp_tmp,kd_tmp,tor_tmp;
-	uint16_t id = motor_id + MIT_MODE;
+	uint16_t id = motor_ptr->para.id + MIT_MODE;
 
 	pos_tmp = float_to_uint(pos,  P_MIN,  P_MAX,  16);
 	vel_tmp = float_to_uint(vel,  V_MIN,  V_MAX,  12);
@@ -162,7 +166,6 @@ void mit_ctrl(hcan_t* hcan, uint16_t motor_id, float pos, float vel,float kp, fl
 	data[6] = ((kd_tmp&0xF)<<4)|(tor_tmp>>8);
 	data[7] = tor_tmp;
 	
-	fdcanx_send_data(hcan, id, data, 8);
 }
 /**
 ************************************************************************
@@ -223,6 +226,10 @@ void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float vel)
 	fdcanx_send_data(hcan, id, data, 4);
 }
 
+void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr)
+{
+	fdcanx_send_data(hcan, motor_ptr->para.id, motor_ptr->output, 8);
+}
 
 
 
