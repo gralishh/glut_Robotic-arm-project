@@ -98,8 +98,11 @@ MOTOR_recv* SERVO_Recv(M8010_motor_t* motor,uint8_t* rx_data)
 HAL_StatusTypeDef SERVO_Send(M8010_motor_t* motor)
 {
   __modify_data(&(motor->send_data));
-  USART2_Send((uint8_t*)(void*)&(motor->send_data.motor_send_data),
-    sizeof(motor->send_data.motor_send_data));
+  if(motor==&joint1_motor)
+  {
+    USART2_Send((uint8_t*)(void*)&(motor->send_data.motor_send_data),
+      sizeof(motor->send_data.motor_send_data));
+  }
   return HAL_OK;
 }
 
@@ -153,4 +156,9 @@ int __extract_data(MOTOR_recv *motor_r)
 		    motor_r->correct = 1;
         return motor_r->correct;
     }
+}
+
+void __M8010_motor_control_hook(void)
+{
+  SERVO_Send(&joint1_motor);
 }

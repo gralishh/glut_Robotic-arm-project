@@ -2,6 +2,9 @@
 #define __GERNERAL_MOTOR_TYPEDEF__
 
 #include "main.h"  
+#include "DJI_motor.h"
+#include "dm4310_drv.h"
+#include "M8010_motor.h"
 
 // 电机控制模式,由电机控制函数设置
 typedef enum{
@@ -31,6 +34,10 @@ typedef enum{
         (angle_ptr) \
       ); \
       break; \
+    case M8010_MOTOR: \
+      *current_ptr = ((M8010_motor_t*)instance_ptr)->recv_data.T; \
+      *speed_ptr   = ((M8010_motor_t*)instance_ptr)->recv_data.W; \
+      *angle_ptr   = ((M8010_motor_t*)instance_ptr)->recv_data.Pos; \
     default: \
   } \
 } \
@@ -60,6 +67,21 @@ typedef enum{
           break; \
       } \
       break; \
+    case M8010_MOTOR: \
+      switch(ctrl_state) \
+      { \
+        case POS_LOOP: \
+          M8010_motor_set_angle(instance_ptr,angle); \
+          break; \
+        case LOCK: \
+          M8010_motor_lock(instance_ptr); \
+          break; \
+        case NON_FORCE: \
+        default: \
+          M8010_motor_nonforce(instance_ptr); \
+          break; \
+      }
+      break;
     default: \
   } \
 } \

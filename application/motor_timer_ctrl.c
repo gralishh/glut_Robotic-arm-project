@@ -5,6 +5,7 @@
 //#include "gimbal_task.h"
 #include "cmsis_os2.h"
 #include "timers.h"
+#include "M8010_motor.c"
 
 #define get_feedback_statue(grp_index) \
   (motor_ctrl_handler.feedback_cmd_list[(motor_group_index_t)grp_index])
@@ -35,6 +36,9 @@ void motor_ctrl_output_cmd(motor_group_index_t grp_index,motor_group_statue_t st
 
 void motor_timer_ctrl_callback(void)
 {
+  /*****standalone_motor_ctrl*****/
+  __M8010_motor_control_hook();
+
   /*****hand_task*****/
   if(get_feedback_statue(HAND_MOTOR))
   {
