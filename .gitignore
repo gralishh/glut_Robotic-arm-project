@@ -3,4 +3,5 @@
 !/MDK-ARM/h7_basic_board_code.uvprojx
 !/MDK-ARM/startup_stm32h723xx.s
 /.vscode/*
-.gitignore
+/.gitignore
+/.vscode/c_cpp_properties.json

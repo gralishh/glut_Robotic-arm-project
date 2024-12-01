@@ -48,7 +48,7 @@ void remote_control_init(void)
   * @param[in]      none
   * @retval         Ò£¿ØÆ÷Êý¾ÝÖ¸Õë
   */
-const RC_ctrl_t *get_remote_control_point(void)
+const inline RC_ctrl_t *get_remote_control_point(void)
 {
     return &rc_ctrl;
 }
