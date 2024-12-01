@@ -43,7 +43,7 @@ typedef struct
 	motor_fbpara_t para;
 }Joint_Motor_t ;
 
-
+typedef FDCAN_HandleTypeDef hcan_t;
 
 extern void dm4310_fbdata(Joint_Motor_t *motor, uint8_t *rx_data,uint32_t data_len);
 
