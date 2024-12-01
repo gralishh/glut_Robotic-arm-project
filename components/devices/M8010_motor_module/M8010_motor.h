@@ -1,6 +1,6 @@
 /**
  * @brief M8010电机驱动模块
- * @note 因为肥肠烂usart的bsp，该模块复用性差，有时间重改
+ * @note 因为肥肠烂usart的bsp，该模块复用性差，但没必要重改
  * @todo 添加过压监测
  */
 #ifndef __M8010_MOTOR_MODULE

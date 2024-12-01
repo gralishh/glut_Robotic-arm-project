@@ -9,41 +9,41 @@
 
 typedef enum{
   first_joint=0x00,
-  JOINT_COUNT,
+  HAND_JOINT_COUNT,
 }HAND_JOINT_INDEX;
 
 typedef enum{
   first_motor,
-  MOTOR_COUNT,
+  HAND_MOTOR_COUNT,
 }HAND_MOTOR_INDEX;
 
 typedef enum{
   first_mode=0x00,
-  MODE_COUNT,
+  HAND_MODE_COUNT,
 }HAND_CTRL_MODE;
 
 typedef struct{
   /*instance array*/
-  void* motor_instance[MOTOR_COUNT];
+  void* motor_instance[HAND_MOTOR_COUNT];
 
   /*state value*/
   uint8_t ctrl_mode;
-  Motor_Type_e motor_type[MOTOR_COUNT];
-  Motor_Ctrl_mode_e motor_ctrl_mode[MOTOR_COUNT];
+  Motor_Type_e motor_type[HAND_MOTOR_COUNT];
+  Motor_Ctrl_mode_e motor_ctrl_mode[HAND_MOTOR_COUNT];
 
   /*feedback value*/
-  fp32 feedback_motor_angle[MOTOR_COUNT];
-  int32_t feedback_motor_speed[MOTOR_COUNT];
-  int32_t feedback_motor_current[MOTOR_COUNT];
+  fp32 feedback_motor_angle[HAND_MOTOR_COUNT];
+  int32_t feedback_motor_speed[HAND_MOTOR_COUNT];
+  int32_t feedback_motor_current[HAND_MOTOR_COUNT];
 
   /*output value*/
-  fp32 motor_angle[MOTOR_COUNT];
-  int32_t motor_speed[MOTOR_COUNT];
-  int32_t motor_current[MOTOR_COUNT];
+  fp32 motor_angle[HAND_MOTOR_COUNT];
+  int32_t motor_speed[HAND_MOTOR_COUNT];
+  int32_t motor_current[HAND_MOTOR_COUNT];
 
   /*for arm ctrl*/
-  fp32 feedback_joint_angle[JOINT_COUNT];
-  fp32 joint_angle[JOINT_COUNT];
+  fp32 feedback_joint_angle[HAND_JOINT_COUNT];
+  fp32 joint_angle[HAND_JOINT_COUNT];
 } HAND_TASK_HANDLER_TYPE; 
 extern HAND_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
 extern HAND_TASK_HANDLER_TYPE* hand_task_handler_ptr;

@@ -50,7 +50,7 @@ void hand_task_get_feedback()
   uint16_t index;
 
   /*motor feedback*/
-  for(index=0;index<MOTOR_COUNT;index++)
+  for(index=0;index<HAND_MOTOR_COUNT;index++)
   {
     GENERAL_MOTOR_GET_FEEDBACK(__GET_MOTOR_INSTANCE(index),
       __GET_MOTOR_TYPE(index),
@@ -108,7 +108,7 @@ void hand_task_output()
   /*joint map to motor state*/
 
   /*motor output*/
-  for(index=0;index<MOTOR_COUNT;index++)
+  for(index=0;index<HAND_MOTOR_COUNT;index++)
   {
     GENERAL_MOTOR_SET_OUTPUT(__GET_MOTOR_INSTANCE(index),
     __GET_MOTOR_TYPE(index),
