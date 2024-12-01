@@ -3,6 +3,7 @@
 #include "main.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "M8010_motor.h" 
 
 /*反馈数据大小*/
 #define FEEDBACK_DATA_SIZE 16
@@ -36,7 +37,8 @@ void usart2_measure_task(void const *pvParameters)
             if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  // 判断数据的起始值是否为0xFD 0xEE
             {
                 USART2_Recv(Transmission_usart2, FEEDBACK_DATA_SIZE);  // 把数据出栈并存储在Transmission_BufferOfusart2，数据处理在中断里
-                //yaw_5_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart2);
+                //usart2_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart2);
+                SERVO_Recv(&joint1_motor,Transmission_usart2);
                 USART2_Drop(4096);
             }
             else
@@ -100,7 +102,7 @@ void usart3_measure_task(void const *pvParameters)
             if(USART3_At(0) == 0xFD && USART3_At(1) == 0xEE)
             {
                 USART3_Recv(Transmission_usart3, FEEDBACK_DATA_SIZE);
-                //roll_3_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart3);
+                //usart3_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart3);
                 USART3_Drop(4096);
             }
             else
