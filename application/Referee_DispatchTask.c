@@ -466,7 +466,7 @@ void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength)
 #define custom_character_lenth 45
 #define custom_graphic_seven_lenth 105
 
-extern  Gimbal_Control_t gimbal_control;
+//extern  Gimbal_Control_t gimbal_control;
 
 uint8_t keyboard_C_state;
 uint8_t keyboard_C_state_last;

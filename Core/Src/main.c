@@ -32,7 +32,6 @@
 #include "gimbal_task.h"
 #include "hand_task.h"
 #include "usart_measure_task.h"/*??????*/
-#include "GO_M8010_control.h"
 #include "motor_timer_ctrl.h"
 /* USER CODE END Includes */
 
@@ -1151,7 +1150,7 @@ void __usart2_measure_task(void *argument)
 void __gimbal_task(void *argument)
 {
   /* USER CODE BEGIN __gimbal_task */
-  gimbal_task(argument);
+  //gimbal_task(argument);
   /* Infinite loop */
   for(;;)
   {
@@ -1170,7 +1169,7 @@ void __gimbal_task(void *argument)
 void __hand_task(void *argument)
 {
   /* USER CODE BEGIN __hand_task */
-  Hand_task(argument);
+  //Hand_task(argument);
   /* Infinite loop */
   for(;;)
   {

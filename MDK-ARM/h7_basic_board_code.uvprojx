@@ -1053,11 +1053,6 @@
               <FilePath>..\bsp\can_bsp.c</FilePath>
             </File>
             <File>
-              <FileName>GO-M8010-6.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\bsp\GO-M8010-6.c</FilePath>
-            </File>
-            <File>
               <FileName>bsp_buzzer.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\bsp\bsp_buzzer.c</FilePath>
@@ -1108,16 +1103,6 @@
               <FilePath>..\application\hand_task.c</FilePath>
             </File>
             <File>
-              <FileName>MCU_communicaton_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\MCU_communicaton_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>PC_communication_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\PC_communication_task.c</FilePath>
-            </File>
-            <File>
               <FileName>Referee_DispatchTask.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\Referee_DispatchTask.c</FilePath>
@@ -1146,11 +1131,6 @@
               <FileName>External_encoder.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\devices\External_encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>GO_M8010_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\GO_M8010_control.c</FilePath>
             </File>
             <File>
               <FileName>DJI_motor.c</FileName>

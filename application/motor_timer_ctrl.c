@@ -1,7 +1,10 @@
 #include "motor_timer_ctrl.h"
+#include "FreeRTOS.h"
 // 提供电机反馈,pid计算以及输出函数
-#include "hand_task.h"
-#include "gimbal_task.h"
+//#include "hand_task.h"
+//#include "gimbal_task.h"
+#include "cmsis_os2.h"
+#include "timers.h"
 
 #define get_feedback_statue(grp_index) \
   (motor_ctrl_handler.feedback_cmd_list[(motor_group_index_t)grp_index])
@@ -35,12 +38,10 @@ void motor_timer_ctrl_callback(void)
   /*****hand_task*****/
   if(get_feedback_statue(HAND_MOTOR))
   {
-    Hand_Feedback_Update();
+
     if(get_output_statue(HAND_MOTOR))
     {
-      Hand_Control_loop();
-      Hand_Set_Reverse();
-      Hand_Current_Output();
+
     }
   }
 
@@ -49,11 +50,10 @@ void motor_timer_ctrl_callback(void)
   /*****gimbal_task*****/
   if(get_feedback_statue(GIMBAL_MOTOR))
   {
-    gimbal_Feedback_Update();
+
     if(get_output_statue(GIMBAL_MOTOR))
     {
-      gimbal_Control_loop();
-      gimbal_current_out();
+
     }
   }
 }
