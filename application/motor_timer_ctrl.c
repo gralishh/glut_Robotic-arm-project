@@ -5,7 +5,7 @@
 //#include "gimbal_task.h"
 #include "cmsis_os2.h"
 #include "timers.h"
-#include "M8010_motor.c"
+#include "M8010_motor.h"
 #include "DJI_motor_canbus.h"
 #include "dm4310_drv.h"
 

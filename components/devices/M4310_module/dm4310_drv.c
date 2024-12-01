@@ -147,9 +147,8 @@ void disable_motor_mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id)
 **/
 void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, float kd, float torq)
 {
-	uint8_t* data=&(motor_ptr->output);
+	uint8_t* data=motor_ptr->output;
 	uint16_t pos_tmp,vel_tmp,kp_tmp,kd_tmp,tor_tmp;
-	uint16_t id = motor_ptr->para.id + MIT_MODE;
 
 	pos_tmp = float_to_uint(pos,  P_MIN,  P_MAX,  16);
 	vel_tmp = float_to_uint(vel,  V_MIN,  V_MAX,  12);
@@ -228,7 +227,8 @@ void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float vel)
 
 void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr)
 {
-	fdcanx_send_data(hcan, motor_ptr->para.id, motor_ptr->output, 8);
+	uint16_t id = motor_ptr->para.id + MIT_MODE;
+	fdcanx_send_data(hcan, id, motor_ptr->output, 8);
 }
 
 
