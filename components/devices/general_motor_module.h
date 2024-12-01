@@ -2,9 +2,6 @@
 #define __GERNERAL_MOTOR_TYPEDEF__
 
 #include "main.h"  
-#include "DJI_motor.h"
-#include "dm4310_drv.h"
-#include "M8010_motor.h"
 
 // 电机控制模式,由电机控制函数设置
 typedef enum{
@@ -44,6 +41,7 @@ typedef enum{
       *speed_ptr   =((Joint_Motor_t*)instance_ptr)->para.vel; \
       *angle_ptr   =((Joint_Motor_t*)instance_ptr)->para.pos; \
     default: \
+      break; \
   } \
 } \
 
@@ -61,10 +59,10 @@ typedef enum{
           DJI_Motor_set_angle(instance_ptr,angle); \
           break; \
         case GIVING_CURRENT: \
-          DJI_Motor_set_current(instacne_ptr,current); \
+          DJI_Motor_set_current(instance_ptr,current); \
           break; \
         case LOCK: \
-          DJI_Motor_set_current(instance_ptr); \
+          DJI_Motor_lockup(instance_ptr); \
           break; \
         case NON_FORCE: \
         default: \
@@ -76,14 +74,14 @@ typedef enum{
       switch(ctrl_state) \
       { \
         case POS_LOOP: \
-          M8010_motor_set_angle(instance_ptr,angle); \
+          M8010_motor_set_angle((M8010_motor_t*)instance_ptr,angle); \
           break; \
         case LOCK: \
-          M8010_motor_lock(instance_ptr); \
+          M8010_motor_lock((M8010_motor_t*)instance_ptr); \
           break; \
         case NON_FORCE: \
         default: \
-          M8010_motor_nonforce(instance_ptr); \
+          M8010_motor_nonforce((M8010_motor_t*)instance_ptr); \
           break; \
       } \
       break; \
@@ -91,11 +89,14 @@ typedef enum{
       switch(ctrl_state) \
       { \
         case POS_LOOP: \
-          mit_ctrl((Joint_Motor_t*)instance_ptr,angle,speed,(Joint_Motor_t*)instance_ptr->Kp,(Joint_Motor_t*)instance_ptr->Kd,0.0); \
+          mit_ctrl((Joint_Motor_t*)instance_ptr,angle,speed, \
+          ((Joint_Motor_t*)instance_ptr)->Kp, \
+          ((Joint_Motor_t*)instance_ptr)->Kd,0.0); \
           break; \
         case LOCK: \
-          mit_ctrl((Joint_Motor_t*)instance_ptr,(Joint_Motor_t*)instance_ptr->para.pos,0.0, \
-            (Joint_Motor_t*)instance_ptr->Kp,(Joint_Motor_t*)instance_ptr->Kd,0.0); \
+          mit_ctrl((Joint_Motor_t*)instance_ptr, \
+            ((Joint_Motor_t*)instance_ptr)->para.pos,0.0, \
+            ((Joint_Motor_t*)instance_ptr)->Kp,((Joint_Motor_t*)instance_ptr)->Kd,0.0); \
           break; \
         case NON_FORCE: \
         default: \
@@ -104,7 +105,12 @@ typedef enum{
       } \
     break; \
     default: \
+    break; \
   } \
 } \
+
+#include "DJI_motor.h"
+#include "dm4310_drv.h"
+#include "M8010_motor.h"
 
 #endif
