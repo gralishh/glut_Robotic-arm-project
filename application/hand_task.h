@@ -26,7 +26,9 @@ typedef enum{
 }HAND_MOTOR_INDEX;
 
 typedef enum{
-  first_mode=0x00,
+  HAND_MODE_NONFORCE=0x00,
+  HAND_MODE_IDLE,
+  HAND_MODE_RC_CTRL,
   HAND_MODE_COUNT,
 }HAND_CTRL_MODE;
 

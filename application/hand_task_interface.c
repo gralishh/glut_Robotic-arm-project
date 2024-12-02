@@ -16,6 +16,11 @@ DJI_Motor_Ctrl_t DJI_Motor_J3;
 DJI_Motor_Ctrl_t DJI_Motor_headendL;
 DJI_Motor_Ctrl_t DJI_Motor_headendR;
 
+static void __hand_nonforce();
+static void __hand_idle_ctrl();
+static void __hand_rc_ctrl();
+
+
 /*general handler method*/
 /** 
  * macro name format:
@@ -91,6 +96,11 @@ void hand_task_get_feedback()
   }
 
   /*joint angle map*/
+  __GET_JOINT_ANGLE(HAND_J1)=__GET_MOTOR_ANGLE(M8010_J1);
+  __GET_JOINT_ANGLE(HAND_J2)=__GET_MOTOR_ANGLE(DM_J2);
+  __GET_JOINT_ANGLE(HAND_J3)=__GET_MOTOR_ANGLE(DJI_J3);
+  __GET_JOINT_ANGLE(HAND_PITCH);
+  __GET_JOINT_ANGLE(HAND_ROLL);
   /*
   __GET_JOINT_ANLGE(index,
     ...
@@ -105,6 +115,21 @@ void hand_task_get_feedback()
  */
 void hand_task_mode_flush()
 {
+  /**/
+  if(get_remote_control_point()->rc.s[0]==3)
+  {
+    if(get_remote_control_point()->rc.s[1]==1)
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+    else if(get_remote_control_point()->rc.s[1]==2)
+      __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
+    else if(get_remote_control_point()->rc.s[1]==3)
+      ;
+  }
+
+  if(get_remote_control_point()->rc.s[0]==1 && get_remote_control_point()->rc.s[1]==1)
+  {
+    __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
+  }
   /*
   if(get_remote_control_point()->rc.s[0]==0 && get_remote_control_point()->rc.s[1]==0)
   {
@@ -120,11 +145,15 @@ void hand_task_set_output()
 {
   switch(__GET_STRUCT_MODE())
   {
-    case first_mode:
-      //__first_mode_ctrl_func();
+    case HAND_MODE_IDLE:
+      __hand_idle_ctrl();
       break;
+    case HAND_MODE_RC_CTRL:
+      __hand_rc_ctrl();
+      break;
+    case HAND_MODE_NONFORCE:
     default:
-      ;
+      __hand_nonforce();
   }
 }
 
@@ -148,4 +177,19 @@ void hand_task_output()
     __GET_MOTOR_ANGLE(index)
     )
   }
+}
+
+void __hand_nonforce()
+{
+
+}
+
+void __hand_idle_ctrl()
+{
+
+}
+
+void __hand_rc_ctrl()
+{
+
 }
