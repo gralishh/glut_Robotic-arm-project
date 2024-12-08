@@ -50,3 +50,14 @@ fp32 angle_normalize(fp32 angle,fp32 offset)
 	
 	return angle;
 }
+
+fp32 angle_limit(fp32 angle,fp32 max_angle,fp32 min_angle)
+{
+  if(max_angle==min_angle&&max_angle==0)
+    return angle;
+  if(angle>max_angle)
+    return max_angle;
+  if(angle<min_angle)
+    return min_angle;
+  return angle;
+}
