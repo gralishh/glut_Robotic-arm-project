@@ -54,6 +54,8 @@ typedef struct{
   /*for arm ctrl*/
   fp32 feedback_joint_angle[HAND_JOINT_COUNT];
   fp32 joint_angle[HAND_JOINT_COUNT];
+  fp32 max_joint_angle[HAND_JOINT_COUNT];
+  fp32 min_joint_angle[HAND_JOINT_COUNT];
 } HAND_TASK_HANDLER_TYPE; 
 extern HAND_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
 extern HAND_TASK_HANDLER_TYPE* hand_task_handler_ptr;

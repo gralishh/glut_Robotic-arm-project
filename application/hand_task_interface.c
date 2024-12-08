@@ -2,12 +2,33 @@
 #include "hand_task.h"
 #include "general_motor_module.h" 
 #include "remote_control.h" 
+#include "angle_process.h"
 
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
 
+/*extern*/
+extern FDCAN_HandleTypeDef hfdcan2;
+
 /*global macro variable*/
 #define HAND_CTRL_CAN 
+// joint mapping parameter
+#define J1_MAP_K   1
+#define J1_MAP_D   0
+#define J2_MAP_K   1
+#define J2_MAP_D   0
+#define J3_MAP_K   1
+#define J3_MAP_D   0
+#define HEL_MAP_K  1
+#define HEL_MAP_D  0
+#define HER_MAP_K  1
+#define HER_MAP_D  0
+// controller sensity(degree per loop)
+#define J1_CTRL_SEN 0
+#define J2_CTRL_SEN 0
+#define J3_CTRL_SEN 0
+#define PITCH_CTRL_SEN 0
+#define ROLL_CTRL_SEN 0
 
 /*global motor handler*/
 extern M8010_motor_t joint1_motor;
@@ -16,9 +37,9 @@ DJI_Motor_Ctrl_t DJI_Motor_J3;
 DJI_Motor_Ctrl_t DJI_Motor_headendL;
 DJI_Motor_Ctrl_t DJI_Motor_headendR;
 
-static void __hand_nonforce();
-static void __hand_idle_ctrl();
-static void __hand_rc_ctrl();
+static void __hand_nonforce(void);
+static void __hand_idle_ctrl(void);
+static void __hand_rc_ctrl(void);
 
 
 /*general handler method*/
@@ -39,23 +60,27 @@ static void __hand_rc_ctrl();
 #define __GET_MOTOR_SPEED(index) (HANDLER_PTR->feedback_motor_speed[index])
 #define __GET_MOTOR_CURRENT(index) (HANDLER_PTR->feedback_motor_current[index])
 
-#define __SET_MOTOR_ANGLE(index,value) (HANDLER_PTR->motor_angle[index]=value)
-#define __SET_MOTOR_SPEED(index,value) (HANDLER_PTR->motor_speed[index]=value)
-#define __SET_MOTOR_CURRENT(index,value) (HANDLER_PTR->motor_current[index]=value)
+#define __SET_MOTOR_ANGLE(index,value) {(HANDLER_PTR->motor_angle[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
+#define __SET_MOTOR_SPEED(index,value) {(HANDLER_PTR->motor_speed[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=SPEED_LOOP);}
+#define __SET_MOTOR_CURRENT(index,value) {(HANDLER_PTR->motor_current[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=GIVING_CURRENT);}
+#define __SET_MOTOR_LOCKUP(index) (HANDLER_PTR->motor_ctrl_mode[index]=LOCK)
+#define __SET_MOTOR_NONFORCE(index) (HANDLER_PTR->motor_ctrl_mode[index]=NON_FORCE)
 
 #define __GET_JOINT_ANGLE(index) (HANDLER_PTR->feedback_joint_angle[index])
-#define __SET_JOINT_ANGLE(index,value) (HANDLER_PTR->joint_angle[index]=value)
+#define __SET_JOINT_LIMIT(index,min,max) {(HANDLER_PTR->max_joint_angle[index]=max);(HANDLER_PTR->min_joint_angle[index]=min);}
+#define __JOINT_LIMIT(index,value) angle_limit(value,HANDLER_PTR->max_joint_angle[index],HANDLER_PTR->min_joint_angle[index])
+#define __SET_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,value));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 
 
 void hand_task_init()
 {
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,1,10,0.075);
+  M8010_motor_init(&joint1_motor,1,0.075,0.075);
 
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
   __SET_MOTOR_TYPE(DM_J2,M4310_MOTOR);
-  enable_motor_mode(hfdcan2,1,MIT_MODE);
+  enable_motor_mode(&hfdcan2,1,MIT_MODE);
   joint_motor_init(&DM_Motor_J2,1,MIT_MODE,10.0,1.0);
 
   __SET_MOTOR_INSTANCE(DJI_J3,&DJI_Motor_J3);
@@ -96,13 +121,13 @@ void hand_task_get_feedback()
   }
 
   /*joint angle map*/
-  __GET_JOINT_ANGLE(HAND_J1)=__GET_MOTOR_ANGLE(M8010_J1);
-  __GET_JOINT_ANGLE(HAND_J2)=__GET_MOTOR_ANGLE(DM_J2);
-  __GET_JOINT_ANGLE(HAND_J3)=__GET_MOTOR_ANGLE(DJI_J3);
+  __GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J2)=J2_MAP_K*__GET_MOTOR_ANGLE(DM_J2)    +J2_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J3)=J3_MAP_K*__GET_MOTOR_ANGLE(DJI_J3)   +J3_MAP_D;
   __GET_JOINT_ANGLE(HAND_PITCH);
   __GET_JOINT_ANGLE(HAND_ROLL);
   /*
-  __GET_JOINT_ANLGE(index,
+  __GET_JOINT_ANGLE(index,
     ...
   )
   ...
@@ -140,6 +165,7 @@ void hand_task_mode_flush()
 
 /**
  * @brief 设置输出量(电流|速度|位置|力矩)
+ * @details 模式控制 
  */
 void hand_task_set_output()
 {
@@ -165,6 +191,12 @@ void hand_task_output()
 {
   uint16_t index;
   /*joint map to motor state*/
+  if(__GET_MOTOR_CTRL_MODE(M8010_J1)==POS_LOOP)
+    __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[M8010_J1]-J1_MAP_D)/J1_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DM_J2)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DM_J2,(HANDLER_PTR->joint_angle[DM_J2]-J2_MAP_D)/J2_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DJI_J3)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DJI_J3,(HANDLER_PTR->joint_angle[DJI_J3]-J3_MAP_D)/J3_MAP_K);
 
   /*motor output*/
   for(index=0;index<HAND_MOTOR_COUNT;index++)
@@ -172,24 +204,37 @@ void hand_task_output()
     GENERAL_MOTOR_SET_OUTPUT(__GET_MOTOR_INSTANCE(index),
     __GET_MOTOR_TYPE(index),
     __GET_MOTOR_CTRL_MODE(index),
-    __GET_MOTOR_CURRENT(index),
-    __GET_MOTOR_SPEED(index),
-    __GET_MOTOR_ANGLE(index)
+    HANDLER_PTR->motor_current[index],
+    HANDLER_PTR->motor_speed[index],
+    HANDLER_PTR->motor_angle[index]
     )
   }
 }
 
 void __hand_nonforce()
 {
-
+  int index;
+  for(index=0;index<HAND_MOTOR_COUNT;index++)
+  {
+    __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);
+    __SET_MOTOR_NONFORCE(index);
+  }
 }
 
 void __hand_idle_ctrl()
 {
-
+  int index;
+  for(index=0;index<HAND_MOTOR_COUNT;index++)
+  {
+    __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);
+    __SET_MOTOR_LOCKUP(index);
+  }
 }
 
 void __hand_rc_ctrl()
 {
 
 }
+
+#undef HANDLER 
+#undef HANDLER_PTR 

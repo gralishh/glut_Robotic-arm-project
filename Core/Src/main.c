@@ -259,7 +259,7 @@ int main(void)
   //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
-  //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
   //USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
@@ -1169,7 +1169,7 @@ void __gimbal_task(void *argument)
 void __hand_task(void *argument)
 {
   /* USER CODE BEGIN __hand_task */
-  //Hand_task(argument);
+  hand_task(argument);
   /* Infinite loop */
   for(;;)
   {
