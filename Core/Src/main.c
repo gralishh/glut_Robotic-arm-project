@@ -33,6 +33,7 @@
 #include "hand_task.h"
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
+#include "DJI_motor_canbus.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -219,6 +220,7 @@ int main(void)
   usart10_init();
   usart2_init();
   usart3_init();
+  DJI_CANBus_init_all();
   /* USER CODE END 2 */
 
   /* Init scheduler */

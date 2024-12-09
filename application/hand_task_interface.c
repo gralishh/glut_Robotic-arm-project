@@ -1,11 +1,13 @@
 #include "hand_task_interface.h"
 #include "hand_task.h"
 #include "general_motor_module.h" 
+#include "DJI_motor_canbus.h"
 #include "remote_control.h" 
 #include "angle_process.h"
 
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
+#define RC_CTRL_PTR (get_remote_control_point())
 
 /*extern*/
 extern FDCAN_HandleTypeDef hfdcan2;
@@ -56,20 +58,24 @@ static void __hand_rc_ctrl(void);
 #define __SET_MOTOR_TYPE(index,type) (HANDLER_PTR->motor_type[index]=(type))
 #define __GET_MOTOR_CTRL_MODE(index) (HANDLER_PTR->motor_ctrl_mode[index])
 
+/*è·å–ç”µæœºåé¦ˆ*/
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
 #define __GET_MOTOR_SPEED(index) (HANDLER_PTR->feedback_motor_speed[index])
 #define __GET_MOTOR_CURRENT(index) (HANDLER_PTR->feedback_motor_current[index])
 
+/*ç”µæœºè¾“å‡ºæ§åˆ¶*/
 #define __SET_MOTOR_ANGLE(index,value) {(HANDLER_PTR->motor_angle[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 #define __SET_MOTOR_SPEED(index,value) {(HANDLER_PTR->motor_speed[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=SPEED_LOOP);}
 #define __SET_MOTOR_CURRENT(index,value) {(HANDLER_PTR->motor_current[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=GIVING_CURRENT);}
 #define __SET_MOTOR_LOCKUP(index) (HANDLER_PTR->motor_ctrl_mode[index]=LOCK)
 #define __SET_MOTOR_NONFORCE(index) (HANDLER_PTR->motor_ctrl_mode[index]=NON_FORCE)
 
+/*å…³èŠ‚æ§åˆ¶*/
 #define __GET_JOINT_ANGLE(index) (HANDLER_PTR->feedback_joint_angle[index])
 #define __SET_JOINT_LIMIT(index,min,max) {(HANDLER_PTR->max_joint_angle[index]=max);(HANDLER_PTR->min_joint_angle[index]=min);}
 #define __JOINT_LIMIT(index,value) angle_limit(value,HANDLER_PTR->max_joint_angle[index],HANDLER_PTR->min_joint_angle[index])
 #define __SET_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,value));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
+#define __ADD_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,HANDLER_PTR->joint_angle[index]+(value)));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 
 
 void hand_task_init()
@@ -101,8 +107,8 @@ void hand_task_init()
 }
 
 /**
- * @brief Ë¢ĞÂ¾ä±úµÄ·´À¡Öµ
- * @details ±éÀúµç»ú¿ØÖÆ¾ä±ú£¬Õë¶Ôµã»÷ÀàĞÍË¢ĞÂ·´À¡
+ * @brief åˆ·æ–°å¥æŸ„çš„åé¦ˆå€¼
+ * @details éå†ç”µæœºæ§åˆ¶å¥æŸ„ï¼Œé’ˆå¯¹ç‚¹å‡»ç±»å‹åˆ·æ–°åé¦ˆ
  * @code 
  */
 void hand_task_get_feedback()
@@ -135,8 +141,8 @@ void hand_task_get_feedback()
 }
 
 /**
- * @brief Ä£Ê½×´Ì¬Ë¢ĞÂ
- * @details ¸ù¾İ¿ØÖÆÆ÷²¦¸ËË¢ĞÂÄ£Ê½(¶ş¼¶Ä£Ê½»áÓëUIñîºÏ)
+ * @brief æ¨¡å¼çŠ¶æ€åˆ·æ–°
+ * @details æ ¹æ®æ§åˆ¶å™¨æ‹¨æ†åˆ·æ–°æ¨¡å¼(äºŒçº§æ¨¡å¼ä¼šä¸UIè€¦åˆ)
  */
 void hand_task_mode_flush()
 {
@@ -164,8 +170,8 @@ void hand_task_mode_flush()
 }
 
 /**
- * @brief ÉèÖÃÊä³öÁ¿(µçÁ÷|ËÙ¶È|Î»ÖÃ|Á¦¾Ø)
- * @details Ä£Ê½¿ØÖÆ 
+ * @brief è®¾ç½®è¾“å‡ºé‡(ç”µæµ|é€Ÿåº¦|ä½ç½®|åŠ›çŸ©)
+ * @details æ¨¡å¼æ§åˆ¶ 
  */
 void hand_task_set_output()
 {
@@ -184,8 +190,8 @@ void hand_task_set_output()
 }
 
 /**
- * @brief ¿ØÖÆÊä³ö
- * @details ¸ù¾İµç»úÖÖÀàÓë¿ØÖÆ×´Ì¬Éè¶¨Êä³ö
+ * @brief æ§åˆ¶è¾“å‡º
+ * @details æ ¹æ®ç”µæœºç§ç±»ä¸æ§åˆ¶çŠ¶æ€è®¾å®šè¾“å‡º
  */
 void hand_task_output()
 {

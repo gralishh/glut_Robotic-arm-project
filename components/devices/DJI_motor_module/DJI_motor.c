@@ -7,7 +7,7 @@
 // 电流输出数组宏函数
 #define IS_OUTPUT_ID_200H(id) ((id>=0x201)&&(id<=0x204))
 #define IS_OUTPUT_ID_1FFH(id) ((id>=0x205)&&(id<=0x208))
-#define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x200)%4-1)
+#define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x201)%4)
 
 // Motor_Ctrl宏函数
 #define __DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current) (motor_ptr->reverse_flag?-current:current)
