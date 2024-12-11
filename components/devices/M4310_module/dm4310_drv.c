@@ -54,6 +54,7 @@ float uint_to_float(int x_int, float x_min, float x_max, int bits)
 void joint_motor_init(Joint_Motor_t *motor,uint16_t id,uint16_t mode,float Kp,float Kd)
 {
   motor->mode=mode;
+  motor->enable=1;
   motor->para.id=id;
   motor->Kp=Kp;
   motor->Kd=Kd;
@@ -166,6 +167,12 @@ void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, float kd,
 	data[7] = tor_tmp;
 	
 }
+
+void mit_nonforce_ctrl(Joint_Motor_t* motor_ptr)
+{
+  mit_ctrl(motor_ptr,0.0001,0.0001,0.0001,0.0001,0.0001);
+}
+
 /**
 ************************************************************************
 * @brief:      	pos_speed_ctrl: 位置速度控制函数
@@ -227,6 +234,8 @@ void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float vel)
 
 void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr)
 {
+  if(!(motor_ptr->enable))
+    return;
 	uint16_t id = motor_ptr->para.id + MIT_MODE;
 	fdcanx_send_data(hcan, id, motor_ptr->output, 8);
 }

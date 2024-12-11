@@ -16,6 +16,8 @@ void hand_task(void *argument)
     hand_task_mode_flush();
     hand_task_set_output();
     hand_task_output();
+    if(!(hand_task_handler_ptr->tick_count_halt))
+      hand_task_handler_ptr->tick++;
     osDelay(1);
   }
 }

@@ -4,6 +4,7 @@
 #include "DJI_motor_canbus.h"
 #include "remote_control.h" 
 #include "angle_process.h"
+#include "cmsis_os2.h"
 
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
@@ -49,6 +50,7 @@ static void __hand_rc_ctrl(void);
  * macro name format:
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
+/*获取电机状态*/
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
 #define __SET_MOTOR_INSTANCE(index,instance_ptr) (HANDLER_PTR->motor_instance[index]=((void*)instance_ptr))
 #define __GET_STRUCT_MODE() (HANDLER_PTR->ctrl_mode)
@@ -65,6 +67,7 @@ static void __hand_rc_ctrl(void);
 
 /*电机输出控制*/
 #define __SET_MOTOR_ANGLE(index,value) {(HANDLER_PTR->motor_angle[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
+#define __ADD_MOTOR_ANGLE(index,value) {(HANDLER_PTR->motor_angle[index]+=value);(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 #define __SET_MOTOR_SPEED(index,value) {(HANDLER_PTR->motor_speed[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=SPEED_LOOP);}
 #define __SET_MOTOR_CURRENT(index,value) {(HANDLER_PTR->motor_current[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=GIVING_CURRENT);}
 #define __SET_MOTOR_LOCKUP(index) (HANDLER_PTR->motor_ctrl_mode[index]=LOCK)
@@ -77,21 +80,42 @@ static void __hand_rc_ctrl(void);
 #define __SET_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,value));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 #define __ADD_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,HANDLER_PTR->joint_angle[index]+(value)));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 
+/*时间控制*/
+#define __RESET_TICKS() (HANDLER_PTR->tick=0)
+#define __HALT_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt=1)
+#define __HOLD_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt=0)
+#define __GET_TICKS() (HANDLER_PTR->tick)
+// unit:seconds
+#define __GET_TICKS_TIME() (HANDLER_PTR->tick*1)
+#define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME()/PROCESS_TIME)
+
 
 void hand_task_init()
 {
+  /*基础初始化*/
+  __HALT_TICKS_COUNTING();
+  __RESET_TICKS();
+
+  /*电机初始化*/
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,1,0.075,0.075);
+  M8010_motor_init(&joint1_motor,3,0.075,0.075);
 
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
   __SET_MOTOR_TYPE(DM_J2,M4310_MOTOR);
-  enable_motor_mode(&hfdcan2,1,MIT_MODE);
-  joint_motor_init(&DM_Motor_J2,1,MIT_MODE,10.0,1.0);
+  //disable_motor_mode(&hfdcan2,1,POS_MODE);
+  //disable_motor_mode(&hfdcan2,1,SPEED_MODE);
+  //enable_motor_mode(&hfdcan2,1,MIT_MODE);
+  for(int i=0;i<20;i++)
+  {
+    enable_motor_mode(&hfdcan2,1,MIT_MODE);
+    osDelay(20);
+  }
+  joint_motor_init(&DM_Motor_J2,1,MIT_MODE,1.0,1.0);
 
   __SET_MOTOR_INSTANCE(DJI_J3,&DJI_Motor_J3);
   __SET_MOTOR_TYPE(DJI_J3,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,2);
+  DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x202);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
   //DJI_Motor_Speed_PID_init()
@@ -99,11 +123,19 @@ void hand_task_init()
 
   __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,3);
+  DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,25,0.001,0,5000,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,50,0,0,500,1000);
+  DJI_Motor_headendL.circle_count_flag=1;
 
   __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,4);
+  DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,25,0,0.001,5000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,50,0,0,500,0);
+  DJI_Motor_headendR.circle_count_flag=1;
+
+  DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
 }
 
 /**
@@ -239,7 +271,11 @@ void __hand_idle_ctrl()
 
 void __hand_rc_ctrl()
 {
-
+  //_ADD_JOINT_ANGLE(HAND_J1,RC_CTRL_PTR->rc.ch[2]*0.00005f);
+  //_ADD_JOINT_ANGLE(HAND_J2,RC_CTRL_PTR->rc.ch[0]*0.00005f);
+  //_ADD_JOINT_ANGLE(HAND_J3,RC_CTRL_PTR->rc.ch[5]*0.00005f);
+  __ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[0]*0.00005f+RC_CTRL_PTR->rc.ch[2]*0.00005f);
+  __ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[0]*0.00005f-RC_CTRL_PTR->rc.ch[2]*0.00005f);
 }
 
 #undef HANDLER 

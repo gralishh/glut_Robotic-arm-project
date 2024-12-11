@@ -10,6 +10,8 @@
 #include "DJI_motor_canbus.h"
 #include "dm4310_drv.h"
 
+extern Joint_Motor_t DM_Motor_J2;
+
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 extern FDCAN_HandleTypeDef hfdcan3;
@@ -92,6 +94,8 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
     __DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl,rx_message,rx_header->Identifier);
 		switch (rx_header->Identifier)
 		{
+      case 0x000:
+        dm4310_fbdata(&DM_Motor_J2,rx_message,FDCAN_DLC_BYTES_8);
       default:
       ;
     }

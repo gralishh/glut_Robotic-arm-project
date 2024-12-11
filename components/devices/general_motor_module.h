@@ -100,7 +100,7 @@ typedef enum{
           break; \
         case NON_FORCE: \
         default: \
-          mit_ctrl((Joint_Motor_t*)instance_ptr,0.0,0.0,0.0,0.0,0.0); \
+          mit_nonforce_ctrl((Joint_Motor_t*)instance_ptr); \
           break; \
       } \
     break; \

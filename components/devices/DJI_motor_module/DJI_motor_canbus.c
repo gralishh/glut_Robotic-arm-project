@@ -23,6 +23,11 @@ void DJI_CANBus_init_all(void)
   DJI_CANBus_init(&DJI_CAN3_Bus_ctrl,&hcan3);
 }
 
+inline void DJI_CANBus_enable_bus(DJI_Motor_Bus_t* DJI_CAN_Bus_ctrl)
+{
+  DJI_CAN_Bus_ctrl->enable=1;
+}
+
 /**
  * @brief CANBus≥ı ºªØ
  */

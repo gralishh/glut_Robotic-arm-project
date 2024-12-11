@@ -31,6 +31,7 @@ extern DJI_Motor_Bus_t DJI_CAN3_Bus_ctrl;
 
 /*preset_interface*/
 void DJI_CANBus_init_all(void);
+void DJI_CANBus_enable_bus(DJI_Motor_Bus_t* DJI_CAN_Bus_ctrl);
 
 /*DJI_CANBus*/
 void DJI_CANBus_init(DJI_Motor_Bus_t* bus,FDCAN_HandleTypeDef* can);

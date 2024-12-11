@@ -9,6 +9,13 @@
 #include "DJI_motor_canbus.h"
 #include "dm4310_drv.h"
 
+#include "detect_task.h"
+
+/*can*/
+extern FDCAN_HandleTypeDef hfdcan2;
+/*specific motor handler*/
+extern Joint_Motor_t DM_Motor_J2;
+
 #define get_feedback_statue(grp_index) \
   (motor_ctrl_handler.feedback_cmd_list[(motor_group_index_t)grp_index])
 
@@ -38,8 +45,14 @@ void motor_ctrl_output_cmd(motor_group_index_t grp_index,motor_group_statue_t st
 
 void motor_timer_ctrl_callback(void)
 {
+  if(toe_is_error(DBUSTOE))
+  {
+    /*ÌîÐ´Ê§Á¦×´Ì¬Ê¹ÄÜ*/
+  }
+
   /*****standalone_motor_ctrl*****/
   __M8010_motor_control_hook();
+  //__dm4310_mit_output_ctrl(&hfdcan2,&DM_Motor_J2);
   __DJI_CANBus_ctrl_loop(&DJI_CAN1_Bus_ctrl);
   __DJI_CANBus_ctrl_loop(&DJI_CAN2_Bus_ctrl);
   __DJI_CANBus_ctrl_loop(&DJI_CAN3_Bus_ctrl);
