@@ -8,8 +8,8 @@
 #define SPEED_MODE		0x200
 
 //以下是DM4310的参数，用其他电机需要更改下面参数
-#define P_MIN -3.14f
-#define P_MAX 3.14f
+#define P_MIN -12.5f
+#define P_MAX 12.5f
 #define V_MIN -30.0f
 #define V_MAX 30.0f
 #define KP_MIN 0.0f
@@ -40,9 +40,11 @@ typedef struct
 typedef struct
 {
 	uint16_t mode;
+  uint16_t output_id;
   uint8_t output[8];
   float Kp;
   float Kd;
+  float lock_angle;
   uint8_t enable;
 	motor_fbpara_t para;
 }Joint_Motor_t ;
@@ -60,9 +62,11 @@ extern void disable_motor_mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id
 //关节电机
 extern void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, float kd, float torq);
 extern void mit_nonforce_ctrl(Joint_Motor_t* motor_ptr);
-extern void pos_speed_ctrl(hcan_t* hcan,uint16_t motor_id, float pos, float vel);
+extern void pos_speed_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel);
 extern void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float _vel);
 
+void mit_ctrl_pos_speed(Joint_Motor_t* motor_ptr,float pos,float vel);
+void mit_ctrl_lock(Joint_Motor_t* motor_ptr);
 void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr);
 
 extern void joint_motor_init(Joint_Motor_t *motor,uint16_t id,uint16_t mode,float Kp,float Kd);

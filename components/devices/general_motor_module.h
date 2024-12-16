@@ -89,18 +89,13 @@ typedef enum{
       switch(ctrl_state) \
       { \
         case POS_LOOP: \
-          mit_ctrl((Joint_Motor_t*)instance_ptr,angle,speed, \
-          ((Joint_Motor_t*)instance_ptr)->Kp, \
-          ((Joint_Motor_t*)instance_ptr)->Kd,0.0); \
+          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,10); \
           break; \
         case LOCK: \
-          mit_ctrl((Joint_Motor_t*)instance_ptr, \
-            ((Joint_Motor_t*)instance_ptr)->para.pos,0.0, \
-            ((Joint_Motor_t*)instance_ptr)->Kp,((Joint_Motor_t*)instance_ptr)->Kd,0.0); \
           break; \
         case NON_FORCE: \
         default: \
-          mit_nonforce_ctrl((Joint_Motor_t*)instance_ptr); \
+          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,0.0001); \
           break; \
       } \
     break; \

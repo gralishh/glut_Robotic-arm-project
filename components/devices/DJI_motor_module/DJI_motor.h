@@ -79,6 +79,7 @@ typedef struct __DJI_Motor_Ctrl_t{
   fp32 set_speed;//目标速度 range:0~2PI 下同
   fp32 set_angle;//目标角度
   int16_t set_current;
+  fp32 set_lock_angle;
 
 /*限制*/
   //除了braking_angle其它都在设置目标值时使用

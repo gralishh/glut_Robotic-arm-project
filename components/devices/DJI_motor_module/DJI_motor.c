@@ -197,7 +197,8 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor)
   }
 
   motor->mode=LOCK;
-  motor->set_angle=__DJI_Motor_Ctrl_get_ecd_angle(motor);
+  if(motor->set_lock_angle==0.0f)
+    motor->set_lock_angle=__DJI_Motor_Ctrl_get_ecd_angle(motor);
 }
 
 /**
@@ -249,6 +250,12 @@ void __DJI_Motor_pos_ctrl_loop(DJI_Motor_Ctrl_t* motor)
  */
 void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 {
+  if(motor->mode!=LOCK)
+    motor->set_lock_angle=0.0f;
+  else
+    motor->set_angle=motor->set_lock_angle;
+
+
   __DJI_Motor_Ctrl_boundary_ctrl(motor,motor->set_current);
   __DJI_Motor_Ctrl_write_current(motor,motor->set_current);
 }

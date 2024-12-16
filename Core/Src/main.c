@@ -172,7 +172,7 @@ void __motor_timr_ctrl_callback(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  for(int aaaa = 5000000 ; aaaa > 0 ; aaaa--)
+  for(int aaaa = 10000000 ; aaaa > 0 ; aaaa--)
 	{
     ;
 	}
