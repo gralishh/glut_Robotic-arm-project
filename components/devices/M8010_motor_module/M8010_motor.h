@@ -1,6 +1,6 @@
 /**
  * @brief M8010电机驱动模块
- * @note 因为肥肠烂usart的bsp，该模块复用性差，有时间重改
+ * @note 因为肥肠烂usart的bsp，该模块复用性差，但没必要重改
  * @todo 添加过压监测
  */
 #ifndef __M8010_MOTOR_MODULE
@@ -86,7 +86,7 @@ extern M8010_motor_t joint1_motor;
 void M8010_motor_init(M8010_motor_t* motor,uint8_t id,float Kp,float Kd);
 void M8010_motor_change_param(M8010_motor_t* motor,float Kp,float Kd);
 
-void M8010_motor_set_anlge(M8010_motor_t* motor,float angle);
+void M8010_motor_set_angle(M8010_motor_t* motor,float angle);
 void M8010_motor_set_angle_speed(M8010_motor_t* motor, float angle, float speed);
 void M8010_motor_lock(M8010_motor_t* motor);
 void M8010_motor_nonforce(M8010_motor_t* motor);

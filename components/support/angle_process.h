@@ -13,5 +13,6 @@
 
 fp32 ecd_to_angle(int16_t ecd,int16_t max_ecd, int32_t offset_ecd , fp32 offset_angle);
 fp32 angle_normalize(fp32 angle,fp32 offset);
+fp32 angle_limit(fp32 angle_ptr,fp32 max_angle,fp32 min_angle);
 
 #endif

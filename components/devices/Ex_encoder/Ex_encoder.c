@@ -54,7 +54,7 @@ void External_ecd_oid_set_id(FDCAN_HandleTypeDef* CANx,uint16_t oid_id,uint16_t 
   message.new_id = new_id;           // 新的编码器地址
   memset(message.reserved, 0x00, sizeof(message.reserved)); // 填充保留字节为 0
 
-  CanSendMsg(CANx,0x01,(int16_t*)(void*)&message);
+  CanSendMsg(CANx,0x01,(uint8_t*)(void*)&message);
 }
 
 void __External_ecd_can_feedback_hook(FDCAN_HandleTypeDef* CANX,uint16_t id,uint8_t* msg)

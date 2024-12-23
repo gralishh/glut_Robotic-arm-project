@@ -31,8 +31,10 @@
 #include "chassis_task.h"
 #include "gimbal_task.h"
 #include "hand_task.h"
+#include "detect_task.h" 
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
+#include "DJI_motor_canbus.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -171,7 +173,7 @@ void __motor_timr_ctrl_callback(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  for(int aaaa = 5000000 ; aaaa > 0 ; aaaa--)
+  for(int aaaa = 10000000 ; aaaa > 0 ; aaaa--)
 	{
     ;
 	}
@@ -219,6 +221,7 @@ int main(void)
   usart10_init();
   usart2_init();
   usart3_init();
+  DJI_CANBus_init_all();
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -256,10 +259,10 @@ int main(void)
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
 
   /* creation of GimbalTask */
-  //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
-  //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
   //USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
@@ -1084,13 +1087,7 @@ void StartDefaultTask(void *argument)
   #define LEDBRIGHT() WS2812_Ctrl(10,10,10)
   #define LEDDARK() WS2812_Ctrl(0,0,0)
 
-  //uint8_t dat[8] = {0};
-  //MOTOR_send __motor_s={0};
-  //MOTOR_recv __motor_r={0};
-  //__motor_s.id=1;
-  //__motor_s.GM_Send_Effort=0;
-  //__motor_s.GM_Send_speed=0;
-  //LEDDARK();
+  DetectTask(argument);
 
   /* Infinite loop */
   for(;;)
@@ -1150,7 +1147,7 @@ void __usart2_measure_task(void *argument)
 void __gimbal_task(void *argument)
 {
   /* USER CODE BEGIN __gimbal_task */
-  //gimbal_task(argument);
+  gimbal_task(argument);
   /* Infinite loop */
   for(;;)
   {
@@ -1169,7 +1166,7 @@ void __gimbal_task(void *argument)
 void __hand_task(void *argument)
 {
   /* USER CODE BEGIN __hand_task */
-  //Hand_task(argument);
+  hand_task(argument);
   /* Infinite loop */
   for(;;)
   {

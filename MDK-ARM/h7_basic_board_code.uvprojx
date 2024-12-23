@@ -1117,6 +1117,11 @@
               <FileType>1</FileType>
               <FilePath>..\application\hand_task_interface.c</FilePath>
             </File>
+            <File>
+              <FileName>gimbal_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\gimbal_task_interface.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

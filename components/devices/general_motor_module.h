@@ -31,7 +31,17 @@ typedef enum{
         (angle_ptr) \
       ); \
       break; \
+    case M8010_MOTOR: \
+      *current_ptr = ((M8010_motor_t*)instance_ptr)->recv_data.T; \
+      *speed_ptr   = ((M8010_motor_t*)instance_ptr)->recv_data.W; \
+      *angle_ptr   = ((M8010_motor_t*)instance_ptr)->recv_data.Pos; \
+      break; \
+    case M4310_MOTOR: \
+      *current_ptr =((Joint_Motor_t*)instance_ptr)->para.tor; \
+      *speed_ptr   =((Joint_Motor_t*)instance_ptr)->para.vel; \
+      *angle_ptr   =((Joint_Motor_t*)instance_ptr)->para.pos; \
     default: \
+      break; \
   } \
 } \
 
@@ -49,10 +59,10 @@ typedef enum{
           DJI_Motor_set_angle(instance_ptr,angle); \
           break; \
         case GIVING_CURRENT: \
-          DJI_Motor_set_current(instacne_ptr,current); \
+          DJI_Motor_set_current(instance_ptr,current); \
           break; \
         case LOCK: \
-          DJI_Motor_set_current(instance_ptr); \
+          DJI_Motor_lockup(instance_ptr); \
           break; \
         case NON_FORCE: \
         default: \
@@ -60,8 +70,42 @@ typedef enum{
           break; \
       } \
       break; \
+    case M8010_MOTOR: \
+      switch(ctrl_state) \
+      { \
+        case POS_LOOP: \
+          M8010_motor_set_angle((M8010_motor_t*)instance_ptr,angle); \
+          break; \
+        case LOCK: \
+          M8010_motor_lock((M8010_motor_t*)instance_ptr); \
+          break; \
+        case NON_FORCE: \
+        default: \
+          M8010_motor_nonforce((M8010_motor_t*)instance_ptr); \
+          break; \
+      } \
+      break; \
+    case M4310_MOTOR: \
+      switch(ctrl_state) \
+      { \
+        case POS_LOOP: \
+          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,15); \
+          break; \
+        case LOCK: \
+          break; \
+        case NON_FORCE: \
+        default: \
+          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,0.0001); \
+          break; \
+      } \
+    break; \
     default: \
+    break; \
   } \
 } \
+
+#include "DJI_motor.h"
+#include "dm4310_drv.h"
+#include "M8010_motor.h"
 
 #endif

@@ -26,7 +26,6 @@ unsigned int usart3_length;
 
 void usart2_measure_task(void const *pvParameters) 
 {
-    #if gimbalControlBoard
     while(1)
     {
         next_usart2:
@@ -87,11 +86,9 @@ void usart2_measure_task(void const *pvParameters)
         }
         vTaskDelay(1);
     }
-    #endif
 }
 void usart3_measure_task(void const *pvParameters) 
 {
-    #if gimbalControlBoard
     while(1)
     {
         next_usart3:
@@ -152,7 +149,6 @@ void usart3_measure_task(void const *pvParameters)
         }
     vTaskDelay(1);
     }
-    #endif
 }
      
 

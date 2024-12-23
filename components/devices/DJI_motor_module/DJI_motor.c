@@ -7,7 +7,7 @@
 // 电流输出数组宏函数
 #define IS_OUTPUT_ID_200H(id) ((id>=0x201)&&(id<=0x204))
 #define IS_OUTPUT_ID_1FFH(id) ((id>=0x205)&&(id<=0x208))
-#define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x200)%4-1)
+#define GET_OUTPUT_CURRENT_INDEX(id) ((id-0x201)%4)
 
 // Motor_Ctrl宏函数
 #define __DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current) (motor_ptr->reverse_flag?-current:current)
@@ -197,7 +197,8 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor)
   }
 
   motor->mode=LOCK;
-  motor->set_angle=__DJI_Motor_Ctrl_get_ecd_angle(motor);
+  if(motor->set_lock_angle==0.0f)
+    motor->set_lock_angle=__DJI_Motor_Ctrl_get_ecd_angle(motor);
 }
 
 /**
@@ -249,6 +250,12 @@ void __DJI_Motor_pos_ctrl_loop(DJI_Motor_Ctrl_t* motor)
  */
 void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 {
+  if(motor->mode!=LOCK)
+    motor->set_lock_angle=0.0f;
+  else
+    motor->set_angle=motor->set_lock_angle;
+
+
   __DJI_Motor_Ctrl_boundary_ctrl(motor,motor->set_current);
   __DJI_Motor_Ctrl_write_current(motor,motor->set_current);
 }

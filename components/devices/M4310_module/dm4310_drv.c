@@ -2,6 +2,8 @@
 
 #include "arm_math.h"
 
+Joint_Motor_t DM_Motor_J2={0};
+
 float Hex_To_Float(uint32_t *Byte,int num)//十六进制到浮点数
 {
 	return *((float*)Byte);
@@ -49,10 +51,13 @@ float uint_to_float(int x_int, float x_min, float x_max, int bits)
 	return ((float)x_int)*span/((float)((1<<bits)-1)) + offset;
 }
 
-void joint_motor_init(Joint_Motor_t *motor,uint16_t id,uint16_t mode)
+void joint_motor_init(Joint_Motor_t *motor,uint16_t id,uint16_t mode,float Kp,float Kd)
 {
   motor->mode=mode;
+  motor->enable=1;
   motor->para.id=id;
+  motor->Kp=Kp;
+  motor->Kd=Kd;
 }
 
 
@@ -141,14 +146,14 @@ void disable_motor_mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id)
 * @details:    	通过CAN总线向电机发送MIT模式下的控制帧。
 ************************************************************************
 **/
-void mit_ctrl(hcan_t* hcan, uint16_t motor_id, float pos, float vel,float kp, float kd, float torq)
+void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, float kd, float torq)
 {
-	uint8_t data[8];
+	uint8_t* data=motor_ptr->output;
 	uint16_t pos_tmp,vel_tmp,kp_tmp,kd_tmp,tor_tmp;
-	uint16_t id = motor_id + MIT_MODE;
+  motor_ptr->output_id = motor_ptr->para.id+MIT_MODE;
 
 	pos_tmp = float_to_uint(pos,  P_MIN,  P_MAX,  16);
-	vel_tmp = float_to_uint(vel,  V_MIN,  V_MAX,  12);
+	vel_tmp = float_to_uint(vel==0.0f?-0.001f:vel,  V_MIN,  V_MAX,  12);
 	kp_tmp  = float_to_uint(kp,   KP_MIN, KP_MAX, 12);
 	kd_tmp  = float_to_uint(kd,   KD_MIN, KD_MAX, 12);
 	tor_tmp = float_to_uint(torq, T_MIN,  T_MAX,  12);
@@ -162,8 +167,18 @@ void mit_ctrl(hcan_t* hcan, uint16_t motor_id, float pos, float vel,float kp, fl
 	data[6] = ((kd_tmp&0xF)<<4)|(tor_tmp>>8);
 	data[7] = tor_tmp;
 	
-	fdcanx_send_data(hcan, id, data, 8);
 }
+
+void mit_nonforce_ctrl(Joint_Motor_t* motor_ptr)
+{
+  mit_ctrl(motor_ptr,0.01,0.01,0.01,0.01,0.01);
+}
+
+void mit_ctrl_pos_speed(Joint_Motor_t* motor_ptr,float pos,float vel)
+{
+  mit_ctrl(motor_ptr,pos,(motor_ptr->para.pos)>0?vel:-vel,motor_ptr->Kp,motor_ptr->Kd,0);
+}
+
 /**
 ************************************************************************
 * @brief:      	pos_speed_ctrl: 位置速度控制函数
@@ -174,13 +189,12 @@ void mit_ctrl(hcan_t* hcan, uint16_t motor_id, float pos, float vel,float kp, fl
 * @details:    	通过CAN总线向电机发送位置速度控制命令
 ************************************************************************
 **/
-void pos_speed_ctrl(hcan_t* hcan,uint16_t motor_id, float pos, float vel)
+extern void pos_speed_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel)
 {
-	uint16_t id;
 	uint8_t *pbuf, *vbuf;
-	uint8_t data[8];
+	uint8_t *data=motor_ptr->output;
 	
-	id = motor_id + POS_MODE;
+	motor_ptr->output_id = motor_ptr->para.id + POS_MODE;
 	pbuf=(uint8_t*)&pos;
 	vbuf=(uint8_t*)&vel;
 	
@@ -193,9 +207,15 @@ void pos_speed_ctrl(hcan_t* hcan,uint16_t motor_id, float pos, float vel)
 	data[5] = *(vbuf+1);
 	data[6] = *(vbuf+2);
 	data[7] = *(vbuf+3);
-	
-	fdcanx_send_data(hcan, id, data, 8);
 }
+
+extern void pos_speed_lock(Joint_Motor_t* motor_ptr,float vel)
+{
+  //if(motor_ptr->lock_angle==0)
+    //motor_ptr->lock_angle=motor_ptr->para.pos;
+  //pos_speed_ctrl(motor_ptr,motor_ptr->lock_angle,vel);
+}
+
 /**
 ************************************************************************
 * @brief:      	speed_ctrl: 速度控制函数
@@ -223,6 +243,14 @@ void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float vel)
 	fdcanx_send_data(hcan, id, data, 4);
 }
 
+void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr)
+{
+  if(!(motor_ptr->enable))
+    return;
+
+	uint16_t id = motor_ptr->output_id;
+	fdcanx_send_data(hcan, id, motor_ptr->output, 8);
+}
 
 
 
