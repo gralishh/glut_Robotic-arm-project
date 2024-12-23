@@ -89,7 +89,7 @@ typedef enum{
       switch(ctrl_state) \
       { \
         case POS_LOOP: \
-          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,10); \
+          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,15); \
           break; \
         case LOCK: \
           break; \

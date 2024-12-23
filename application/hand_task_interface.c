@@ -8,7 +8,9 @@
 #include "DJI_motor_canbus.h"
 #include "remote_control.h" 
 #include "angle_process.h"
+#include "detect_task.h"
 #include "cmsis_os2.h"
+#include "ws2812.h"
 
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
@@ -96,6 +98,9 @@ static void __hand_rc_ctrl(void);
 
 void hand_task_init()
 {
+  osDelay(3000);
+  WS2812_Ctrl(30,100,50);
+
   /*基础初始化*/
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
@@ -114,7 +119,7 @@ void hand_task_init()
     disable_motor_mode(&hfdcan2,1,MIT_MODE);
     osDelay(20);
   }
-  for(int i=0;i<20;i++)
+  for(int i=0;i<40;i++)
   {
     enable_motor_mode(&hfdcan2,1,POS_MODE);
     osDelay(20);
@@ -189,17 +194,25 @@ void hand_task_get_feedback()
 void hand_task_mode_flush()
 {
   /**/
-  if(get_remote_control_point()->rc.s[0]==3)
+  if(switch_is_up(get_remote_control_point()->rc.s[1]))
   {
-    if(get_remote_control_point()->rc.s[1]==1)
+    if(switch_is_down(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
-    else if(get_remote_control_point()->rc.s[1]==2)
+    else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
-    else if(get_remote_control_point()->rc.s[1]==3)
+    else if(switch_is_up(get_remote_control_point()->rc.s[0]))
       ;
   }
+  else if(switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
+  {
+    __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
+  }
+  else
+  {
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+  }
 
-  if(get_remote_control_point()->rc.s[0]==1 && get_remote_control_point()->rc.s[1]==1)
+	if(toe_is_error(DBUSTOE))
   {
     __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
   }

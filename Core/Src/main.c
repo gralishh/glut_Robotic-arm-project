@@ -31,6 +31,7 @@
 #include "chassis_task.h"
 #include "gimbal_task.h"
 #include "hand_task.h"
+#include "detect_task.h" 
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
@@ -258,7 +259,7 @@ int main(void)
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
 
   /* creation of GimbalTask */
-  //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
@@ -1086,13 +1087,7 @@ void StartDefaultTask(void *argument)
   #define LEDBRIGHT() WS2812_Ctrl(10,10,10)
   #define LEDDARK() WS2812_Ctrl(0,0,0)
 
-  //uint8_t dat[8] = {0};
-  //MOTOR_send __motor_s={0};
-  //MOTOR_recv __motor_r={0};
-  //__motor_s.id=1;
-  //__motor_s.GM_Send_Effort=0;
-  //__motor_s.GM_Send_speed=0;
-  //LEDDARK();
+  DetectTask(argument);
 
   /* Infinite loop */
   for(;;)
@@ -1152,7 +1147,7 @@ void __usart2_measure_task(void *argument)
 void __gimbal_task(void *argument)
 {
   /* USER CODE BEGIN __gimbal_task */
-  //gimbal_task(argument);
+  gimbal_task(argument);
   /* Infinite loop */
   for(;;)
   {
