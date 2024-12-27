@@ -8,12 +8,14 @@
 #include "task.h"
 
 typedef enum{
-  CHASSIS_UPLIFT=0x00,
   CHASSIS_JOINT_COUNT,
 }CHASSIS_JOINT_INDEX;
 
 typedef enum{
-  DJI_UL=0x00,
+  DJI_LF=0x00,
+  DJI_RF,
+  DJI_LB,
+  DJI_RB,
   CHASSIS_MOTOR_COUNT,
 }CHASSIS_MOTOR_INDEX;
 
@@ -51,6 +53,11 @@ typedef struct{
 
   uint8_t tick_count_halt;
   int64_t tick;
+
+  /*µ×ÅÌÔË¶¯×´Ì¬*/
+  fp32 vx;
+  fp32 vy;
+  fp32 wz;
 } CHASSIS_TASK_HANDLER_TYPE; 
 extern CHASSIS_TASK_HANDLER_TYPE chassis_task_handler;/*unique structure*/
 extern CHASSIS_TASK_HANDLER_TYPE* chassis_task_handler_ptr;

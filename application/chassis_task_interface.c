@@ -11,17 +11,24 @@
 #define RC_CTRL_PTR (get_remote_control_point())
 
 /*extern*/
-extern FDCAN_HandleTypeDef hfdcan1;
+extern FDCAN_HandleTypeDef hfdcan3;
 
 /*global macro variable*/
 // joint mapping parameter
-#define UL_MAP_K   1
-#define UL_MAP_D   0
+
 // controller sensity(degree per loop)
-#define UL_CTRL_SEN 0
+#define VX_CTRL_SEN 0.0053f
+#define VY_CTRL_SEN 0.0053f
+#define WZ_CTRL_SEN 0.01f
+// chassis para
+#define CHASSIS_WZ_SET_SCALE 0.03f
+#define MOTOR_DISTANCE_TO_CENTER 0.2f
 
 /*global motor handler*/
-DJI_Motor_Ctrl_t DJI_Motor_uplift;
+DJI_Motor_Ctrl_t DJI_Motor_LeftFront;
+DJI_Motor_Ctrl_t DJI_Motor_RightFront;
+DJI_Motor_Ctrl_t DJI_Motor_LeftBack;
+DJI_Motor_Ctrl_t DJI_Motor_RightBack;
 
 static void __chassis_nonforce(void);
 static void __chassis_idle_ctrl(void);
@@ -80,15 +87,28 @@ void chassis_task_init()
   __RESET_TICKS();
 
   /*电机初始化*/
-  __SET_MOTOR_INSTANCE(DJI_UL,&DJI_Motor_uplift);
-  __SET_MOTOR_TYPE(DJI_UL,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,25,0,0.001,5000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,50,0,0,500,0);
-  DJI_Motor_uplift.circle_count_flag=1;
+  __SET_MOTOR_INSTANCE(DJI_LF,&DJI_Motor_LeftFront);
+  __SET_MOTOR_TYPE(DJI_LF,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_LeftFront,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftFront,PID_POSITION,25,0,0,5000,0);
+
+  __SET_MOTOR_INSTANCE(DJI_RF,&DJI_Motor_RightFront);
+  __SET_MOTOR_TYPE(DJI_RF,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_RightFront,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront,PID_POSITION,25,0,0,5000,0);
+
+  __SET_MOTOR_INSTANCE(DJI_LB,&DJI_Motor_LeftBack);
+  __SET_MOTOR_TYPE(DJI_LB,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_LeftBack,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftBack,PID_POSITION,25,0,0,5000,0);
+
+  __SET_MOTOR_INSTANCE(DJI_RB,&DJI_Motor_RightBack);
+  __SET_MOTOR_TYPE(DJI_RB,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_RightBack,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack,PID_POSITION,25,0,0,5000,0);
 
   __chassis_idle_ctrl();
-  DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
+  DJI_CANBus_enable_bus(&DJI_CAN3_Bus_ctrl);
 }
 
 /**
@@ -112,7 +132,6 @@ void chassis_task_get_feedback()
   }
 
   /*joint angle map*/
-  __GET_JOINT_ANGLE(CHASSIS_UPLIFT)=UL_MAP_K*__GET_MOTOR_ANGLE(DJI_UL) +UL_MAP_D;
   /*
   __GET_JOINT_ANGLE(index,
     ...
@@ -128,11 +147,9 @@ void chassis_task_get_feedback()
 void chassis_task_mode_flush()
 {
   /**/
-  if(switch_is_mid(get_remote_control_point()->rc.s[1]))
+  if(switch_is_down(get_remote_control_point()->rc.s[1]))
   {
-    if(switch_is_down(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
-    else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
+    if(switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(CHASSIS_MODE_RC_CTRL);
     else if(switch_is_up(get_remote_control_point()->rc.s[0]))
       ;
@@ -181,8 +198,6 @@ void chassis_task_output()
 {
   uint16_t index;
   /*joint map to motor state*/
-  if(__GET_MOTOR_CTRL_MODE(DJI_UL)==POS_LOOP)
-    __SET_MOTOR_ANGLE(DJI_UL,(HANDLER_PTR->joint_angle[DJI_UL]-UL_MAP_D)/UL_MAP_K);
 
   /*motor output*/
   for(index=0;index<CHASSIS_MOTOR_COUNT;index++)
@@ -202,7 +217,6 @@ void __chassis_nonforce()
   int index;
   for(index=0;index<CHASSIS_MOTOR_COUNT;index++)
   {
-    __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);// 设置关节输出值为当前关节角度
     __SET_MOTOR_NONFORCE(index);
   }
 }
@@ -212,14 +226,24 @@ void __chassis_idle_ctrl()
   int index;
   for(index=0;index<CHASSIS_MOTOR_COUNT;index++)
   {
-    __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);// 设置关节输出值为当前关节角度
     __SET_MOTOR_LOCKUP(index);
   }
 }
 
 void __chassis_rc_ctrl()
 {
-  __ADD_JOINT_ANGLE(CHASSIS_UPLIFT,RC_CTRL_PTR->rc.ch[2]*0.00005f);
+  HANDLER_PTR->vx=-RC_CTRL_PTR->rc.ch[3]*VX_CTRL_SEN;
+  HANDLER_PTR->vy=-RC_CTRL_PTR->rc.ch[2]*VY_CTRL_SEN;
+  HANDLER_PTR->wz= RC_CTRL_PTR->rc.ch[0]*WZ_CTRL_SEN;
+
+  //HANDLER_PTR->vx=HANDLER_PTR->vx
+  //HANDLER_PTR->vy=HANDLER_PTR->vy
+  //HANDLER_PTR->wz=HANDLER_PTR->wz
+
+  __SET_MOTOR_SPEED(DJI_LF, - HANDLER_PTR->vx - HANDLER_PTR->vy + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_RF,   HANDLER_PTR->vx - HANDLER_PTR->vy + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_RB,   HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_LB, - HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
 }
 
 #undef HANDLER 
