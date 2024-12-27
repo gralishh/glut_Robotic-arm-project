@@ -273,7 +273,7 @@
         <Ww>
           <count>22</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler</ItemText>
+          <ItemText>hand_task_handler,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>23</count>
@@ -294,6 +294,21 @@
           <count>26</count>
           <WinNumber>1</WinNumber>
           <ItemText>DJI_CAN2_Bus_ctrl</ItemText>
+        </Ww>
+        <Ww>
+          <count>27</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>DJI_CAN1_Bus_ctrl</ItemText>
+        </Ww>
+        <Ww>
+          <count>28</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>gimbal_task_handler,0x10</ItemText>
+        </Ww>
+        <Ww>
+          <count>29</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>DJI_Motor_uplift</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

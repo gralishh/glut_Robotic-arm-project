@@ -5,6 +5,7 @@
 #include "remote_control.h" 
 #include "angle_process.h"
 #include "cmsis_os2.h"
+#include "detect_task.h"
 
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
@@ -82,12 +83,12 @@ void gimbal_task_init()
   /*电机初始化*/
   __SET_MOTOR_INSTANCE(DJI_UL,&DJI_Motor_uplift);
   __SET_MOTOR_TYPE(DJI_UL,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,25,0,0.001,5000,0);
+  DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x201);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,40,0,0.001,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,50,0,0,500,0);
   DJI_Motor_uplift.circle_count_flag=1;
 
-  __gimbal_idle_ctrl();
+  __gimbal_nonforce();
   DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
 }
 
@@ -144,6 +145,11 @@ void gimbal_task_mode_flush()
   else
   {
     __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  }
+
+	if(toe_is_error(DBUSTOE))
+  {
+    __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
   /*
   if(get_remote_control_point()->rc.s[0]==0 && get_remote_control_point()->rc.s[1]==0)
@@ -209,17 +215,12 @@ void __gimbal_nonforce()
 
 void __gimbal_idle_ctrl()
 {
-  int index;
-  for(index=0;index<GIMBAL_MOTOR_COUNT;index++)
-  {
-    __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);// 设置关节输出值为当前关节角度
-    __SET_MOTOR_LOCKUP(index);
-  }
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,0);
 }
 
 void __gimbal_rc_ctrl()
 {
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[2]*0.00005f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00008f);
 }
 
 #undef HANDLER 

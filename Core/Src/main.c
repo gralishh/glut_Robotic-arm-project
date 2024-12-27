@@ -222,6 +222,7 @@ int main(void)
   usart2_init();
   usart3_init();
   DJI_CANBus_init_all();
+  WS2812_Ctrl(0,0,0);
   /* USER CODE END 2 */
 
   /* Init scheduler */
