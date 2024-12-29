@@ -122,6 +122,13 @@ const osThreadAttr_t USART3_measure_attributes = {
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for CustomCtrlTask */
+osThreadId_t CustomCtrlTaskHandle;
+const osThreadAttr_t CustomCtrlTask_attributes = {
+  .name = "CustomCtrlTask",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityLow,
+};
 /* Definitions for motor_timer_ctrl */
 osTimerId_t motor_timer_ctrlHandle;
 const osTimerAttr_t motor_timer_ctrl_attributes = {
@@ -155,6 +162,7 @@ void __usart2_measure_task(void *argument);
 void __gimbal_task(void *argument);
 void __hand_task(void *argument);
 void __usart3_measure_task(void *argument);
+void __Custom_Ctrl_Task(void *argument);
 void __motor_timr_ctrl_callback(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -266,6 +274,9 @@ int main(void)
 
   /* creation of USART3_measure */
   //USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
+
+  /* creation of CustomCtrlTask */
+  CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1192,6 +1203,24 @@ void __usart3_measure_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __usart3_measure_task */
+}
+
+/* USER CODE BEGIN Header___Custom_Ctrl_Task */
+/**
+* @brief Function implementing the CustomCtrlTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___Custom_Ctrl_Task */
+void __Custom_Ctrl_Task(void *argument)
+{
+  /* USER CODE BEGIN __Custom_Ctrl_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __Custom_Ctrl_Task */
 }
 
 /* __motor_timr_ctrl_callback function */
