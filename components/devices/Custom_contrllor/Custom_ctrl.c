@@ -1,6 +1,8 @@
 #include "Custom_ctrl.h"
 
 #define HEADER 0xa5
+#define PACK_LENGTH (sizeof(data_t))
+#define RX_BUF ((void*)Custom_Ctrl_get_rx_pack_ptr())
 /**/
 #define IS_HEADER(byte) (byte==HEADER)
 
@@ -17,7 +19,7 @@ inline CUSTOM_CTRL_T* Custom_Ctrl_get_rx_pack_ptr(void)
 /**
  * @brief 解包数据
  */
-void Custom_Ctrl_unpack(Custom_Ctrl_handler* handler,uint8_t* pack)
+void Custom_Ctrl_unpack(void)
 {
 
 }
@@ -36,63 +38,62 @@ void Data_init(data_t *data_init)
 
 void Custom_Ctrl_Task(void* para)
 {
+  static uint32_t usart1_length=0x00;
   while(1)
   {
-    next_usart2:
-    usart2_length = USART2_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
+    next_usart1:
+    usart1_length = USART1_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
-    if(usart2_length >= 10)
+    if(usart1_length >= PACK_LENGTH)
     {
-      if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  // 判断数据的起始值是否为0xFD 0xEE
+      if(IS_HEADER(USART1_At(0)))  
       {
-        USART2_Recv(Transmission_usart2, FEEDBACK_DATA_SIZE);  // 把数据出栈并存储在Transmission_BufferOfusart2，数据处理在中断里
-        //usart2_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart2);
-        SERVO_Recv(&joint1_motor,Transmission_usart2);
-        USART2_Drop(4096);
+        USART1_Recv(RX_BUF, PACK_LENGTH);  
+        Custom_Ctrl_unpack();
+        USART1_Drop(4096);
       }
       else
       {
-        USART2_Drop(1);
+        USART1_Drop(1);
         vTaskDelay(1);
-        usart2_length = USART2_GetDataCount();
-        if(usart2_length > 3000)
+        usart1_length = USART1_GetDataCount();
+        if(usart1_length > 3000)
         {
-            USART2_Drop(4096);
+            USART1_Drop(4096);
         }
-        goto next_usart2;
+        goto next_usart1;
       }
     }
     else
     {
-      USART2_Drop(1);
+      USART1_Drop(1);
       for(;;)
       {
-		    usart2_length =  USART2_GetDataCount();
-        if( usart2_length > 0)
+		    usart1_length =  USART1_GetDataCount();
+        if( usart1_length > 0)
         {
-            if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  // Frame head
+            if(IS_HEADER(USART1_At(0)))  // Frame head
             {
-                break;
+              break;
             }
             else
             {
-                USART2_Drop(1);
-                vTaskDelay(1);
+              USART1_Drop(1);
+              vTaskDelay(1);
             }
-             usart2_length =  USART2_GetDataCount();
-            if(usart2_length > 3000)
+             usart1_length =  USART1_GetDataCount();
+            if(usart1_length > 3000)
             {
-                USART2_Drop(4096);
-                break;
+              USART1_Drop(4096);
+              break;
             }
         }
         else
         {
-            break;
+          break;
         }
       }
     }
     vTaskDelay(1);
   }
-
 }

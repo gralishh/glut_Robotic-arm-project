@@ -2,6 +2,7 @@
 #define __CUSTOM_CTRL_H__
 
 #include "main.h" 
+#include "struct_typedef.h"
 #include "crc.h"
 
 typedef  struct
@@ -50,12 +51,13 @@ typedef data_t CUSTOM_CTRL_RX_PACK;
 
 typedef struct{
   CUSTOM_CTRL_RX_PACK rx_pack;
+  fp32 joint_angle[4];
 } CUSTOM_CTRL_T;
 CUSTOM_CTRL_T Custom_Ctrl_handler;
 
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
 CUSTOM_CTRL_T* Custom_Ctrl_get_rx_pack_ptr(void);
-void Custom_Ctrl_unpack(Custom_Ctrl_handler* handler,uint8_t* pack);
+void Custom_Ctrl_unpack(void);
 void Custom_Ctrl_Task(void* para);
 
 #endif
