@@ -1078,11 +1078,6 @@
               <FilePath>..\application\CAN_receive.c</FilePath>
             </File>
             <File>
-              <FileName>chassis_behaviour.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\chassis_behaviour.c</FilePath>
-            </File>
-            <File>
               <FileName>chassis_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\chassis_task.c</FilePath>
@@ -1121,6 +1116,11 @@
               <FileName>gimbal_task_interface.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\gimbal_task_interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\chassis_task_interface.c</FilePath>
             </File>
           </Files>
         </Group>
