@@ -17,9 +17,9 @@ extern FDCAN_HandleTypeDef hfdcan3;
 // joint mapping parameter
 
 // controller sensity(degree per loop)
-#define VX_CTRL_SEN 0.0053f
-#define VY_CTRL_SEN 0.0053f
-#define WZ_CTRL_SEN 0.01f
+#define VX_CTRL_SEN 2.53f
+#define VY_CTRL_SEN 2.53f
+#define WZ_CTRL_SEN 6.0f
 // chassis para
 #define CHASSIS_WZ_SET_SCALE 0.03f
 #define MOTOR_DISTANCE_TO_CENTER 0.2f
@@ -108,7 +108,7 @@ void chassis_task_init()
   DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack,PID_POSITION,25,0,0,5000,0);
 
   __chassis_idle_ctrl();
-  //DJI_CANBus_enable_bus(&DJI_CAN3_Bus_ctrl);
+  DJI_CANBus_enable_bus(&DJI_CAN3_Bus_ctrl);
 }
 
 /**
