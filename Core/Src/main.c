@@ -222,6 +222,7 @@ int main(void)
   usart2_init();
   usart3_init();
   DJI_CANBus_init_all();
+  WS2812_Ctrl(0,0,0);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -265,7 +266,7 @@ int main(void)
   //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
-  //USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
+  USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1055,6 +1056,7 @@ static void MX_DMA_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
@@ -1065,6 +1067,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, Pump1_Pin|Pump2_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : Pump1_Pin Pump2_Pin */
+  GPIO_InitStruct.Pin = Pump1_Pin|Pump2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

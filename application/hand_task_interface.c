@@ -109,7 +109,7 @@ void hand_task_init()
   // J1
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,3,0.35,0.075);
+  M8010_motor_init(&joint1_motor,3,0.4,0.075);
 
   // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
@@ -129,7 +129,7 @@ void hand_task_init()
   // J3
   __SET_MOTOR_INSTANCE(DJI_J3,&DJI_Motor_J3);
   __SET_MOTOR_TYPE(DJI_J3,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x202);
+  DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
   DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,25,0.000,0,10000.000,800);
@@ -140,7 +140,7 @@ void hand_task_init()
   __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,25,0.001,0,5000,1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,25,0.001,0,9000,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,50,0,0,500,1000);
   DJI_Motor_headendL.circle_count_flag=1;
 
@@ -148,7 +148,7 @@ void hand_task_init()
   __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,25,0,0.001,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,25,0.001,0,9000,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,50,0,0,500,0);
   DJI_Motor_headendR.circle_count_flag=1;
 
@@ -292,12 +292,12 @@ void __hand_nonforce()
 
 void __hand_idle_ctrl()
 {
-  int index;
-  for(index=0;index<HAND_MOTOR_COUNT;index++)
-  {
-    __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);// 设置关节输出值为当前关节角度
-    __SET_MOTOR_LOCKUP(index);
-  }
+  __ADD_MOTOR_ANGLE(DJI_HE_L,0);
+  __ADD_MOTOR_ANGLE(DJI_HE_R,0);
+  __ADD_JOINT_ANGLE(HAND_J1,0);
+  __ADD_JOINT_ANGLE(HAND_J2,0);
+  __ADD_JOINT_ANGLE(HAND_J3,0);
+
 }
 
 void __hand_rc_ctrl()
@@ -305,8 +305,8 @@ void __hand_rc_ctrl()
   //_ADD_JOINT_ANGLE(HAND_J1,RC_CTRL_PTR->rc.ch[2]*0.00005f);
   //_ADD_JOINT_ANGLE(HAND_J2,RC_CTRL_PTR->rc.ch[0]*0.00005f);
   //_ADD_JOINT_ANGLE(HAND_J3,RC_CTRL_PTR->rc.ch[5]*0.00005f);
-  __ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[3]*0.00005f+RC_CTRL_PTR->rc.ch[1]*0.00005f);
-  __ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.00005f);
+  __ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[3]*0.00005f+RC_CTRL_PTR->rc.ch[1]*0.0001f);
+  __ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.0001f);
   __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.00001f);
   __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.000001f);
   __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025);
