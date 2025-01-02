@@ -133,7 +133,7 @@ void hand_task_init()
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
   DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,25,0.000,0,10000.000,800);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,50,0.0,0.1,500,100);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,50,0.0,0.0,500,100);
   DJI_Motor_J3.circle_count_flag=1;
 
   // Headend_L
