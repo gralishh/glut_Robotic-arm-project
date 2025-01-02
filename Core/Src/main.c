@@ -260,10 +260,10 @@ int main(void)
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
 
   /* creation of GimbalTask */
-  //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
-  //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
   USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
@@ -608,7 +608,17 @@ static void MX_FDCAN2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN FDCAN2_Init 2 */
+  if (HAL_FDCAN_DeInit(&hfdcan2) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
+  hfdcan2.Init.MessageRAMOffset=(hfdcan1.msgRam.EndAddress - SRAMCAN_BASE)/4+1;
+
+  if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE END FDCAN2_Init 2 */
 
 }
@@ -661,7 +671,17 @@ static void MX_FDCAN3_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN FDCAN3_Init 2 */
+  if (HAL_FDCAN_DeInit(&hfdcan3) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
+  hfdcan3.Init.MessageRAMOffset=(hfdcan2.msgRam.EndAddress - SRAMCAN_BASE)/4+1;
+
+  if (HAL_FDCAN_Init(&hfdcan3) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE END FDCAN3_Init 2 */
 
 }
