@@ -106,14 +106,14 @@ void hand_task_init()
   __RESET_TICKS();
 
   /*电机初始化*/
+  // J1
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
   M8010_motor_init(&joint1_motor,3,0.35,0.075);
 
+  // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
   __SET_MOTOR_TYPE(DM_J2,M4310_MOTOR);
-  //disable_motor_mode(&hfdcan2,1,POS_MODE);
-  //disable_motor_mode(&hfdcan2,1,SPEED_MODE);
   for(int i=0;i<10;i++)
   {
     disable_motor_mode(&hfdcan2,1,MIT_MODE);
@@ -126,6 +126,7 @@ void hand_task_init()
   }
   joint_motor_init(&DM_Motor_J2,1,POS_MODE,1.0,1.0);
 
+  // J3
   __SET_MOTOR_INSTANCE(DJI_J3,&DJI_Motor_J3);
   __SET_MOTOR_TYPE(DJI_J3,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x202);
@@ -135,6 +136,7 @@ void hand_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,50,0.0,0.1,500,100);
   DJI_Motor_J3.circle_count_flag=1;
 
+  // Headend_L
   __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
@@ -142,6 +144,7 @@ void hand_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,50,0,0,500,1000);
   DJI_Motor_headendL.circle_count_flag=1;
 
+  // Headend_R
   __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
@@ -149,7 +152,12 @@ void hand_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,50,0,0,500,0);
   DJI_Motor_headendR.circle_count_flag=1;
 
-  __hand_idle_ctrl();
+  for(int i=0;i<40;i++)
+  {
+    osDelay(20);
+    hand_task_get_feedback();
+    __hand_idle_ctrl();
+  }
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
 }
 

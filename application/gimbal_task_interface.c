@@ -87,7 +87,12 @@ void gimbal_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,50,0,0,500,0);
   DJI_Motor_uplift.circle_count_flag=1;
 
-  __gimbal_idle_ctrl();
+  for(int i=0;i<40;i++)
+  {
+    osDelay(20);
+    gimbal_task_get_feedback();
+    __gimbal_idle_ctrl();
+  }
   DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
 }
 
