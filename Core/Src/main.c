@@ -93,7 +93,7 @@ osThreadId_t ChassisTaskHandle;
 const osThreadAttr_t ChassisTask_attributes = {
   .name = "ChassisTask",
   .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for USART2_measure */
 osThreadId_t USART2_measureHandle;
@@ -128,7 +128,7 @@ osThreadId_t CustomCtrlTaskHandle;
 const osThreadAttr_t CustomCtrlTask_attributes = {
   .name = "CustomCtrlTask",
   .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for motor_timer_ctrl */
 osTimerId_t motor_timer_ctrlHandle;
