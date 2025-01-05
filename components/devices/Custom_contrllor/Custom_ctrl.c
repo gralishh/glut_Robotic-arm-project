@@ -1,4 +1,7 @@
 #include "Custom_ctrl.h"
+#include "crc.h"
+#include "bsp_usart.h"
+#include "cmsis_os.h"
 
 #define HEADER 0xa5
 #define PACK_LENGTH (sizeof(data_t))
@@ -6,14 +9,16 @@
 /**/
 #define IS_HEADER(byte) (byte==HEADER)
 
+CUSTOM_CTRL_T CC_handler;
+
 inline CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void)
 {
-  return &Custom_Ctrl_handler;
+  return &CC_handler;
 }
 
-inline CUSTOM_CTRL_T* Custom_Ctrl_get_rx_pack_ptr(void)
+inline data_t* Custom_Ctrl_get_rx_pack_ptr(void)
 {
-  return &(Custom_Ctrl_handler.rx_pack);
+  return &(CC_handler.rx_pack);
 }
 
 /**
@@ -38,53 +43,53 @@ void Data_init(data_t *data_init)
 
 void Custom_Ctrl_Task(void* para)
 {
-  static uint32_t usart1_length=0x00;
+  static uint32_t uart7_length=0x00;
   while(1)
   {
-    next_usart1:
-    usart1_length = USART1_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
+    next_uart7:
+    uart7_length = UART7_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
-    if(usart1_length >= PACK_LENGTH)
+    if(uart7_length >= PACK_LENGTH)
     {
-      if(IS_HEADER(USART1_At(0)))  
+      if(IS_HEADER(UART7_At(0)))  
       {
-        USART1_Recv(RX_BUF, PACK_LENGTH);  
+        UART7_Recv(RX_BUF, PACK_LENGTH);  
         Custom_Ctrl_unpack();
-        USART1_Drop(4096);
+        UART7_Drop(4096);
       }
       else
       {
-        USART1_Drop(1);
+        UART7_Drop(1);
         vTaskDelay(1);
-        usart1_length = USART1_GetDataCount();
-        if(usart1_length > 3000)
+        uart7_length = UART7_GetDataCount();
+        if(uart7_length > 3000)
         {
-            USART1_Drop(4096);
+            UART7_Drop(4096);
         }
-        goto next_usart1;
+        goto next_uart7;
       }
     }
     else
     {
-      USART1_Drop(1);
+      UART7_Drop(1);
       for(;;)
       {
-		    usart1_length =  USART1_GetDataCount();
-        if( usart1_length > 0)
+		    uart7_length =  UART7_GetDataCount();
+        if( uart7_length > 0)
         {
-            if(IS_HEADER(USART1_At(0)))  // Frame head
+            if(IS_HEADER(UART7_At(0)))  // Frame head
             {
               break;
             }
             else
             {
-              USART1_Drop(1);
+              UART7_Drop(1);
               vTaskDelay(1);
             }
-             usart1_length =  USART1_GetDataCount();
-            if(usart1_length > 3000)
+             uart7_length =  UART7_GetDataCount();
+            if(uart7_length > 3000)
             {
-              USART1_Drop(4096);
+              UART7_Drop(4096);
               break;
             }
         }

@@ -3,22 +3,21 @@
 
 #include "main.h" 
 #include "struct_typedef.h"
-#include "crc.h"
 
-typedef  struct
+typedef __packed struct
 {
 	uint8_t data[30];
-} __packed robot_interactive_data_t;
+} robot_interactive_data_t;
 
-typedef  struct
+typedef __packed struct
 {
   uint8_t  sof;
   uint16_t data_length;
   uint8_t  seq;
   uint8_t  crc8;
-} __packed frame_header_t;
+} frame_header_t;
 
-typedef  struct
+typedef __packed struct
 {
   uint8_t  up : 1;
   uint8_t  down : 1;
@@ -36,16 +35,16 @@ typedef  struct
 	uint8_t  k10 : 1;
 	uint8_t  k11 : 1;
 	uint8_t  k12 : 1;
-} __packed key_t;
+} key_t;
 
-typedef  struct
+typedef __packed struct
 {
 	frame_header_t	header;
 	uint16_t cmd_id;
 	key_t   key;
 	uint16_t adc_val[4];
 	uint16_t crc16;
-} __packed data_t;
+} data_t; 
 
 typedef data_t CUSTOM_CTRL_RX_PACK;
 
@@ -53,10 +52,9 @@ typedef struct{
   CUSTOM_CTRL_RX_PACK rx_pack;
   fp32 joint_angle[4];
 } CUSTOM_CTRL_T;
-CUSTOM_CTRL_T Custom_Ctrl_handler;
 
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
-CUSTOM_CTRL_T* Custom_Ctrl_get_rx_pack_ptr(void);
+data_t* Custom_Ctrl_get_rx_pack_ptr(void);
 void Custom_Ctrl_unpack(void);
 void Custom_Ctrl_Task(void* para);
 

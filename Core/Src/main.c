@@ -35,6 +35,7 @@
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
+#include "Custom_ctrl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -230,6 +231,8 @@ int main(void)
   usart2_init();
   usart3_init();
   DJI_CANBus_init_all();
+
+  HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -261,7 +264,7 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of USART2_measure */
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
@@ -273,7 +276,7 @@ int main(void)
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
-  //USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
+  USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
 
   /* creation of CustomCtrlTask */
   CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
@@ -1066,16 +1069,27 @@ static void MX_DMA_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port, POWER_5V_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : POWER_5V_EN_Pin */
+  GPIO_InitStruct.Pin = POWER_5V_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(POWER_5V_EN_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
@@ -1215,6 +1229,7 @@ void __usart3_measure_task(void *argument)
 void __Custom_Ctrl_Task(void *argument)
 {
   /* USER CODE BEGIN __Custom_Ctrl_Task */
+  Custom_Ctrl_Task(argument);
   /* Infinite loop */
   for(;;)
   {

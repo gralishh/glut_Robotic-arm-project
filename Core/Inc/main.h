@@ -58,6 +58,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define POWER_5V_EN_Pin GPIO_PIN_15
+#define POWER_5V_EN_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 
