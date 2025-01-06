@@ -58,12 +58,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define Pump1_Pin GPIO_PIN_9
-#define Pump1_GPIO_Port GPIOE
-#define Pump2_Pin GPIO_PIN_13
-#define Pump2_GPIO_Port GPIOE
 #define POWER_5V_EN_Pin GPIO_PIN_15
 #define POWER_5V_EN_GPIO_Port GPIOC
+#define PUMP1_IN_Pin GPIO_PIN_9
+#define PUMP1_IN_GPIO_Port GPIOE
+#define PUMP1_OUT_Pin GPIO_PIN_13
+#define PUMP1_OUT_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

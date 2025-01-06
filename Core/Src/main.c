@@ -23,7 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ws2812.h"
-#include "remote_control.h" /*Ó?ÓÚ?â?Ô*/
+#include "remote_control.h" /*??ÓÚ????*/
 #include "can_bsp.h"
 #include "bsp_usart.h"
 
@@ -1105,6 +1105,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port, POWER_5V_EN_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, PUMP1_IN_Pin|PUMP1_OUT_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : POWER_5V_EN_Pin */
   GPIO_InitStruct.Pin = POWER_5V_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -1112,13 +1115,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(POWER_5V_EN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, Pump1_Pin|Pump2_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pins : Pump1_Pin Pump2_Pin */
-  GPIO_InitStruct.Pin = Pump1_Pin|Pump2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  /*Configure GPIO pins : PUMP1_IN_Pin PUMP1_OUT_Pin */
+  GPIO_InitStruct.Pin = PUMP1_IN_Pin|PUMP1_OUT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
