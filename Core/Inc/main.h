@@ -62,6 +62,8 @@ void Error_Handler(void);
 #define Pump1_GPIO_Port GPIOE
 #define Pump2_Pin GPIO_PIN_13
 #define Pump2_GPIO_Port GPIOE
+#define POWER_5V_EN_Pin GPIO_PIN_15
+#define POWER_5V_EN_GPIO_Port GPIOC
 
 /* USER CODE BEGIN Private defines */
 

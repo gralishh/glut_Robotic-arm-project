@@ -23,7 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ws2812.h"
-#include "remote_control.h" /*”√”⁄≤‚ ‘*/
+#include "remote_control.h" /*”?”⁄?‚?‘*/
 #include "can_bsp.h"
 #include "bsp_usart.h"
 
@@ -35,6 +35,7 @@
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
+#include "Custom_ctrl.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -92,7 +93,7 @@ osThreadId_t ChassisTaskHandle;
 const osThreadAttr_t ChassisTask_attributes = {
   .name = "ChassisTask",
   .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityHigh,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for USART2_measure */
 osThreadId_t USART2_measureHandle;
@@ -119,6 +120,13 @@ const osThreadAttr_t HandTask_attributes = {
 osThreadId_t USART3_measureHandle;
 const osThreadAttr_t USART3_measure_attributes = {
   .name = "USART3_measure",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for CustomCtrlTask */
+osThreadId_t CustomCtrlTaskHandle;
+const osThreadAttr_t CustomCtrlTask_attributes = {
+  .name = "CustomCtrlTask",
   .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
@@ -155,6 +163,7 @@ void __usart2_measure_task(void *argument);
 void __gimbal_task(void *argument);
 void __hand_task(void *argument);
 void __usart3_measure_task(void *argument);
+void __Custom_Ctrl_Task(void *argument);
 void __motor_timr_ctrl_callback(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -223,6 +232,8 @@ int main(void)
   usart3_init();
   DJI_CANBus_init_all();
   WS2812_Ctrl(0,0,0);
+
+  HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -267,6 +278,9 @@ int main(void)
 
   /* creation of USART3_measure */
   USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
+
+  /* creation of CustomCtrlTask */
+  CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1082,11 +1096,21 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port, POWER_5V_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : POWER_5V_EN_Pin */
+  GPIO_InitStruct.Pin = POWER_5V_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(POWER_5V_EN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, Pump1_Pin|Pump2_Pin, GPIO_PIN_RESET);
@@ -1224,6 +1248,25 @@ void __usart3_measure_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __usart3_measure_task */
+}
+
+/* USER CODE BEGIN Header___Custom_Ctrl_Task */
+/**
+* @brief Function implementing the CustomCtrlTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___Custom_Ctrl_Task */
+void __Custom_Ctrl_Task(void *argument)
+{
+  /* USER CODE BEGIN __Custom_Ctrl_Task */
+  Custom_Ctrl_Task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __Custom_Ctrl_Task */
 }
 
 /* __motor_timr_ctrl_callback function */
