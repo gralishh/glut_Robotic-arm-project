@@ -17,9 +17,9 @@ extern FDCAN_HandleTypeDef hfdcan1;
 // joint mapping parameter
 
 // controller sensity(degree per loop)
-#define VX_CTRL_SEN 2.53f
-#define VY_CTRL_SEN 2.53f
-#define WZ_CTRL_SEN 6.0f
+#define VX_CTRL_SEN 3.23f
+#define VY_CTRL_SEN 3.23f
+#define WZ_CTRL_SEN 8.0f
 // chassis para
 #define CHASSIS_WZ_SET_SCALE 0.03f
 #define MOTOR_DISTANCE_TO_CENTER 0.2f
@@ -152,22 +152,23 @@ void chassis_task_mode_flush()
     if(switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(CHASSIS_MODE_RC_CTRL);
     else if(switch_is_up(get_remote_control_point()->rc.s[0]))
-      ;
-  }
-  else if(switch_is_mid(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
-  {
-    __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
+      __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
   }
   else
   {
     __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
   }
-  /*
-  if(get_remote_control_point()->rc.s[0]==0 && get_remote_control_point()->rc.s[1]==0)
+
+  if(switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
   {
-    __SET_STRUCT_MODE(first_mode);
+    __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
   }
-  */
+
+	if(toe_is_error(DBUSTOE))
+  {
+    __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
+  }
+
 }
 
 /**
@@ -234,7 +235,7 @@ void __chassis_rc_ctrl()
 {
   HANDLER_PTR->vx=-RC_CTRL_PTR->rc.ch[3]*VX_CTRL_SEN;
   HANDLER_PTR->vy=-RC_CTRL_PTR->rc.ch[2]*VY_CTRL_SEN;
-  HANDLER_PTR->wz= RC_CTRL_PTR->rc.ch[0]*WZ_CTRL_SEN;
+  HANDLER_PTR->wz=-RC_CTRL_PTR->rc.ch[0]*WZ_CTRL_SEN;
 
   //HANDLER_PTR->vx=HANDLER_PTR->vx
   //HANDLER_PTR->vy=HANDLER_PTR->vy
