@@ -11,6 +11,7 @@
 #include "detect_task.h"
 #include "cmsis_os2.h"
 #include "ws2812.h"
+#include "Custom_ctrl.h"
 
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
@@ -49,6 +50,7 @@ DJI_Motor_Ctrl_t DJI_Motor_headendR;
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
+static void __hand_custom_ctrl(void);
 
 
 /*general handler method*/
@@ -308,8 +310,38 @@ void __hand_rc_ctrl()
   __ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[3]*0.00005f+RC_CTRL_PTR->rc.ch[1]*0.0001f);
   __ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.0001f);
   __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.00001f);
-  __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.000001f);
+  __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.000002f);
   __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025);
+}
+
+void __hand_custom_ctrl(void)
+{
+  //__SET_JOINT_ANGLE(HAND_ROLL,Custom_Ctrl_get_ptr()->joint_angle[4]);
+  //__SET_JOINT_ANGLE(HAND_PITCH,Custom_Ctrl_get_ptr()->joint_angle[3]);
+  //__SET_JOINT_ANGLE(HAND_J1,Custom_Ctrl_get_ptr()->joint_angle[0]);
+  //__SET_JOINT_ANGLE(HAND_J2,Custom_Ctrl_get_ptr()->joint_angle[1]);
+  //__SET_JOINT_ANGLE(HAND_J3,Custom_Ctrl_get_ptr()->joint_angle[2]);
+
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[4]-__GET_JOINT_ANGLE(HAND_ROLL))>0.01)
+    __ADD_JOINT_ANGLE(HAND_ROLL,
+      Custom_Ctrl_get_ptr()->joint_angle[4]>__GET_JOINT_ANGLE(HAND_ROLL)?0.001:-0.001);
+
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[3]-__GET_JOINT_ANGLE(HAND_PITCH))>0.01)
+    __ADD_JOINT_ANGLE(HAND_PITCH,
+      Custom_Ctrl_get_ptr()->joint_angle[3]>__GET_JOINT_ANGLE(HAND_PITCH)?0.001:-0.001);
+
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[0]-__GET_JOINT_ANGLE(HAND_J1))>0.01)
+    __ADD_JOINT_ANGLE(HAND_J1,
+      Custom_Ctrl_get_ptr()->joint_angle[0]>__GET_JOINT_ANGLE(HAND_J1)?0.001:-0.001);
+
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[1]-__GET_JOINT_ANGLE(HAND_J2))>0.03)
+    __ADD_JOINT_ANGLE(HAND_J2,
+      Custom_Ctrl_get_ptr()->joint_angle[1]>__GET_JOINT_ANGLE(HAND_J2)?0.003:-0.003);
+
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[2]-__GET_JOINT_ANGLE(HAND_J3))>0.01)
+    __ADD_JOINT_ANGLE(HAND_J3,
+      Custom_Ctrl_get_ptr()->joint_angle[2]>__GET_JOINT_ANGLE(HAND_J3)?0.001:-0.001);
+  
 }
 
 #undef HANDLER 

@@ -42,7 +42,7 @@ typedef __packed struct
 	frame_header_t	header;
 	uint16_t cmd_id;
 	key_t   key;
-	uint16_t adc_val[4];
+	uint16_t adc_val[5];
 	uint16_t crc16;
 } data_t; 
 
@@ -50,7 +50,7 @@ typedef data_t CUSTOM_CTRL_RX_PACK;
 
 typedef struct{
   CUSTOM_CTRL_RX_PACK rx_pack;
-  fp32 joint_angle[4];
+  fp32 joint_angle[5];
 } CUSTOM_CTRL_T;
 
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
