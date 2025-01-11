@@ -88,7 +88,7 @@ void gimbal_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,70,0,0,500,0);
   DJI_Motor_uplift.circle_count_flag=1;
 
-  __SET_JOINT_LIMIT(GIMBAL_UPLIFT,30,430);
+  __SET_JOINT_LIMIT(GIMBAL_UPLIFT,25,430);
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -223,6 +223,14 @@ void __gimbal_idle_ctrl()
 void __gimbal_rc_ctrl()
 {
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00008f);
+  if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
+  {
+    PUMP1_ON();
+  }
+  else if(RC_CTRL_PTR->rc.ch[4]<-660/3*2)
+  {
+    PUMP1_OFF();
+  }
 }
 
 #undef HANDLER 

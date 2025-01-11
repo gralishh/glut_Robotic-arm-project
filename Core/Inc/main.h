@@ -47,8 +47,8 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define PUMP1_ON() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_SET)
-#define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
+#define PUMP1_ON() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_SET)
+#define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
