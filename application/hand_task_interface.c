@@ -1,6 +1,6 @@
 /**
  * @brief 
- * @attention lockup的逻辑有大🐱饼
+ * @attention lockup的逻辑大抵没有大🐱饼
  */
 #include "hand_task_interface.h"
 #include "hand_task.h"
@@ -20,6 +20,8 @@
 /*extern*/
 extern FDCAN_HandleTypeDef hfdcan2;
 
+/*ABS*/
+#define ABS(X) (X>0?X:-X)
 /*global macro variable*/
 #define HAND_CTRL_CAN 
 // joint mapping parameter
@@ -29,10 +31,10 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define J2_MAP_D   0
 #define J3_MAP_K   1
 #define J3_MAP_D   0
-#define HEL_MAP_K  1
-#define HEL_MAP_D  0
-#define HER_MAP_K  1
-#define HER_MAP_D  0
+#define PITCH_MAP_K  1
+#define PITCH_MAP_D  0
+#define ROLL_MAP_K  1
+#define ROLL_MAP_D  0
 // controller sensity(degree per loop)
 #define J1_CTRL_SEN 0
 #define J2_CTRL_SEN 0
@@ -51,6 +53,7 @@ static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
+static void __hand_pose_ctrl(void);
 
 
 /*general handler method*/
@@ -111,7 +114,7 @@ void hand_task_init()
   // J1
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,3,0.8,0.075);
+  M8010_motor_init(&joint1_motor,3,0.7,0.098);
 
   // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
@@ -154,6 +157,8 @@ void hand_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,65,0,0,500,0);
   DJI_Motor_headendR.circle_count_flag=1;
 
+  //joint_pitch
+  __SET_JOINT_LIMIT(HAND_PITCH,0,135.0f);
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -259,11 +264,17 @@ void hand_task_output()
   uint16_t index;
   /*joint map to motor state*/
   if(__GET_MOTOR_CTRL_MODE(M8010_J1)==POS_LOOP)
-    __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[M8010_J1]-J1_MAP_D)/J1_MAP_K);
+    __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[HAND_J1]-J1_MAP_D)/J1_MAP_K);
   if(__GET_MOTOR_CTRL_MODE(DM_J2)==POS_LOOP)
-    __SET_MOTOR_ANGLE(DM_J2,(HANDLER_PTR->joint_angle[DM_J2]-J2_MAP_D)/J2_MAP_K);
+    __SET_MOTOR_ANGLE(DM_J2,(HANDLER_PTR->joint_angle[HAND_J2]-J2_MAP_D)/J2_MAP_K);
   if(__GET_MOTOR_CTRL_MODE(DJI_J3)==POS_LOOP)
-    __SET_MOTOR_ANGLE(DJI_J3,(HANDLER_PTR->joint_angle[DJI_J3]-J3_MAP_D)/J3_MAP_K);
+    __SET_MOTOR_ANGLE(DJI_J3,(HANDLER_PTR->joint_angle[HAND_J3]-J3_MAP_D)/J3_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DJI_HE_L)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DJI_HE_L,-(HANDLER_PTR->joint_angle[HAND_PITCH]-PITCH_MAP_D)/PITCH_MAP_K+
+      (HANDLER_PTR->joint_angle[HAND_ROLL]-ROLL_MAP_D)/ROLL_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DJI_HE_R)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DJI_HE_R,(HANDLER_PTR->joint_angle[HAND_PITCH]-PITCH_MAP_D)/PITCH_MAP_K+
+    (HANDLER_PTR->joint_angle[HAND_ROLL]-ROLL_MAP_D)/ROLL_MAP_K);
 
   /*motor output*/
   for(index=0;index<HAND_MOTOR_COUNT;index++)
@@ -290,8 +301,10 @@ void __hand_nonforce()
 
 void __hand_idle_ctrl()
 {
-  __ADD_MOTOR_ANGLE(DJI_HE_L,0);
-  __ADD_MOTOR_ANGLE(DJI_HE_R,0);
+  //__ADD_MOTOR_ANGLE(DJI_HE_L,0);
+  //__ADD_MOTOR_ANGLE(DJI_HE_R,0);
+  __ADD_JOINT_ANGLE(HAND_ROLL,0);
+  __ADD_JOINT_ANGLE(HAND_PITCH,0);
   __ADD_JOINT_ANGLE(HAND_J1,0);
   __ADD_JOINT_ANGLE(HAND_J2,0);
   __ADD_JOINT_ANGLE(HAND_J3,0);
@@ -300,12 +313,11 @@ void __hand_idle_ctrl()
 
 void __hand_rc_ctrl()
 {
-  //_ADD_JOINT_ANGLE(HAND_J1,RC_CTRL_PTR->rc.ch[2]*0.00005f);
-  //_ADD_JOINT_ANGLE(HAND_J2,RC_CTRL_PTR->rc.ch[0]*0.00005f);
-  //_ADD_JOINT_ANGLE(HAND_J3,RC_CTRL_PTR->rc.ch[5]*0.00005f);
-  __ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[3]*0.00005f+RC_CTRL_PTR->rc.ch[1]*0.0001f);
-  __ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.0001f);
-  __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.00001f);
+  //__ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[3]*0.00005f+RC_CTRL_PTR->rc.ch[1]*0.0001f);
+  //__ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.0001f);
+  __ADD_JOINT_ANGLE(HAND_PITCH,RC_CTRL_PTR->rc.ch[1]*0.0001f);
+  __ADD_JOINT_ANGLE(HAND_ROLL,RC_CTRL_PTR->rc.ch[3]*0.00005f);
+  __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.000007f);
   __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.000002f);
   __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025);
 }
@@ -318,25 +330,25 @@ void __hand_custom_ctrl(void)
   //__SET_JOINT_ANGLE(HAND_J2,Custom_Ctrl_get_ptr()->joint_angle[1]);
   //__SET_JOINT_ANGLE(HAND_J3,Custom_Ctrl_get_ptr()->joint_angle[2]);
 
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[4]-__GET_JOINT_ANGLE(HAND_ROLL))>0.01)
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[4]-__GET_JOINT_ANGLE(HAND_ROLL))>0.01f)
     __ADD_JOINT_ANGLE(HAND_ROLL,
-      Custom_Ctrl_get_ptr()->joint_angle[4]>__GET_JOINT_ANGLE(HAND_ROLL)?0.001:-0.001);
+      Custom_Ctrl_get_ptr()->joint_angle[4]>__GET_JOINT_ANGLE(HAND_ROLL)?0.001f:-0.001f);
 
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[3]-__GET_JOINT_ANGLE(HAND_PITCH))>0.01)
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[3]-__GET_JOINT_ANGLE(HAND_PITCH))>0.01f)
     __ADD_JOINT_ANGLE(HAND_PITCH,
-      Custom_Ctrl_get_ptr()->joint_angle[3]>__GET_JOINT_ANGLE(HAND_PITCH)?0.001:-0.001);
+      Custom_Ctrl_get_ptr()->joint_angle[3]>__GET_JOINT_ANGLE(HAND_PITCH)?0.001f:-0.001f);
 
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[0]-__GET_JOINT_ANGLE(HAND_J1))>0.01)
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[0]-__GET_JOINT_ANGLE(HAND_J1))>0.01f)
     __ADD_JOINT_ANGLE(HAND_J1,
-      Custom_Ctrl_get_ptr()->joint_angle[0]>__GET_JOINT_ANGLE(HAND_J1)?0.001:-0.001);
+      Custom_Ctrl_get_ptr()->joint_angle[0]>__GET_JOINT_ANGLE(HAND_J1)?0.001f:-0.001f);
 
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[1]-__GET_JOINT_ANGLE(HAND_J2))>0.03)
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[1]-__GET_JOINT_ANGLE(HAND_J2))>0.03f)
     __ADD_JOINT_ANGLE(HAND_J2,
-      Custom_Ctrl_get_ptr()->joint_angle[1]>__GET_JOINT_ANGLE(HAND_J2)?0.003:-0.003);
+      Custom_Ctrl_get_ptr()->joint_angle[1]>__GET_JOINT_ANGLE(HAND_J2)?0.003f:-0.003f);
 
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[2]-__GET_JOINT_ANGLE(HAND_J3))>0.01)
+  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[2]-__GET_JOINT_ANGLE(HAND_J3))>0.01f)
     __ADD_JOINT_ANGLE(HAND_J3,
-      Custom_Ctrl_get_ptr()->joint_angle[2]>__GET_JOINT_ANGLE(HAND_J3)?0.001:-0.001);
+      Custom_Ctrl_get_ptr()->joint_angle[2]>__GET_JOINT_ANGLE(HAND_J3)?0.001f:-0.001f);
   
 }
 
