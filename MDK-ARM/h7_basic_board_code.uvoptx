@@ -325,6 +325,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>&amp;hfdcan1</ItemText>
         </Ww>
+        <Ww>
+          <count>33</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>pose_mode</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>

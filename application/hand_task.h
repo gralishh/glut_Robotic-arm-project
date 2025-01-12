@@ -29,6 +29,7 @@ typedef enum{
   HAND_MODE_NONFORCE=0x00,
   HAND_MODE_IDLE,
   HAND_MODE_RC_CTRL,
+  HAND_MODE_POSE_CTRL,
   HAND_MODE_COUNT,
 }HAND_CTRL_MODE;
 
@@ -38,6 +39,7 @@ typedef struct{
 
   /*state value*/
   uint8_t ctrl_mode;
+  uint8_t mode_switch; //模式切换时置1
   Motor_Type_e motor_type[HAND_MOTOR_COUNT];
   Motor_Ctrl_mode_e motor_ctrl_mode[HAND_MOTOR_COUNT];
 
@@ -59,6 +61,7 @@ typedef struct{
 
   uint8_t tick_count_halt;
   int64_t tick;
+  int64_t tick_stack[5];// 具体使用取决于任务
 } HAND_TASK_HANDLER_TYPE; 
 extern HAND_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
 extern HAND_TASK_HANDLER_TYPE* hand_task_handler_ptr;

@@ -3,6 +3,7 @@
  * @attention lockup的逻辑大抵没有大🐱饼
  */
 #include "hand_task_interface.h"
+#include "struct_typedef.h"
 #include "hand_task.h"
 #include "general_motor_module.h" 
 #include "DJI_motor_canbus.h"
@@ -58,6 +59,8 @@ static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
 static void __hand_pose_ctrl(void);
 
+static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5);
+
 
 /*general handler method*/
 /** 
@@ -98,10 +101,15 @@ static void __hand_pose_ctrl(void);
 #define __RESET_TICKS() (HANDLER_PTR->tick=0)
 #define __HALT_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt=1)
 #define __HOLD_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt=0)
+#define __IS_TIMER_HALT() (1==HANDLER_PTR->tick_count_halt)
 #define __GET_TICKS() (HANDLER_PTR->tick)
 // unit:seconds
 #define __GET_TICKS_TIME() (HANDLER_PTR->tick*1)
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME()/PROCESS_TIME)
+#define __GET_TICKS_STACK(index) (HANDLER_PTR->tick_stack[index])
+#define __RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index]=__GET_TICKS_TIME())
+#define __RESET_RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index]=0)
+#define __IS_MODE_SWITCHED() (1==HANDLER_PTR->mode_switch)
 
 
 void hand_task_init()
@@ -212,7 +220,8 @@ void hand_task_get_feedback()
  */
 void hand_task_mode_flush()
 {
-  /**/
+  static uint8_t last_mode=HAND_MODE_NONFORCE;
+  last_mode=HANDLER_PTR->ctrl_mode;
   if(switch_is_up(get_remote_control_point()->rc.s[1]))
   {
     if(switch_is_down(get_remote_control_point()->rc.s[0]))
@@ -220,7 +229,7 @@ void hand_task_mode_flush()
     else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if(switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+      __SET_STRUCT_MODE(HAND_MODE_POSE_CTRL);
   }
   else
   {
@@ -237,6 +246,10 @@ void hand_task_mode_flush()
     __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
   }
 
+  if(HANDLER_PTR->ctrl_mode==last_mode)
+    HANDLER_PTR->mode_switch=0;
+  else 
+    HANDLER_PTR->mode_switch=1;
 }
 
 /**
@@ -252,6 +265,9 @@ void hand_task_set_output()
       break;
     case HAND_MODE_RC_CTRL:
       __hand_rc_ctrl();
+      break;
+    case HAND_MODE_POSE_CTRL:
+      __hand_pose_ctrl();
       break;
     case HAND_MODE_NONFORCE:
     default:
@@ -328,43 +344,111 @@ void __hand_rc_ctrl()
 
 void __hand_custom_ctrl(void)
 {
-  //__SET_JOINT_ANGLE(HAND_ROLL,Custom_Ctrl_get_ptr()->joint_angle[4]);
-  //__SET_JOINT_ANGLE(HAND_PITCH,Custom_Ctrl_get_ptr()->joint_angle[3]);
-  //__SET_JOINT_ANGLE(HAND_J1,Custom_Ctrl_get_ptr()->joint_angle[0]);
-  //__SET_JOINT_ANGLE(HAND_J2,Custom_Ctrl_get_ptr()->joint_angle[1]);
-  //__SET_JOINT_ANGLE(HAND_J3,Custom_Ctrl_get_ptr()->joint_angle[2]);
-
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[4]-__GET_JOINT_ANGLE(HAND_ROLL))>0.01f)
-    __ADD_JOINT_ANGLE(HAND_ROLL,
-      Custom_Ctrl_get_ptr()->joint_angle[4]>__GET_JOINT_ANGLE(HAND_ROLL)?0.001f:-0.001f);
-  else 
-    __ADD_JOINT_ANGLE(HAND_ROLL,joint[4]);
-
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[3]-__GET_JOINT_ANGLE(HAND_PITCH))>0.01f)
-    __ADD_JOINT_ANGLE(HAND_PITCH,
-      Custom_Ctrl_get_ptr()->joint_angle[3]>__GET_JOINT_ANGLE(HAND_PITCH)?0.001f:-0.001f);
-  else
-    __ADD_JOINT_ANGLE(HAND_PITCH,joint_angle[3]);
-
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[0]-__GET_JOINT_ANGLE(HAND_J1))>0.01f)
-    __ADD_JOINT_ANGLE(HAND_J1,
-      Custom_Ctrl_get_ptr()->joint_angle[0]>__GET_JOINT_ANGLE(HAND_J1)?0.001f:-0.001f);
-  else
-    __ADD_JOINT_ANGLE(HAND_J1,joint[0]);
-
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[1]-__GET_JOINT_ANGLE(HAND_J2))>0.03f)
-    __ADD_JOINT_ANGLE(HAND_J2,
-      Custom_Ctrl_get_ptr()->joint_angle[1]>__GET_JOINT_ANGLE(HAND_J2)?0.003f:-0.003f);
-  else
-    __ADD_JOINT_ANGLE(HAND_J2,joint_angel[1]);
-
-  if(ABS(Custom_Ctrl_get_ptr()->joint_angle[2]-__GET_JOINT_ANGLE(HAND_J3))>0.01f)
-    __ADD_JOINT_ANGLE(HAND_J3,
-      Custom_Ctrl_get_ptr()->joint_angle[2]>__GET_JOINT_ANGLE(HAND_J3)?0.001f:-0.001f);
-  else
-    __ADD_JOINT_ANGLE(HAND_J3,joint_angle[2]);
+  //fp32 *cc_joint_angle;
+  //cc_joint_angle=RC_CTRL_PTR->rc.ch;
+  //__hand_move2_subctrl(cc_joint_angle[0],cc_joint_angle[1],cc_joint_angle[2],cc_joint_angle[3],cc_joint_angle[4]);
   
 }
+
+void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5)
+{
+  if(J5 != 0)
+  {
+    if(ABS(J5-__GET_JOINT_ANGLE(HAND_ROLL))>0.05f)
+    {
+      __ADD_JOINT_ANGLE(HAND_ROLL,
+        J5>__GET_JOINT_ANGLE(HAND_ROLL)?0.001f:-0.001f);
+    }
+    else 
+    {
+      __SET_JOINT_ANGLE(HAND_ROLL,J5);
+    }
+  }
+
+  if(J4 != 0)
+  {
+    if(ABS(J4-__GET_JOINT_ANGLE(HAND_PITCH))>0.05f)
+    {
+      __ADD_JOINT_ANGLE(HAND_PITCH,
+        J4>__GET_JOINT_ANGLE(HAND_PITCH)?0.001f:-0.001f);
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(HAND_PITCH,J4);
+    }
+  }
+
+  if(J1 != 0)
+  {
+    if(ABS(J1-__GET_JOINT_ANGLE(HAND_J1))>0.05f)
+    {
+      __ADD_JOINT_ANGLE(HAND_J1,
+        J1>__GET_JOINT_ANGLE(HAND_J1)?0.001f:-0.001f);
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(HAND_J1,J1);
+    }
+  }
+
+  if(J2 != 0)
+  {
+    if(ABS(J2-__GET_JOINT_ANGLE(HAND_J2))>0.05f)
+    {
+      __ADD_JOINT_ANGLE(HAND_J2,
+        J2>__GET_JOINT_ANGLE(HAND_J2)?0.001f:-0.001f);
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(HAND_J2,J2);
+    }
+  }
+
+  if(J3 != 0)
+  {
+    if(ABS(J3-__GET_JOINT_ANGLE(HAND_J3))>0.05f)
+    {
+      __ADD_JOINT_ANGLE(HAND_J3,
+        J3>__GET_JOINT_ANGLE(HAND_J3)?0.001f:-0.001f);
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(HAND_J3,J3);
+    }
+  }
+  
+}
+
+void __hand_pose_ctrl(void)
+{
+  static uint8_t pose_mode=0;
+  if(__IS_MODE_SWITCHED())
+  {
+    __RESET_TICKS();
+    __HALT_TICKS_COUNTING();
+    pose_mode=0;
+  }
+
+  if(RC_CTRL_PTR->rc.ch[3]==-660&&RC_CTRL_PTR->rc.ch[1]==-660)
+  {
+    __HOLD_TICKS_COUNTING();
+    if(__GET_TICKS_STACK(0)==0)
+      __RECORD_TICKS(0);
+  }
+  else
+  {
+    __RESET_TICKS();
+    __RESET_RECORD_TICKS(0);
+    __HALT_TICKS_COUNTING();
+  }
+
+  if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>1000)
+    pose_mode=1;
+
+  if(pose_mode==1)
+    __hand_move2_subctrl(-PI/8,-2.2,0,0,0);
+}
+
 
 #undef HANDLER 
 #undef HANDLER_PTR 
