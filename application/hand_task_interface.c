@@ -26,12 +26,12 @@ extern FDCAN_HandleTypeDef hfdcan2;
 /*global macro variable*/
 #define HAND_CTRL_CAN 
 // joint mapping parameter
-#define J1_MAP_K   0.33
+#define J1_MAP_K   0.167
 #define J1_MAP_D   J1_D
 #define J2_MAP_K   1
 #define J2_MAP_D   0
-#define J3_MAP_K   1
-#define J3_MAP_D   0
+#define J3_MAP_K   (-1/19.2)
+#define J3_MAP_D   0.1
 #define PITCH_MAP_K  1
 #define PITCH_MAP_D  0
 #define ROLL_MAP_K  1
@@ -42,6 +42,12 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define J3_CTRL_SEN 0
 #define PITCH_CTRL_SEN 0
 #define ROLL_CTRL_SEN 0
+
+#define J1_EN (0x01<<0)
+#define J2_EN (0x01<<1)
+#define J3_EN (0x01<<2)
+#define J4_EN (0x01<<3)
+#define J5_EN (0x01<<4)
 
 /*global motor handler*/
 extern M8010_motor_t joint1_motor;
@@ -59,7 +65,7 @@ static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
 static void __hand_pose_ctrl(void);
 
-static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5);
+static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
 
 
 /*general handler method*/
@@ -229,7 +235,8 @@ void hand_task_mode_flush()
     else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if(switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_POSE_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      //__SET_STRUCT_MODE(HAND_MODE_POSE_CTRL);
   }
   else
   {
@@ -268,6 +275,9 @@ void hand_task_set_output()
       break;
     case HAND_MODE_POSE_CTRL:
       __hand_pose_ctrl();
+      break;
+    case HAND_MODE_CUSTOM_CTRL:
+      __hand_custom_ctrl();
       break;
     case HAND_MODE_NONFORCE:
     default:
@@ -337,22 +347,22 @@ void __hand_rc_ctrl()
   //__ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.0001f);
   __ADD_JOINT_ANGLE(HAND_PITCH,RC_CTRL_PTR->rc.ch[1]*0.0001f);
   __ADD_JOINT_ANGLE(HAND_ROLL,RC_CTRL_PTR->rc.ch[3]*0.00005f);
-  __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.0000023f);
-  __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.000002f);
-  __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025f);
+  __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.0000007f);
+  __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.0000015f);
+  __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025f*J3_MAP_K);
 }
 
 void __hand_custom_ctrl(void)
 {
-  //fp32 *cc_joint_angle;
-  //cc_joint_angle=RC_CTRL_PTR->rc.ch;
+  #define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
   //__hand_move2_subctrl(cc_joint_angle[0],cc_joint_angle[1],cc_joint_angle[2],cc_joint_angle[3],cc_joint_angle[4]);
+  __hand_move2_subctrl(cc_joint_angle[0]-PI/2,cc_joint_angle[1],cc_joint_angle[2],0,0,J1_EN|J2_EN|J3_EN);
   
 }
 
-void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5)
+void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 {
-  if(J5 != 0)
+  if(EN&=J5_EN)
   {
     if(ABS(J5-__GET_JOINT_ANGLE(HAND_ROLL))>0.05f)
     {
@@ -365,7 +375,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5)
     }
   }
 
-  if(J4 != 0)
+  if(EN&=J4_EN)
   {
     if(ABS(J4-__GET_JOINT_ANGLE(HAND_PITCH))>0.05f)
     {
@@ -378,43 +388,39 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5)
     }
   }
 
-  if(J1 != 0)
+  if(EN&=J1_EN)
   {
-    if(ABS(J1-__GET_JOINT_ANGLE(HAND_J1))>0.05f)
+    if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.030f)
     {
       __ADD_JOINT_ANGLE(HAND_J1,
         J1>__GET_JOINT_ANGLE(HAND_J1)?0.001f:-0.001f);
     }
-    else
-    {
-      __SET_JOINT_ANGLE(HAND_J1,J1);
-    }
+    //else
+    //{
+    //  __SET_JOINT_ANGLE(HAND_J1,J1);
+    //}
   }
 
-  if(J2 != 0)
+  if(EN&=J2_EN)
   {
-    if(ABS(J2-__GET_JOINT_ANGLE(HAND_J2))>0.05f)
+    if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.030f)
     {
       __ADD_JOINT_ANGLE(HAND_J2,
         J2>__GET_JOINT_ANGLE(HAND_J2)?0.001f:-0.001f);
     }
-    else
-    {
-      __SET_JOINT_ANGLE(HAND_J2,J2);
-    }
+    //else
+    //{
+    //  __SET_JOINT_ANGLE(HAND_J2,J2);
+    //}
   }
 
-  if(J3 != 0)
+  if(EN&=J3_EN)
   {
-    if(ABS(J3-__GET_JOINT_ANGLE(HAND_J3))>0.05f)
-    {
-      __ADD_JOINT_ANGLE(HAND_J3,
-        J3>__GET_JOINT_ANGLE(HAND_J3)?0.001f:-0.001f);
-    }
-    else
-    {
-      __SET_JOINT_ANGLE(HAND_J3,J3);
-    }
+  if(ABS(J3-__GET_JOINT_ANGLE(HAND_J3))>0.08f)
+  {
+    __ADD_JOINT_ANGLE(HAND_J3,
+      J3>__GET_JOINT_ANGLE(HAND_J3)?0.001f:-0.001f);
+  }
   }
   
 }
@@ -446,7 +452,7 @@ void __hand_pose_ctrl(void)
     pose_mode=1;
 
   if(pose_mode==1)
-    __hand_move2_subctrl(-PI/8,-2.2,0,0,0);
+    __hand_move2_subctrl(-PI/8,-2.2,0,0,0,J1_EN|J2_EN);
 }
 
 
