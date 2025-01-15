@@ -61,6 +61,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define POWER_5V_EN_Pin GPIO_PIN_15
 #define POWER_5V_EN_GPIO_Port GPIOC
+#define PUMP3_IN_Pin GPIO_PIN_0
+#define PUMP3_IN_GPIO_Port GPIOA
+#define PUMP2_IN_Pin GPIO_PIN_2
+#define PUMP2_IN_GPIO_Port GPIOA
 #define PUMP1_IN_Pin GPIO_PIN_9
 #define PUMP1_IN_GPIO_Port GPIOE
 #define PUMP1_OUT_Pin GPIO_PIN_13
