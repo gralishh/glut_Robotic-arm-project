@@ -22,15 +22,25 @@
 #define ABS(X) ((X)>0?(X):-(X))
 /*global macro variable*/
 // joint mapping parameter
-#define J1_MAP_K   0.167
-#define J1_MAP_D   J1_D
+#define UL_MAP_K   1
+#define UL_MAP_D   0
+#define PUSH_MAP_K 1
+#define PUSH_MAP_D 0
+#define PU_MAP_K   1
+#define PU_MAP_D   0
 // controller sensity(degree per loop)
-#define J1_CTRL_SEN 0
+#define UL_CTRL_SEN   0
+#define PUSH_CTRL_SEN 0
+#define PICK_CTRL_SEN   0
 
-#define J1_EN (0x01<<0)
+#define UL_EN (0x01<<0)
+#define PUSH_EN (0x01<<0)
+#define PICK_EN (0x01<<0)
 
 /*global motor handler*/
-//DJI_Motor_Ctrl_t DJI_Motor_J3;
+DJI_Motor_Ctrl_t DJI_Motor_cat_uplift;
+DJI_Motor_Ctrl_t DJI_Motor_cat_push;
+DJI_Motor_Ctrl_t DJI_Motor_cat_pickup;
 
 /*global variable*/
 static fp32 J1_D=0;
@@ -102,7 +112,26 @@ void catcher_task_init()
   __RESET_TICKS();
 
   /*电机初始化*/
+  __SET_MOTOR_INSTANCE(DJI_CAT_UL,&DJI_Motor_cat_uplift);
+  __SET_MOTOR_TYPE(DJI_CAT_UL,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_cat_uplift,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_uplift,PID_POSITION,20,0,0.001,9000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_uplift,PID_POSITION,80,0,0,500,0);
+  DJI_Motor_cat_uplift.circle_count_flag=1;
 
+  __SET_MOTOR_INSTANCE(DJI_CAT_PUSH,&DJI_Motor_cat_push);
+  __SET_MOTOR_TYPE(DJI_CAT_PUSH,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_cat_push,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_push,PID_POSITION,20,0,0.001,9000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_push,PID_POSITION,80,0,0,500,0);
+  DJI_Motor_cat_push.circle_count_flag=1;
+
+  __SET_MOTOR_INSTANCE(DJI_CAT_PICKUP,&DJI_Motor_cat_pickup);
+  __SET_MOTOR_TYPE(DJI_CAT_PICKUP,DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_cat_pickup,&DJI_CAN3_Bus_ctrl,M3508,0x205);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,20,0,0.001,9000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,80,0,0,500,0);
+  DJI_Motor_cat_pickup.circle_count_flag=1;
 }
 
 /**
@@ -143,14 +172,14 @@ void catcher_task_mode_flush()
 {
   static uint8_t last_mode=CATCHER_MODE_NONFORCE;
   last_mode=HANDLER_PTR->ctrl_mode;
-  if(switch_is_up(get_remote_control_point()->rc.s[1]))
+  if(switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
     if(switch_is_down(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(CATCHER_MODE_IDLE);
     else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(CATCHER_MODE_RC_CTRL);
-    else if(switch_is_up(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(CATCHER_MODE_IDLE);
+    else if(switch_is_up(get_remote_control_point()->rc.s[0]))
+      __SET_STRUCT_MODE(CATCHER_MODE_RC_CTRL);
       //__SET_STRUCT_MODE(CATCHER_MODE_POSE_CTRL);
   }
   else
@@ -237,7 +266,9 @@ void __catcher_nonforce()
 
 void __catcher_idle_ctrl()
 {
-  //__ADD_JOINT_ANGLE(CATCHER_ROLL,0);
+  __ADD_JOINT_ANGLE(CAT_UPLIFT,0);
+  __ADD_JOINT_ANGLE(CAT_UPLIFT,0);
+  __ADD_JOINT_ANGLE(CAT_UPLIFT,0);
 
 }
 
