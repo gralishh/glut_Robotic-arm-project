@@ -256,7 +256,11 @@ void hand_task_mode_flush()
   if(HANDLER_PTR->ctrl_mode==last_mode)
     HANDLER_PTR->mode_switch=0;
   else 
+  {
+    __RESET_TICKS();
+    __HALT_TICKS_COUNTING();
     HANDLER_PTR->mode_switch=1;
+  }
 }
 
 /**
@@ -304,7 +308,7 @@ void hand_task_output()
       (HANDLER_PTR->joint_angle[HAND_ROLL]-ROLL_MAP_D)/ROLL_MAP_K);
   if(__GET_MOTOR_CTRL_MODE(DJI_HE_R)==POS_LOOP)
     __SET_MOTOR_ANGLE(DJI_HE_R,(HANDLER_PTR->joint_angle[HAND_PITCH]-PITCH_MAP_D)/PITCH_MAP_K+
-    (HANDLER_PTR->joint_angle[HAND_ROLL]-ROLL_MAP_D)/ROLL_MAP_K);
+      (HANDLER_PTR->joint_angle[HAND_ROLL]-ROLL_MAP_D)/ROLL_MAP_K);
 
   /*motor output*/
   for(index=0;index<HAND_MOTOR_COUNT;index++)
@@ -444,24 +448,38 @@ void __hand_pose_ctrl(void)
     pose_mode=0;
   }
 
-  if(RC_CTRL_PTR->rc.ch[3]==-660&&RC_CTRL_PTR->rc.ch[1]==-660)
+  /*Pose control command*/
+  if(pose_mode==0)
   {
-    __HOLD_TICKS_COUNTING();
-    if(__GET_TICKS_STACK(0)==0)
-      __RECORD_TICKS(0);
-  }
-  else
-  {
-    __RESET_TICKS();
-    __RESET_RECORD_TICKS(0);
-    __HALT_TICKS_COUNTING();
+    if(RC_CTRL_PTR->rc.ch[3]==-660)
+    {
+      __HOLD_TICKS_COUNTING();
+      if(__GET_TICKS_STACK(0)==0)
+        __RECORD_TICKS(0);
+      else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>1000)
+        pose_mode=1;
+    }
+    if(RC_CTRL_PTR->rc.ch[1]==-660)
+    {
+      __HOLD_TICKS_COUNTING();
+      if(__GET_TICKS_STACK(0)==0)
+        __RECORD_TICKS(0);
+      else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>2000)
+        pose_mode=2;
+    }
+    else
+    {
+      __RESET_TICKS();
+      __RESET_RECORD_TICKS(0);
+      __HALT_TICKS_COUNTING();
+    }
   }
 
-  if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>1000)
-    pose_mode=1;
 
   if(pose_mode==1)
-    __hand_move2_subctrl(-PI/8,-2.2,0,0,0,J1_EN|J2_EN);
+    __hand_move2_subctrl(-PI/8,-2.2,0.5,0,0,J1_EN|J2_EN|J3_EN);
+  else if(pose_mode==2)
+    __hand_custom_ctrl();
 }
 
 
