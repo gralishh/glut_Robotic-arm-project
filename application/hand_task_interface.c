@@ -22,7 +22,7 @@
 extern FDCAN_HandleTypeDef hfdcan2;
 
 /*ABS*/
-#define ABS(X) (X>0?X:-X)
+#define ABS(X) ((X)>0?(X):-(X))
 /*global macro variable*/
 #define HAND_CTRL_CAN 
 // joint mapping parameter
@@ -131,7 +131,7 @@ void hand_task_init()
   // J1
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,3,0.7,0.098);
+  M8010_motor_init(&joint1_motor,3,0.7,0.090);
 
   // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
@@ -355,14 +355,14 @@ void __hand_rc_ctrl()
 void __hand_custom_ctrl(void)
 {
   #define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
-  //__hand_move2_subctrl(cc_joint_angle[0],cc_joint_angle[1],cc_joint_angle[2],cc_joint_angle[3],cc_joint_angle[4]);
   __hand_move2_subctrl(cc_joint_angle[0]-PI/2,cc_joint_angle[1],cc_joint_angle[2],0,0,J1_EN|J2_EN|J3_EN);
+  #undef cc_joint_angle
   
 }
 
 void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 {
-  if(EN&=J5_EN)
+  if(EN&J5_EN)
   {
     if(ABS(J5-__GET_JOINT_ANGLE(HAND_ROLL))>0.05f)
     {
@@ -375,7 +375,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     }
   }
 
-  if(EN&=J4_EN)
+  if(EN&J4_EN)
   {
     if(ABS(J4-__GET_JOINT_ANGLE(HAND_PITCH))>0.05f)
     {
@@ -388,12 +388,15 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     }
   }
 
-  if(EN&=J1_EN)
+  if(EN&J1_EN)
   {
-    if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.030f)
+    if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_J1,
-        J1>__GET_JOINT_ANGLE(HAND_J1)?0.001f:-0.001f);
+        J1>__GET_JOINT_ANGLE(HAND_J1)?
+           0.001f:
+          -0.001f);
+      __ADD_JOINT_ANGLE(HAND_J1,0.002f*(J1-HANDLER_PTR->joint_angle[HAND_J1]));
     }
     //else
     //{
@@ -401,12 +404,15 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     //}
   }
 
-  if(EN&=J2_EN)
+  if(EN&J2_EN)
   {
-    if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.030f)
+    if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_J2,
-        J2>__GET_JOINT_ANGLE(HAND_J2)?0.001f:-0.001f);
+        J2>__GET_JOINT_ANGLE(HAND_J2)?
+          0.001f:
+          -0.001f);
+      //__ADD_JOINT_ANGLE(HAND_J2,0.002f*(J2-HANDLER_PTR->joint_angle[HAND_J2]));
     }
     //else
     //{
@@ -414,13 +420,16 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     //}
   }
 
-  if(EN&=J3_EN)
+  if(EN&J3_EN)
   {
-  if(ABS(J3-__GET_JOINT_ANGLE(HAND_J3))>0.08f)
-  {
-    __ADD_JOINT_ANGLE(HAND_J3,
-      J3>__GET_JOINT_ANGLE(HAND_J3)?0.001f:-0.001f);
-  }
+    if(ABS(J3-HANDLER_PTR->joint_angle[HAND_J3])>0.030f)
+    {
+      __ADD_JOINT_ANGLE(HAND_J3,
+        J3>__GET_JOINT_ANGLE(HAND_J3)?
+          0.001f:
+          -0.001f);
+      //__ADD_JOINT_ANGLE(HAND_J3,0.001f*(J3-HANDLER_PTR->joint_angle[HAND_J3]));
+    }
   }
   
 }

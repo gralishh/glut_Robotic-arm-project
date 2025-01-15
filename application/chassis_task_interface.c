@@ -80,6 +80,7 @@ static void __chassis_union_rc_ctrl(void);
 // unit:seconds
 #define __GET_TICKS_TIME() (HANDLER_PTR->tick*1)
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME()/PROCESS_TIME)
+#define __IS_MODE_SWITCHED() (1==HANDLER_PTR->mode_switch)
 
 
 void chassis_task_init()
@@ -153,6 +154,8 @@ void chassis_task_get_feedback()
 void chassis_task_mode_flush()
 {
   /**/
+  static uint8_t last_mode=CHASSIS_MODE_NONFORCE;
+  last_mode=HANDLER_PTR->ctrl_mode;
   if(switch_is_down(get_remote_control_point()->rc.s[1]))
   {
     if(switch_is_mid(get_remote_control_point()->rc.s[0]))
@@ -179,6 +182,11 @@ void chassis_task_mode_flush()
   {
     __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
   }
+
+  if(HANDLER_PTR->ctrl_mode==last_mode)
+    HANDLER_PTR->mode_switch=0;
+  else 
+    HANDLER_PTR->mode_switch=1;
 
 }
 
@@ -239,9 +247,18 @@ void __chassis_nonforce()
 void __chassis_idle_ctrl()
 {
   int index;
+
+  if(__IS_MODE_SWITCHED())
+  {
+    for(index=0;index<CHASSIS_MOTOR_COUNT;index++)
+    {
+      __SET_MOTOR_ANGLE(index,__GET_MOTOR_ANGLE(index));
+    }
+  }
+
   for(index=0;index<CHASSIS_MOTOR_COUNT;index++)
   {
-    __SET_MOTOR_ANGLE(index,0.0);
+    __ADD_MOTOR_ANGLE(index,0);
   }
 }
 
