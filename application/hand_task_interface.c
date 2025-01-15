@@ -163,7 +163,7 @@ void hand_task_init()
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,9000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,60,0,0,500,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,70,0,0,500,1000);
   DJI_Motor_headendL.circle_count_flag=1;
 
   // Headend_R
@@ -171,7 +171,7 @@ void hand_task_init()
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,9000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,65,0,0,500,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,70,0,0,500,0);
   DJI_Motor_headendR.circle_count_flag=1;
 
   //joint_pitch
@@ -418,12 +418,12 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 
   if(EN&J3_EN)
   {
-    if(ABS(J3-HANDLER_PTR->joint_angle[HAND_J3])>0.030f)
+    if(ABS(J3-HANDLER_PTR->joint_angle[HAND_J3])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_J3,
         J3>__GET_JOINT_ANGLE(HAND_J3)?
-          0.001f:
-          -0.001f);
+          0.0015f:
+          -0.0015f);
       //__ADD_JOINT_ANGLE(HAND_J3,0.001f*(J3-HANDLER_PTR->joint_angle[HAND_J3]));
     }
   }
@@ -474,6 +474,57 @@ void __hand_pose_ctrl(void)
     __hand_custom_ctrl();
 }
 
+/*
+$$$$$$$}.........$$$$$$$$$   "00000000$$$$""""""""""""""""""""""*$$$$%000$$     ........$$.....
+...               .$"   "00000000$$$$"""""""""""""""""""""""""""""""*$$j...$.          ...$w...
+.              $$   "000000$$$$$""""""""""""""""""""""""""""""""""""""$$.....$$         ...j$..
+.....$ """   ""0$$$$$$;""""""""""""""""""""""""""""""""""""""""""""""""$jjj...$   $$   $$$$$$$$
+....$ $jjjj$$$$"-"""""""""""""""""  $$$$$$.                     """"""""$j....w$$  $$  ........
+...$"$.j$$$$""""""""    """"         :$$$.                              $.....j$$$$ ...        
+../"0.$$$$-""     "    ""              ;l                              .j.....$$.......    $ $ 
+.j$ $$$$"""      "" ""                                                 $j....$ ..  j....    $  
+$$" $$"""""     ""              B$$$;.                                .jjj.jjU...   j.....   $ 
+#$ $$f"""      "             $$000000000p$$$$'                       ;$j>.jjj$.....  j.....  $ 
+$$$$"""""   ""            .$00000000000000000000$$$.                $...jjjjjj$$...... $$$$x   
+.$$:""""                .$000000$$$$$$$$$000000000000$$$$B......;$$p*$jjjjjjj$jjj$$j$$$.$$$$$  
+j$0""""               .$00000$$0000$$$$$$$$$$$$$$$%000000000000000$$$$$jjjjj$j.jjjj$$$$$$      
+.$"""""              $"0000$$00000$$$$$$$$$$$$0$$$$$$$$$$$$$$$$$$$$$$$$$j$$     >$             
+.j"""""            ;" 0000$000$$$`/jjjjjj>..jj$$$$$$$$$$$$$$$$$$$$$$$j.$"                      
+..$"""           ^$ Q000$$00$$>jjjjjjjjjjjjjj>....``>//jjjjjjjjUjjj...`$                       
+..j$""         .$00000$$$0$$.....$jjjjjj/`..............jjjjjjj$.....$$$$$;                    
+..Uj$""      $$00000$$$$$$........$jj.........................$.........jjjjjjjjjjjj$$         
+j.....j$$$$0  '00$$$$$$$j..........j$............j...........$  ........$jjjjjjjwjjjjj[$$      
+$$jjjj.$0000""$$$$$$$$jj........j$$$jjj...........j.........$.jj.   ....$jjjj/$j$jjjjjjjjjj$$  
+$$$jjjj$$$$$$$$$$$$jjj#.....`$j       j$j.........[........$. $$$$$$$$$$$$$j$j...$jjjjjjjjjjjjj
+.$$$$$j$$$$$$$$$$[jjj$......$.         .$j$...............j $..$$$$$$$$$$$$$$j....$jjjjjjjjjjjj
+..$$$/[jj.    jjjjjj$.......  ..jjjj...  ...jj..........j.  .$$$$$B;;;;;$$  $$$...[$jjjjjjjj/$j
+..$$$/jjjjjjjjjjjjj$....                   ....jw......j   $$  j$:;;;;;;;$$   $$j..jjjjjjjjjjjj
+...$$jjjjjjjjjjjj[$....                      .....$..j.  .$    $;:":;;":;$$    $$U..$$jjjjjjjjj
+....$$.jjjjjjjjjjjj...                          ..@.j.   .       "";$$""";$     $$/..$[jjjjjjjj
+.....$$..[jjjjjj/$...                           ..j.           $;""u$$"""$j    .@...jjjjjjjjjjj
+......j$.....jj$$>...       .......jj           ..             j$"""""";;$     $....$jjwjjjjjj/
+  ......$.......$...         .$$$$$j.                           $$""""""$     $....jj$jjjjjjjjj
+.......jjj$......$.    .#$$$$$$$$$$$$$$.    .$$$$$                       ..jj..... j$jjjjjjjjjj
+....jjjjjjj$$.....$  j$[$$$$$$$$.            $$$                                    jjjjjjjjjjj
+$$$$$$$jjjjjjj$j...$..j$$$$j..                                                     $jjjjjjjjjjj
+    $$jjjjjjjjj$j$$..$$j...                       $$j                             $jjjjjjjjjjjj
+    $$jjjjjjjjjj$j......                       $jjjjjjjjj$  $$                   $jjjjjjjjjjjjj
+   $$[jjjjjjjjjjj$                         $$jjjjjjjjjjjjjj$j$                  xjjjjj>>jjjjjjj
+  $$jjjjjjjjjjjjj$                        $$jjjjjjjjjjjjjjjjj$                 $jjj.....jjjjjjj
+ $$.jjjjjjjjjjj$                           $jjjjjjjjjjjjjjjjjj               jj.........jjjjjjj
+$$.[jjjjjjjjj$                              $jjjjjjjjjjjjjjj$              $............[jjjjjj
+$..jjjjjjjj$                                 jjjjjjjjjjjjjj$            .j....   .......>jjjjjj
+ .jjjjjjjjj[j$                                 j$jjjjjjjjj$            j................`jjjjjj
+..jjjjjjjjjjjjjjjj$                                 jj               j....           ....j[.  $
+.jjjjjjjjjjjjjjjj/$    w$$$                                         $..               .       $
+.jjjjjjjjjjjjjjjjjj$w$$$$j/jjjj$$@                                  j                        $$
+jjjjjjjjjjjjjjjjjjj$$$   $$$jjjjjjj/jj#$$                          ^                         $$
+jjjjjjjjjjjjjjjjjj$$        $$$`jjjjjjjjjj.$$                       $                         $
+jjjjjjjjjjjjjjjj$$            $$$jjjjjjjjjjjj$                       $                         
+jjjjjjjjjjjjjj$$$                $$jj$$$$$$$$$$                       "$                  $'   
+jjjjjjjjjjjj$$$               $$$$jj/jjjjj$$$$.                         $$                 $$$$
+
+*/
 
 #undef HANDLER 
 #undef HANDLER_PTR 
