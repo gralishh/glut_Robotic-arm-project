@@ -34,7 +34,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define J3_MAP_D   0.1
 #define PITCH_MAP_K  (PI/2/(135-50))
 #define PITCH_MAP_D  (-50*PITCH_MAP_K)
-#define ROLL_MAP_K  1
+#define ROLL_MAP_K  (PITCH_MAP_K/2)
 #define ROLL_MAP_D  0
 // controller sensity(degree per loop)
 #define J1_CTRL_SEN 0
@@ -176,6 +176,9 @@ void hand_task_init()
 
   //joint_pitch
   __SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,135.0f*PITCH_MAP_K+PITCH_MAP_D);
+  __SET_JOINT_LIMIT(HAND_J1,-3.12,0);
+  __SET_JOINT_LIMIT(HAND_J2,-3.14/2/5*3,3.14/2/5*3);
+  __SET_JOINT_LIMIT(HAND_J3,-3.14/2/5*3,3.14/2/5*3);
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -350,7 +353,7 @@ void __hand_rc_ctrl()
   //__ADD_MOTOR_ANGLE(DJI_HE_L,RC_CTRL_PTR->rc.ch[3]*0.00005f+RC_CTRL_PTR->rc.ch[1]*0.0001f);
   //__ADD_MOTOR_ANGLE(DJI_HE_R,RC_CTRL_PTR->rc.ch[3]*0.00005f-RC_CTRL_PTR->rc.ch[1]*0.0001f);
   __ADD_JOINT_ANGLE(HAND_PITCH,RC_CTRL_PTR->rc.ch[1]*0.0001f*PITCH_MAP_K);
-  __ADD_JOINT_ANGLE(HAND_ROLL,RC_CTRL_PTR->rc.ch[3]*0.0001f);
+  __ADD_JOINT_ANGLE(HAND_ROLL,RC_CTRL_PTR->rc.ch[3]*0.0001f*ROLL_MAP_K);
   __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.0000007f);
   __ADD_JOINT_ANGLE(HAND_J2,-RC_CTRL_PTR->rc.ch[0]*0.0000015f);
   __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025f*J3_MAP_K);
@@ -359,7 +362,7 @@ void __hand_rc_ctrl()
 void __hand_custom_ctrl(void)
 {
   #define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
-  __hand_move2_subctrl(cc_joint_angle[0]-PI/2,cc_joint_angle[1],cc_joint_angle[2],-cc_joint_angle[3],0,J1_EN|J2_EN|J3_EN|J4_EN);
+  __hand_move2_subctrl(cc_joint_angle[0]-PI/2,cc_joint_angle[1],cc_joint_angle[2],-cc_joint_angle[3],cc_joint_angle[4],J1_EN|J2_EN|J3_EN|J4_EN|J5_EN);
   #undef cc_joint_angle
   
 }
@@ -368,10 +371,10 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 {
   if(EN&J5_EN)
   {
-    if(ABS(J5-__GET_JOINT_ANGLE(HAND_ROLL))>0.05f)
+    if(ABS(J5-HANDLER_PTR->joint_angle[HAND_ROLL])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_ROLL,
-        J5>__GET_JOINT_ANGLE(HAND_ROLL)?0.001f:-0.001f);
+        J5>HANDLER_PTR->joint_angle[HAND_ROLL]?0.003f:-0.003f);
     }
     else 
     {
@@ -381,7 +384,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 
   if(EN&J4_EN)
   {
-    if(ABS(J4-HANDLER_PTR->joint_angle[HAND_PITCH])>0.030f)
+    if(ABS(J4-HANDLER_PTR->joint_angle[HAND_PITCH])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_PITCH,
         J4>HANDLER_PTR->joint_angle[HAND_PITCH]?0.001f:-0.001f);
@@ -394,9 +397,9 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     {
       __ADD_JOINT_ANGLE(HAND_J1,
         J1>__GET_JOINT_ANGLE(HAND_J1)?
-           0.001f:
-          -0.001f);
-      __ADD_JOINT_ANGLE(HAND_J1,0.002f*(J1-HANDLER_PTR->joint_angle[HAND_J1]));
+           0.0015f:
+          -0.0015f);
+     // __ADD_JOINT_ANGLE(HAND_J1,0.002f*(J1-HANDLER_PTR->joint_angle[HAND_J1]));
     }
   }
 
@@ -406,8 +409,8 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     {
       __ADD_JOINT_ANGLE(HAND_J2,
         J2>__GET_JOINT_ANGLE(HAND_J2)?
-          0.001f:
-          -0.001f);
+          0.002f:
+          -0.002f);
       //__ADD_JOINT_ANGLE(HAND_J2,0.002f*(J2-HANDLER_PTR->joint_angle[HAND_J2]));
     }
     //else
@@ -523,6 +526,7 @@ jjjjjjjjjjjjjjjjjj$$        $$$`jjjjjjjjjj.$$                       $           
 jjjjjjjjjjjjjjjj$$            $$$jjjjjjjjjjjj$                       $                         
 jjjjjjjjjjjjjj$$$                $$jj$$$$$$$$$$                       "$                  $'   
 jjjjjjjjjjjj$$$               $$$$jj/jjjjj$$$$.                         $$                 $$$$
+
 
 */
 
