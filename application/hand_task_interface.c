@@ -2,6 +2,7 @@
  * @brief 
  * @attention lockup的逻辑大抵没有大🐱饼
  */
+#include <string.h>
 #include "hand_task_interface.h"
 #include "struct_typedef.h"
 #include "hand_task.h"
@@ -59,6 +60,9 @@ DJI_Motor_Ctrl_t DJI_Motor_headendR;
 /*global variable*/
 static fp32 J1_D=0;
 
+float custom_controller_K[5]={1,1,1,1,1};
+float custom_controller_D[5]={0,0,0,0,0};
+
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
@@ -73,6 +77,8 @@ static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t
  * macro name format:
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
+/*自定义控制器*/
+#define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
 /*获取电机状态*/
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
 #define __SET_MOTOR_INSTANCE(index,instance_ptr) (HANDLER_PTR->motor_instance[index]=((void*)instance_ptr))
@@ -99,6 +105,7 @@ static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t
 /*关节控制*/
 #define __GET_JOINT_ANGLE(index) (HANDLER_PTR->feedback_joint_angle[index])
 #define __SET_JOINT_LIMIT(index,min,max) {(HANDLER_PTR->max_joint_angle[index]=max);(HANDLER_PTR->min_joint_angle[index]=min);}
+#define __RESET_JOINT_LIMIT(index) __SET_JOINT_LIMIT(index,0,0)
 #define __JOINT_LIMIT(index,value) angle_limit(value,HANDLER_PTR->max_joint_angle[index],HANDLER_PTR->min_joint_angle[index])
 #define __SET_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,value));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 #define __ADD_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,HANDLER_PTR->joint_angle[index]+(value)));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
@@ -131,7 +138,7 @@ void hand_task_init()
   // J1
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,3,0.7,0.090);
+  M8010_motor_init(&joint1_motor,3,0.75,0.095);
 
   // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
@@ -154,7 +161,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0,10000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,10000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,500,100);
   DJI_Motor_J3.circle_count_flag=1;
 
@@ -163,7 +170,7 @@ void hand_task_init()
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,9000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,70,0,0,500,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,5000,1000);
   DJI_Motor_headendL.circle_count_flag=1;
 
   // Headend_R
@@ -171,14 +178,14 @@ void hand_task_init()
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,9000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,70,0,0,500,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,80,0,0,5000,0);
   DJI_Motor_headendR.circle_count_flag=1;
 
   //joint_pitch
   __SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,135.0f*PITCH_MAP_K+PITCH_MAP_D);
   __SET_JOINT_LIMIT(HAND_J1,-3.12,0);
-  __SET_JOINT_LIMIT(HAND_J2,-3.14/2/5*3,3.14/2/5*3);
-  __SET_JOINT_LIMIT(HAND_J3,-3.14/2/5*3,3.14/2/5*3);
+  __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
+  __SET_JOINT_LIMIT(HAND_J3,-1.18,1.18);
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -213,8 +220,8 @@ void hand_task_get_feedback()
   __GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
   __GET_JOINT_ANGLE(HAND_J2)=J2_MAP_K*__GET_MOTOR_ANGLE(DM_J2)    +J2_MAP_D;
   __GET_JOINT_ANGLE(HAND_J3)=J3_MAP_K*__GET_MOTOR_ANGLE(DJI_J3)   +J3_MAP_D;
-  __GET_JOINT_ANGLE(HAND_PITCH);
-  __GET_JOINT_ANGLE(HAND_ROLL);
+  __GET_JOINT_ANGLE(HAND_PITCH)=HANDLER_PTR->joint_angle[HAND_PITCH];
+  __GET_JOINT_ANGLE(HAND_ROLL)=HANDLER_PTR->joint_angle[HAND_ROLL];
   /*
   __GET_JOINT_ANGLE(index,
     ...
@@ -236,10 +243,10 @@ void hand_task_mode_flush()
     if(switch_is_down(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
     else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
-    else if(switch_is_up(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
-      //__SET_STRUCT_MODE(HAND_MODE_POSE_CTRL);
+    else if(switch_is_up(get_remote_control_point()->rc.s[0]))
+      //__SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_POSE_CTRL);
   }
   else
   {
@@ -361,10 +368,11 @@ void __hand_rc_ctrl()
 
 void __hand_custom_ctrl(void)
 {
-  #define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
-  __hand_move2_subctrl(cc_joint_angle[0]-PI/2,cc_joint_angle[1],cc_joint_angle[2],-cc_joint_angle[3],cc_joint_angle[4],J1_EN|J2_EN|J3_EN|J4_EN|J5_EN);
-  #undef cc_joint_angle
-  
+  __hand_move2_subctrl(
+      (cc_joint_angle[0]-PI/2-custom_controller_D[0])*custom_controller_K[0],
+      (cc_joint_angle[1]-custom_controller_D[1])*custom_controller_K[1],
+      (cc_joint_angle[2]-custom_controller_D[2])*custom_controller_K[2],
+      -cc_joint_angle[3],cc_joint_angle[4],J1_EN|J2_EN|J3_EN|J4_EN|J5_EN);
 }
 
 void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
@@ -374,7 +382,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     if(ABS(J5-HANDLER_PTR->joint_angle[HAND_ROLL])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_ROLL,
-        J5>HANDLER_PTR->joint_angle[HAND_ROLL]?0.003f:-0.003f);
+        J5>HANDLER_PTR->joint_angle[HAND_ROLL]?0.001f:-0.001f);
     }
     else 
     {
@@ -396,21 +404,21 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.01f)
     {
       __ADD_JOINT_ANGLE(HAND_J1,
-        J1>__GET_JOINT_ANGLE(HAND_J1)?
-           0.0015f:
-          -0.0015f);
+        J1>HANDLER_PTR->joint_angle[HAND_J1]?
+           0.0008f:
+          -0.0008f);
      // __ADD_JOINT_ANGLE(HAND_J1,0.002f*(J1-HANDLER_PTR->joint_angle[HAND_J1]));
     }
   }
 
   if(EN&J2_EN)
   {
-    if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.01f)
+    if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.02f)
     {
       __ADD_JOINT_ANGLE(HAND_J2,
-        J2>__GET_JOINT_ANGLE(HAND_J2)?
-          0.002f:
-          -0.002f);
+        J2>HANDLER_PTR->joint_angle[HAND_J2]?
+          0.001f:
+          -0.001f);
       //__ADD_JOINT_ANGLE(HAND_J2,0.002f*(J2-HANDLER_PTR->joint_angle[HAND_J2]));
     }
     //else
@@ -424,13 +432,81 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     if(ABS(J3-HANDLER_PTR->joint_angle[HAND_J3])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_J3,
-        J3>__GET_JOINT_ANGLE(HAND_J3)?
+        J3>HANDLER_PTR->joint_angle[HAND_J3]?
           0.0015f:
           -0.0015f);
       //__ADD_JOINT_ANGLE(HAND_J3,0.001f*(J3-HANDLER_PTR->joint_angle[HAND_J3]));
     }
   }
-  
+}
+
+void __hand_custom_map_subctrl(void)
+{
+  static int Joint_init=0;
+  float Joint_pos1[5];
+  float Joint_pos2[5];
+
+
+  if(Joint_init==0)
+  {
+    __hand_move2_subctrl(0,-PI/2,0,0,0,J1_EN|J2_EN|J3_EN);
+    if(RC_CTRL_PTR->rc.ch[3]==660)
+    {
+      __HOLD_TICKS_COUNTING();
+      if(__GET_TICKS_STACK(0)==0)
+        __RECORD_TICKS(0);
+      else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>1000)
+      {
+        __RESET_TICKS();
+        __RESET_RECORD_TICKS(0);
+        __HALT_TICKS_COUNTING();
+        memcpy((void*)Joint_pos1,(void*)cc_joint_angle,sizeof(float)*3);
+        Joint_init=1;
+      }
+    }
+    else
+    {
+      __RESET_TICKS();
+      __RESET_RECORD_TICKS(0);
+      __HALT_TICKS_COUNTING();
+    }
+  }
+
+  if(Joint_init==1)
+  {
+    __hand_move2_subctrl(-PI/2,0,PI/2,0,0,J1_EN|J2_EN|J3_EN);
+    if(RC_CTRL_PTR->rc.ch[3]==660)
+    {
+      __HOLD_TICKS_COUNTING();
+      if(__GET_TICKS_STACK(0)==0)
+        __RECORD_TICKS(0);
+      else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>1000)
+      {
+        __RESET_TICKS();
+        __RESET_RECORD_TICKS(0);
+        __HALT_TICKS_COUNTING();
+        memcpy((void*)Joint_pos2,(void*)cc_joint_angle,sizeof(float)*3);
+        Joint_init=2;
+      }
+    }
+    else
+    {
+      __RESET_TICKS();
+      __RESET_RECORD_TICKS(0);
+      __HALT_TICKS_COUNTING();
+    }
+  }
+
+  if(Joint_init==2)
+  {
+    custom_controller_D[0]=Joint_pos2[0];
+    custom_controller_D[1]=Joint_pos2[1];
+    custom_controller_D[2]=Joint_pos1[2];
+
+    custom_controller_K[0]=(PI/2)/ABS(Joint_pos1[0]-Joint_pos2[0]);
+    custom_controller_K[1]=(PI/2)/ABS(Joint_pos1[1]-Joint_pos2[0]);
+    custom_controller_K[2]=(PI/2)/ABS(Joint_pos1[2]-Joint_pos2[0]);
+  }
 }
 
 void __hand_pose_ctrl(void)
@@ -454,13 +530,29 @@ void __hand_pose_ctrl(void)
       else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>1000)
         pose_mode=1;
     }
-    if(RC_CTRL_PTR->rc.ch[1]==-660)
+    else if(RC_CTRL_PTR->rc.ch[1]==-660)
     {
       __HOLD_TICKS_COUNTING();
       if(__GET_TICKS_STACK(0)==0)
         __RECORD_TICKS(0);
       else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>2000)
         pose_mode=2;
+    }
+    else if(RC_CTRL_PTR->rc.ch[1]==660)
+    {
+      __HOLD_TICKS_COUNTING();
+      if(__GET_TICKS_STACK(0)==0)
+        __RECORD_TICKS(0);
+      else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>2000)
+        pose_mode=3;
+    }
+    else if(RC_CTRL_PTR->rc.ch[3]==660)
+    {
+      __HOLD_TICKS_COUNTING();
+      if(__GET_TICKS_STACK(0)==0)
+        __RECORD_TICKS(0);
+      else if(__GET_TICKS_TIME()-__GET_TICKS_STACK(0)>2000)
+        pose_mode=4;
     }
     else
     {
@@ -474,7 +566,12 @@ void __hand_pose_ctrl(void)
   if(pose_mode==1)
     __hand_move2_subctrl(-PI/8,-2.2,0.5,0,0,J1_EN|J2_EN|J3_EN);
   else if(pose_mode==2)
-    __hand_custom_ctrl();
+    //__hand_custom_ctrl();
+    __hand_rc_ctrl();
+  else if(pose_mode==3)
+    __hand_custom_map_subctrl();
+  else
+    ;
 }
 
 /*
