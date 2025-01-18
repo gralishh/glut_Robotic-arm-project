@@ -162,7 +162,7 @@ void hand_task_init()
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
   DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,10000.000,800);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,500,100);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
   DJI_Motor_J3.circle_count_flag=1;
 
   // Headend_L
@@ -183,9 +183,10 @@ void hand_task_init()
 
   //joint_pitch
   __SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,135.0f*PITCH_MAP_K+PITCH_MAP_D);
+  __SET_JOINT_ANGLE(HAND_PITCH,PITCH_MAP_D);
   __SET_JOINT_LIMIT(HAND_J1,-3.12,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
-  __SET_JOINT_LIMIT(HAND_J3,-1.18,1.18);
+  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.1),1.18*(1.1));
   for(int i=0;i<40;i++)
   {
     osDelay(20);

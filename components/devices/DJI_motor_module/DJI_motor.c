@@ -4,6 +4,9 @@
 #include "angle_process.h"
 #include <string.h>
 
+// ABS
+#define ABS(X) ((X)>0?(X):(-X))
+
 // 电流输出数组宏函数
 #define IS_OUTPUT_ID_200H(id) ((id>=0x201)&&(id<=0x204))
 #define IS_OUTPUT_ID_1FFH(id) ((id>=0x205)&&(id<=0x208))
@@ -128,6 +131,11 @@ void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband)
 
 }
 
+inline void DJI_Motor_set_stall_detect(DJI_Motor_Ctrl_t* motor)
+{
+  __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_STALL_DETECT_INIT);
+}
+
 void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle)
 {
   if(!__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_SPEED_PID_INIT|MOTOR_POS_PID_INIT))
@@ -219,6 +227,11 @@ void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp3
   return;
 }
 
+uint8_t DJI_Motor_get_stall_flag(DJI_Motor_Ctrl_t* motor)
+{
+  return motor->stall_flag;
+}
+
 void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor)
 {
   if(!__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_SPEED_PID_INIT))
@@ -306,27 +319,60 @@ static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor)
 
 static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor)
 {
+  fp32 output_speed=0.0f;
+
   if(motor->circle_count_flag)
   {
-    return PID_Calc(&(motor->pid_speed_loop),
-      __DJI_Motor_Ctrl_get_speed(motor),
-      PID_Calc(
-          &(motor->pid_pos_loop),
-          __DJI_Motor_Ctrl_get_angle(motor),
-          motor->set_angle
-      )
+    output_speed=PID_Calc(
+      &(motor->pid_pos_loop),
+      __DJI_Motor_Ctrl_get_angle(motor),
+      motor->set_angle
     );
   }
   else
   {
-    return PID_Calc(&(motor->pid_speed_loop),
-      __DJI_Motor_Ctrl_get_speed(motor),
-      PID_Calc(
-        &(motor->pid_pos_loop),
-        0,
-        angle_normalize(motor->set_angle,-__DJI_Motor_Ctrl_get_angle(motor))
-      )
+    output_speed=PID_Calc(
+      &(motor->pid_pos_loop),
+      0,
+      angle_normalize(motor->set_angle,-__DJI_Motor_Ctrl_get_angle(motor))
     );
   }
+
+  /*堵转检测*/
+  if(__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_STALL_DETECT_INIT))
+  {
+    if(motor->stall_flag==0)
+    {
+      if(ABS((float)__DJI_Motor_Ctrl_get_speed(motor))<output_speed*0.2f && output_speed>15.0f)
+      {
+        motor->start_stall_time++;
+      }
+      else
+      {
+        motor->start_stall_time=0;
+      }
+
+      if(motor->start_stall_time==3000)
+      {
+        motor->stall_flag=1;
+        motor->start_stall_time=0;
+      }
+    }
+    else
+    {
+      motor->start_stall_time++;
+      output_speed=0.0f;
+      if(motor->start_stall_time>1000)
+      {
+        motor->start_stall_time=0;
+        motor->stall_flag=0;
+      }
+    }
+  }
+
+  return PID_Calc(&(motor->pid_speed_loop),
+    __DJI_Motor_Ctrl_get_speed(motor),
+    output_speed
+  );
 }
 

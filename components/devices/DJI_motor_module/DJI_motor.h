@@ -37,6 +37,7 @@ typedef enum{
   MOTOR_ANGLE_LIMIT_INIT     =0x01<<3,
   MOTOR_SPEED_LIMIT_INIT     =0x01<<4,
   MOTOR_CURRENT_LIMIT_INIT   =0x01<<5,
+  MOTOR_STALL_DETECT_INIT    =0x01<<6
 } Motor_Ctrl_init_state_e;
 
 typedef struct __DJI_Motor_Bus_t DJI_Motor_Bus_t;
@@ -95,6 +96,9 @@ typedef struct __DJI_Motor_Ctrl_t{
   fp32 last_ecd_angle;// 上一转子角度反馈
   fp32 circle_count;//转子圈数
 
+/*堵转检测*/
+  uint16_t start_stall_time;
+  uint8_t stall_flag;
 } DJI_Motor_Ctrl_t;
 
 /*preset_bus_handler*/
@@ -117,6 +121,7 @@ void DJI_Motor_Speed_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,
   fp32 max_out,fp32 max_iout);
 void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband);
+void DJI_Motor_set_stall_detect(DJI_Motor_Ctrl_t* motor);
 
 /*电机控制接口*/
 void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle);//
@@ -127,6 +132,7 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
 
 /*电机反馈接口*/
 void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle);
+uint8_t DJI_Motor_get_stall_flag(DJI_Motor_Ctrl_t* motor);
 
 /*DJI_Motor循环控制接口*/
 void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor);
