@@ -230,14 +230,41 @@ void __gimbal_idle_ctrl()
 
 void __gimbal_rc_ctrl()
 {
+  static PUMP_STATE_T pump;
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00008f);
+  
+  /*Æø±Ã¿ØÖÆ*/
   if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
   {
-    PUMP1_ON();
+    if(pump==PUMP_PULL)
+      pump=PUMP_RESET;
+    else if(pump==PUMP_RESET)
+      pump=PUMP_PULL;
   }
   else if(RC_CTRL_PTR->rc.ch[4]<-660/3*2)
   {
-    PUMP1_OFF();
+    pump=PUMP_PUSH;
+  }
+  else
+  {
+    if(pump==PUMP_PUSH)
+    {
+      pump=PUMP_RESET;
+    }
+  }
+
+  switch(pump)
+  {
+    case PUMP_PULL:
+      PUMP1_PULL();
+      break;
+    case PUMP_PUSH:
+      PUMP1_PUSH();
+      break;
+    case PUMP_RESET:
+    default:
+      PUMP1_OFF();
+      break;
   }
 }
 

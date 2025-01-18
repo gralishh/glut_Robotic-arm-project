@@ -36,7 +36,11 @@ extern "C" {
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef enum{
+  PUMP_RESET,
+  PUMP_PULL,
+  PUMP_PUSH
+} PUMP_STATE_T;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -47,8 +51,10 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-#define PUMP1_ON() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_SET)
-#define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET)
+/*OUT为吸气气泵，IN为出气气泵*/
+#define PUMP1_PULL() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_SET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
+#define PUMP1_PUSH() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_SET)
+#define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
