@@ -31,6 +31,7 @@
 #include "chassis_task.h"
 #include "gimbal_task.h"
 #include "hand_task.h"
+#include "catcher_task.h"
 #include "detect_task.h" 
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
@@ -127,7 +128,14 @@ const osThreadAttr_t USART3_measure_attributes = {
 osThreadId_t CustomCtrlTaskHandle;
 const osThreadAttr_t CustomCtrlTask_attributes = {
   .name = "CustomCtrlTask",
-  .stack_size = 512 * 4,
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for CatcherTask */
+osThreadId_t CatcherTaskHandle;
+const osThreadAttr_t CatcherTask_attributes = {
+  .name = "CatcherTask",
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for motor_timer_ctrl */
@@ -164,6 +172,7 @@ void __gimbal_task(void *argument);
 void __hand_task(void *argument);
 void __usart3_measure_task(void *argument);
 void __Custom_Ctrl_Task(void *argument);
+void __catcher_task(void *argument);
 void __motor_timr_ctrl_callback(void *argument);
 
 /* USER CODE BEGIN PFP */
@@ -281,6 +290,9 @@ int main(void)
 
   /* creation of CustomCtrlTask */
   CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
+
+  /* creation of CatcherTask */
+  CatcherTaskHandle = osThreadNew(__catcher_task, NULL, &CatcherTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1277,6 +1289,25 @@ void __Custom_Ctrl_Task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __Custom_Ctrl_Task */
+}
+
+/* USER CODE BEGIN Header___catcher_task */
+/**
+* @brief Function implementing the CatcherTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___catcher_task */
+void __catcher_task(void *argument)
+{
+  /* USER CODE BEGIN __catcher_task */
+  catcher_task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __catcher_task */
 }
 
 /* __motor_timr_ctrl_callback function */

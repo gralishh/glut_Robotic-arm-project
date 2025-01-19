@@ -128,6 +128,8 @@ void catcher_task_init()
   DJI_Motor_Speed_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,15,0,0.001,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,20,0,0,500,0);
   DJI_Motor_cat_pickup.circle_count_flag=1;
+
+  DJI_CANBus_enable_bus(&DJI_CAN3_Bus_ctrl);
 }
 
 /**

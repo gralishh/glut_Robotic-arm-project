@@ -1122,6 +1122,16 @@
               <FileType>1</FileType>
               <FilePath>..\application\chassis_task_interface.c</FilePath>
             </File>
+            <File>
+              <FileName>catcher_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\catcher_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>catcher_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\catcher_task_interface.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
