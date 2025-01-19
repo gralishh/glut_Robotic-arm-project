@@ -18,9 +18,9 @@ extern FDCAN_HandleTypeDef hfdcan1;
 // joint mapping parameter
 
 // controller sensity(degree per loop)
-#define VX_CTRL_SEN 3.23f
-#define VY_CTRL_SEN 3.23f
-#define WZ_CTRL_SEN 8.0f
+#define VX_CTRL_SEN 4.23f
+#define VY_CTRL_SEN 4.23f
+#define WZ_CTRL_SEN 9.0f
 // chassis para
 #define CHASSIS_WZ_SET_SCALE 0.03f
 #define MOTOR_DISTANCE_TO_CENTER 0.2f
@@ -94,25 +94,25 @@ void chassis_task_init()
   __SET_MOTOR_TYPE(DJI_LF,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_LeftFront,&DJI_CAN1_Bus_ctrl,M3508,0x201);
   DJI_Motor_Speed_PID_init(&DJI_Motor_LeftFront,PID_POSITION,20,0,0.001,5000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_LeftFront,PID_POSITION,15,0,0,500,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_LeftFront,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_RF,&DJI_Motor_RightFront);
   __SET_MOTOR_TYPE(DJI_RF,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightFront,&DJI_CAN1_Bus_ctrl,M3508,0x202);
   DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront,PID_POSITION,20,0,0.001,5000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_RightFront,PID_POSITION,15,0,0,500,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_RightFront,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_LB,&DJI_Motor_LeftBack);
   __SET_MOTOR_TYPE(DJI_LB,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_LeftBack,&DJI_CAN1_Bus_ctrl,M3508,0x204);
   DJI_Motor_Speed_PID_init(&DJI_Motor_LeftBack,PID_POSITION,20,0,0.001,5000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_LeftBack,PID_POSITION,15,0,0,500,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_LeftBack,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_RB,&DJI_Motor_RightBack);
   __SET_MOTOR_TYPE(DJI_RB,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightBack,&DJI_CAN1_Bus_ctrl,M3508,0x203);
   DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack,PID_POSITION,20,0,0.001,5000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_RightBack,PID_POSITION,15,0,0,500,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_RightBack,PID_POSITION,15,0,0,1000,0);
 
   __chassis_idle_ctrl();
   DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
