@@ -59,8 +59,8 @@ typedef struct{
   int64_t tick;
   int64_t tick_stack[5];// 具体使用取决于任务
 } CATCHER_TASK_HANDLER_TYPE; 
-extern CATCHER_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
-extern CATCHER_TASK_HANDLER_TYPE* hand_task_handler_ptr;
+extern CATCHER_TASK_HANDLER_TYPE catcher_task_handler;/*unique structure*/
+extern CATCHER_TASK_HANDLER_TYPE* catcher_task_handler_ptr;
 
 void catcher_task(void *argument);
 

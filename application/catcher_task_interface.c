@@ -122,8 +122,8 @@ void catcher_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_cat_push,PID_POSITION,20,0,0,500,0);
   DJI_Motor_cat_push.circle_count_flag=1;
 
-  __SET_MOTOR_INSTANCE(DJI_CAT_PICKUP,&DJI_Motor_cat_pickup);
-  __SET_MOTOR_TYPE(DJI_CAT_PICKUP,DJI_MOTOR);
+  __SET_MOTOR_INSTANCE(DJI_CAT_PICK,&DJI_Motor_cat_pickup);
+  __SET_MOTOR_TYPE(DJI_CAT_PICK,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_cat_pickup,&DJI_CAN3_Bus_ctrl,M3508,0x203);
   DJI_Motor_Speed_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,15,0,0.001,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,20,0,0,500,0);
