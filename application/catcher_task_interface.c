@@ -43,15 +43,11 @@ DJI_Motor_Ctrl_t DJI_Motor_cat_push;
 DJI_Motor_Ctrl_t DJI_Motor_cat_pickup;
 
 /*global variable*/
-static fp32 J1_D=0;
 
 static void __catcher_nonforce(void);
 static void __catcher_idle_ctrl(void);
 static void __catcher_rc_ctrl(void);
 static void __catcher_pose_ctrl(void);
-
-static void __catcher_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
-
 
 /*general handler method*/
 /** 
@@ -114,23 +110,23 @@ void catcher_task_init()
   /*电机初始化*/
   __SET_MOTOR_INSTANCE(DJI_CAT_UL,&DJI_Motor_cat_uplift);
   __SET_MOTOR_TYPE(DJI_CAT_UL,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_cat_uplift,&DJI_CAN3_Bus_ctrl,M3508,0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_uplift,PID_POSITION,20,0,0.001,9000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_uplift,PID_POSITION,80,0,0,500,0);
+  DJI_Motor_init(&DJI_Motor_cat_uplift,&DJI_CAN3_Bus_ctrl,M3508,0x201);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_uplift,PID_POSITION,15,0,0.001,9000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_uplift,PID_POSITION,40,0,0,500,0);
   DJI_Motor_cat_uplift.circle_count_flag=1;
 
   __SET_MOTOR_INSTANCE(DJI_CAT_PUSH,&DJI_Motor_cat_push);
   __SET_MOTOR_TYPE(DJI_CAT_PUSH,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_cat_push,&DJI_CAN3_Bus_ctrl,M3508,0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_push,PID_POSITION,20,0,0.001,9000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_push,PID_POSITION,80,0,0,500,0);
+  DJI_Motor_init(&DJI_Motor_cat_push,&DJI_CAN3_Bus_ctrl,M3508,0x202);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_push,PID_POSITION,15,0,0.001,9000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_push,PID_POSITION,20,0,0,500,0);
   DJI_Motor_cat_push.circle_count_flag=1;
 
   __SET_MOTOR_INSTANCE(DJI_CAT_PICKUP,&DJI_Motor_cat_pickup);
   __SET_MOTOR_TYPE(DJI_CAT_PICKUP,DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_cat_pickup,&DJI_CAN3_Bus_ctrl,M3508,0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,20,0,0.001,9000,0);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,80,0,0,500,0);
+  DJI_Motor_init(&DJI_Motor_cat_pickup,&DJI_CAN3_Bus_ctrl,M3508,0x203);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,15,0,0.001,9000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_cat_pickup,PID_POSITION,20,0,0,500,0);
   DJI_Motor_cat_pickup.circle_count_flag=1;
 }
 
@@ -155,7 +151,9 @@ void catcher_task_get_feedback()
   }
 
   /*joint angle map*/
-  //__GET_JOINT_ANGLE(CATCHER_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
+  __GET_JOINT_ANGLE(CAT_UPLIFT)=UL_MAP_K*__GET_MOTOR_ANGLE(DJI_CAT_UL) + UL_MAP_D;
+  __GET_JOINT_ANGLE(CAT_PUSHOUT)=PUSH_MAP_K*__GET_MOTOR_ANGLE(DJI_CAT_PUSH) + PUSH_MAP_D;
+  __GET_JOINT_ANGLE(CAT_PICKUP)=PU_MAP_K*__GET_MOTOR_ANGLE(DJI_CAT_PICK) + PU_MAP_D;
   /*
   __GET_JOINT_ANGLE(index,
     ...
@@ -238,8 +236,12 @@ void catcher_task_output()
 {
   uint16_t index;
   /*joint map to motor state*/
-  //if(__GET_MOTOR_CTRL_MODE(M8010_J1)==POS_LOOP)
-  //  __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[CATCHER_J1]-J1_MAP_D)/J1_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DJI_CAT_UL)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DJI_CAT_UL,(HANDLER_PTR->joint_angle[CAT_UPLIFT]-UL_MAP_D)/UL_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DJI_CAT_PUSH)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DJI_CAT_PUSH,(HANDLER_PTR->joint_angle[CAT_PUSHOUT]-PUSH_MAP_D)/PUSH_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(DJI_CAT_PICK)==POS_LOOP)
+    __SET_MOTOR_ANGLE(DJI_CAT_PICK,(HANDLER_PTR->joint_angle[CAT_PICKUP]-PU_MAP_D)/PU_MAP_K);
 
   /*motor output*/
   for(index=0;index<CATCHER_MOTOR_COUNT;index++)
@@ -277,22 +279,6 @@ void __catcher_rc_ctrl()
   //__ADD_JOINT_ANGLE(CATCHER_PITCH,RC_CTRL_PTR->rc.ch[1]*0.0001f);
 }
 
-void __catcher_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
-{
-  if(EN&J5_EN)
-  {
-    if(ABS(J5-__GET_JOINT_ANGLE(CATCHER_ROLL))>0.05f)
-    {
-      __ADD_JOINT_ANGLE(CATCHER_ROLL,
-        J5>__GET_JOINT_ANGLE(CATCHER_ROLL)?0.001f:-0.001f);
-    }
-    else 
-    {
-      __SET_JOINT_ANGLE(CATCHER_ROLL,J5);
-    }
-  }
-}
-
 void __catcher_pose_ctrl(void)
 {
   static uint8_t pose_mode=0;
@@ -324,6 +310,7 @@ void __catcher_pose_ctrl(void)
 
 
   if(pose_mode==1)
+    ;
     //__catcher_move2_subctrl(-PI/8,-2.2,0.5,0,0,J1_EN|J2_EN|J3_EN);
 }
 
