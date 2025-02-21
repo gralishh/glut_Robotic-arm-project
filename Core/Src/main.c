@@ -1301,7 +1301,7 @@ void __Custom_Ctrl_Task(void *argument)
 void __catcher_task(void *argument)
 {
   /* USER CODE BEGIN __catcher_task */
-  catcher_task(argument);
+  //catcher_task(argument);
   /* Infinite loop */
   for(;;)
   {

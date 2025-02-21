@@ -27,6 +27,7 @@ DJI_Motor_Ctrl_t DJI_Motor_uplift;
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
 static void __gimbal_rc_ctrl(void);
+static void __gimbal_uplift_rc_ctrl(void);
 
 
 /*general handler method*/
@@ -143,7 +144,7 @@ void gimbal_task_mode_flush()
     else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
     else if(switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+      __SET_STRUCT_MODE(GIMBAL_MODE_UPLIFT_RC_CTRL);
   }
   else if(switch_is_up(get_remote_control_point()->rc.s[1]))
   {
@@ -182,6 +183,9 @@ void gimbal_task_set_output()
       break;
     case GIMBAL_MODE_RC_CTRL:
       __gimbal_rc_ctrl();
+      break;
+    case GIMBAL_MODE_UPLIFT_RC_CTRL:
+      __gimbal_uplift_rc_ctrl();
       break;
     case GIMBAL_MODE_NONFORCE:
     default:
@@ -231,7 +235,7 @@ void __gimbal_idle_ctrl()
 void __gimbal_rc_ctrl()
 {
   static PUMP_STATE_T pump;
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00008f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00012f);
   
   /*Æø±Ã¿ØÖÆ*/
   if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
@@ -266,6 +270,11 @@ void __gimbal_rc_ctrl()
       PUMP1_OFF();
       break;
   }
+}
+
+void __gimbal_uplift_rc_ctrl()
+{
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00018f);
 }
 
 #undef HANDLER 
