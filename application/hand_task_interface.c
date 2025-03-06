@@ -541,8 +541,10 @@ void __hand_gold_catch_ctrl(void)
 {
   __ADD_JOINT_ANGLE(HAND_J1,-RC_CTRL_PTR->rc.ch[2]*0.0000007f*2);
   __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025f*J3_MAP_K);
-  __ADD_JOINT_ANGLE(HAND_PITCH,RC_CTRL_PTR->rc.ch[3]*0.0001f*PITCH_MAP_K);
-  __hand_move2_subctrl(0,0,0,0,0,J2_EN);
+  __ADD_JOINT_ANGLE(HAND_PITCH,-RC_CTRL_PTR->rc.ch[3]*0.0001f*PITCH_MAP_K);
+  if(__GET_JOINT_ANGLE(HAND_PITCH)>0)
+    __SET_JOINT_ANGLE(HAND_PITCH,0);
+  __hand_move2_subctrl(0,-0.950,0,0,0,J2_EN);
 }
 
 void __hand_pose_ctrl(void)
