@@ -6,6 +6,7 @@
 #include "angle_process.h"
 #include "cmsis_os2.h"
 #include "detect_task.h"
+#include "Custom_ctrl.h" 
 
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
@@ -14,10 +15,14 @@
 /*extern*/
 extern FDCAN_HandleTypeDef hfdcan1;
 
+/*ABS*/
+#define ABS(X) ((X)>0?(X):-(X))
 /*global macro variable*/
 // joint mapping parameter
 #define UL_MAP_K   1
 #define UL_MAP_D   0
+#define UL_MAX_ENCODE 420
+#define UL_MIN_ENCODE 25
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
 
@@ -28,6 +33,11 @@ static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
 static void __gimbal_rc_ctrl(void);
 static void __gimbal_uplift_rc_ctrl(void);
+static void __gimbal_uplift_shouldRoll_ctrl(void);
+static void __gimbal_uplift_custom_ctrl(void);
+
+static void __uplift_move2_subctrl(fp32 UL,uint8_t EN);
+static void __pump_subctrl(void);
 
 
 /*general handler method*/
@@ -35,6 +45,9 @@ static void __gimbal_uplift_rc_ctrl(void);
  * macro name format:
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
+/*自定义控制器*/
+#define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
+#define cc_key_value (Custom_Ctrl_get_rx_pack_ptr()->key)
 /*获取电机状态*/
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
 #define __SET_MOTOR_INSTANCE(index,instance_ptr) (HANDLER_PTR->motor_instance[index]=((void*)instance_ptr))
@@ -73,6 +86,7 @@ static void __gimbal_uplift_rc_ctrl(void);
 // unit:seconds
 #define __GET_TICKS_TIME() (HANDLER_PTR->tick*1)
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME()/PROCESS_TIME)
+#define __IS_MODE_SWITCHED() (1==HANDLER_PTR->mode_switch)
 
 
 void gimbal_task_init()
@@ -90,7 +104,7 @@ void gimbal_task_init()
   DJI_Motor_uplift.circle_count_flag=1;
   //DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
 
-  __SET_JOINT_LIMIT(GIMBAL_UPLIFT,25,440);
+  __SET_JOINT_LIMIT(GIMBAL_UPLIFT,UL_MIN_ENCODE,UL_MAX_ENCODE);
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -132,10 +146,13 @@ void gimbal_task_get_feedback()
 
 /**
  * @brief 模式状态刷新
- * @details 根据控制器拨杆刷新模式(二级模式会与UI耦合)
+ * @details 根据控制器拨杆刷新模式
  */
 void gimbal_task_mode_flush()
 {
+  static uint8_t last_mode=GIMBAL_MODE_NONFORCE;
+  last_mode=HANDLER_PTR->ctrl_mode;
+
   /**/
   if(switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
@@ -149,7 +166,7 @@ void gimbal_task_mode_flush()
   else if(switch_is_up(get_remote_control_point()->rc.s[1]))
   {
     if(switch_is_mid(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
+      __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
     else
       __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
   }
@@ -168,6 +185,14 @@ void gimbal_task_mode_flush()
     __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
 
+  if(HANDLER_PTR->ctrl_mode==last_mode)
+    HANDLER_PTR->mode_switch=0;
+  else 
+  {
+    __RESET_TICKS();
+    __HALT_TICKS_COUNTING();
+    HANDLER_PTR->mode_switch=1;
+  }
 }
 
 /**
@@ -186,6 +211,9 @@ void gimbal_task_set_output()
       break;
     case GIMBAL_MODE_UPLIFT_RC_CTRL:
       __gimbal_uplift_rc_ctrl();
+      break;
+    case GIMBAL_MODE_CUSTOM_CTRL:
+      __gimbal_uplift_custom_ctrl();
       break;
     case GIMBAL_MODE_NONFORCE:
     default:
@@ -234,28 +262,83 @@ void __gimbal_idle_ctrl()
 
 void __gimbal_rc_ctrl()
 {
-  static PUMP_STATE_T pump;
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00012f);
-  
+  __pump_subctrl();
+}
+
+void __gimbal_uplift_rc_ctrl()
+{
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00018f);
+  __pump_subctrl();
+}
+
+void __gimbal_uplift_custom_ctrl()
+{
+  static float middle_pos=UL_MIN_ENCODE;
+  if(__IS_MODE_SWITCHED())
+  {
+    middle_pos=__GET_JOINT_ANGLE(GIMBAL_UPLIFT);
+  }
+
+  __pump_subctrl();
+  if(-300>RC_CTRL_PTR->rc.ch[1] || RC_CTRL_PTR->rc.ch[1]>300)
+  {
+    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00018f;
+  }
+
+  if(middle_pos<UL_MIN_ENCODE)
+    middle_pos=UL_MIN_ENCODE;
+  else if(middle_pos>UL_MAX_ENCODE)
+    middle_pos = UL_MAX_ENCODE;
+
+  __uplift_move2_subctrl(middle_pos+(UL_MAX_ENCODE-UL_MIN_ENCODE)/2*(cc_joint_angle[4]-0.5),0x01);
+}
+
+void __pump_subctrl()
+{
+  static PUMP_STATE_T pump;
+  if(__IS_MODE_SWITCHED())
+  {
+    HANDLER_PTR->tick=500;
+  }
   /*气泵控制*/
-  if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
+  if(cc_key_value.k1)
   {
-    if(pump==PUMP_PULL)
-      pump=PUMP_RESET;
-    else if(pump==PUMP_RESET)
-      pump=PUMP_PULL;
+    __RESET_TICKS();
+    __HALT_TICKS_COUNTING();
+    pump=PUMP_PULL;
   }
-  else if(RC_CTRL_PTR->rc.ch[4]<-660/3*2)
+  else 
   {
-    pump=PUMP_PUSH;
-  }
-  else
-  {
-    if(pump==PUMP_PUSH)
+    __HALT_TICKS_COUNTING();
+    if(__GET_TICKS()<500)
+    {
+      pump=PUMP_PUSH;
+      __HOLD_TICKS_COUNTING();
+    }
+    else
     {
       pump=PUMP_RESET;
     }
   }
+  //if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
+  //{
+  //  if(pump==PUMP_PULL)
+  //    pump=PUMP_RESET;
+  //  else if(pump==PUMP_RESET)
+  //    pump=PUMP_PULL;
+  //}
+  //else if(RC_CTRL_PTR->rc.ch[4]<-660/3*2)
+  //{
+  //  pump=PUMP_PUSH;
+  //}
+  //else
+  //{
+  //  if(pump==PUMP_PUSH)
+  //  {
+  //    pump=PUMP_RESET;
+  //  }
+  //}
 
   switch(pump)
   {
@@ -270,11 +353,23 @@ void __gimbal_rc_ctrl()
       PUMP1_OFF();
       break;
   }
+
 }
 
-void __gimbal_uplift_rc_ctrl()
+void __uplift_move2_subctrl(fp32 UL,uint8_t EN)
 {
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00018f);
+  if(EN)
+  {
+    if(ABS(UL-HANDLER_PTR->joint_angle[GIMBAL_UPLIFT])>1.0f)
+    {
+      __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,
+        UL>HANDLER_PTR->joint_angle[GIMBAL_UPLIFT]?0.1f:-0.1f);
+    }
+    else
+    {
+    
+    }
+  }
 }
 
 #undef HANDLER 

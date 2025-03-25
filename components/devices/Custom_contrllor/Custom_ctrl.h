@@ -42,7 +42,7 @@ typedef __packed struct
 	frame_header_t	header;
 	uint16_t cmd_id;
 	key_t   key;
-	float adc_val[5];
+	float adc_val[6];
 	uint16_t crc16;
 } data_t; 
 

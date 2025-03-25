@@ -55,9 +55,12 @@ void Custom_Ctrl_Task(void* para)
       {
         UART7_Recv(RX_BUF, PACK_LENGTH);  
         Custom_Ctrl_unpack();
+        UART7_Drop(4096);
       }
       else
       {
+        UART7_Drop(1);
+        vTaskDelay(1);
         uart7_length = UART7_GetDataCount();
         if(uart7_length > 3000)
         {

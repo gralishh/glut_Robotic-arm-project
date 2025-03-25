@@ -22,6 +22,7 @@ typedef enum{
   GIMBAL_MODE_IDLE,
   GIMBAL_MODE_RC_CTRL,
   GIMBAL_MODE_UPLIFT_RC_CTRL,
+  GIMBAL_MODE_CUSTOM_CTRL,
   GIMBAL_MODE_COUNT,
 }GIMBAL_CTRL_MODE;
 
@@ -31,6 +32,7 @@ typedef struct{
 
   /*state value*/
   uint8_t ctrl_mode;
+  uint8_t mode_switch; //模式切换时置1
   Motor_Type_e motor_type[GIMBAL_MOTOR_COUNT];
   Motor_Ctrl_mode_e motor_ctrl_mode[GIMBAL_MOTOR_COUNT];
 
@@ -52,6 +54,7 @@ typedef struct{
 
   uint8_t tick_count_halt;
   int64_t tick;
+  int64_t tick_stack[5];// 具体使用取决于任务
 } GIMBAL_TASK_HANDLER_TYPE; 
 extern GIMBAL_TASK_HANDLER_TYPE gimbal_task_handler;/*unique structure*/
 extern GIMBAL_TASK_HANDLER_TYPE* gimbal_task_handler_ptr;
