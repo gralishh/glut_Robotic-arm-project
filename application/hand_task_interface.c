@@ -71,6 +71,7 @@ static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
 
 static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
+static void __hand_pitch_pos_init(void);
 
 
 /*general handler method*/
@@ -473,6 +474,11 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
       //__ADD_JOINT_ANGLE(HAND_J3,0.001f*(J3-HANDLER_PTR->joint_angle[HAND_J3]));
     }
   }
+}
+
+void __hand_pitch_pos_init(void)
+{
+  
 }
 
 void __hand_custom_map_subctrl(void)

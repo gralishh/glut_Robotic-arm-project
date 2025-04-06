@@ -28,7 +28,7 @@
   if(IS_OUTPUT_ID_1FFH(motor_ptr->id)) \
     (motor_ptr->mounted_bus->output_current1FFH)[GET_OUTPUT_CURRENT_INDEX(motor_ptr->id)]=__DJI_Motor_Ctrl_get_reverse_current(motor_ptr,current); \
 
-
+// 功能性代码(只会出现在一个位置,仅为方便修改集中在此)
 /*靠近角度边界且被监测值(速度，电流)仍向边界行去时触发*/
 #define __DJI_Motor_Ctrl_boundary_ctrl(motor_ptr,detected_value) \
 { \
@@ -43,6 +43,51 @@
   }  \
 } \
 
+/*堵转检测*/
+#define __DJI_Motor_Ctrl_stall_detect(motor_ptr) \ 
+if(__DJI_Motor_Ctrl_get_init_state(motor_ptr,MOTOR_STALL_DETECT_INIT))\
+{\
+  if(motor_ptr->stall_flag==0)/*当没有堵转时，检测堵转*/\
+  {\
+  }\
+  else\
+  {\
+  }\
+}\
+//  {\
+    if(ABS((float)__DJI_Motor_Ctrl_get_speed(motor))<output_speed*0.2f && output_speed>15.0f)\
+    {\
+      motor_ptr->start_stall_time++;\
+    }\
+    else\
+    {\
+      motor_ptr->start_stall_time=0;\
+    }\
+    if(motor_ptr->start_stall_time==3000)\
+    {\
+      motor_ptr->stall_flag=1;\
+      motor_ptr->start_stall_time=0;\
+    }\
+  }\
+  else\
+  {\
+    motor_ptr->start_stall_time++;\
+    output_speed=0.0f;\
+    if(motor_ptr->start_stall_time>1000)\
+    {\
+      motor_ptr->start_stall_time=0;\
+      motor_ptr->stall_flag=0;\
+    }\
+  }\
+}\
+
+
+/**
+ * @brief 电机初始化
+ * @param[out] motor 电机控制句柄
+ * @param[in] bus 电机搭载can总线句柄
+ * @param[in] id 电机can总线id(0x201~0x208)
+ */
 void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_e motor_type,uint16_t id)
 {
   memset((void*)motor,0x0,sizeof(DJI_Motor_Ctrl_t));
@@ -56,12 +101,14 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t* motor,DJI_Motor_Bus_t* bus,DJI_Motor_Type_
 }
 
 /**
- * @brief 角度限制设置
+ * @brief 角度限制设置(opt config)
  * @param[in,out] motor 电机控制句柄
  * @param[in] max_angle 最大角度
  * @param[in] min_angle 最小角度
  * @param[in] braking_angle 边界刹车角度
- * @note 力矩(电流)与速度控制时，当角度在
+ * @note 
+ * 1.本函数在pid输入前作用，对pid目标值(设定值进行限制)
+ * 2.力矩(电流)与速度控制时，当角度在
  * max_angle-braking_angle ~ max_angle
  * 或min_angle ~ min_angle+braking_angle
  * 的范围时，设置为最值的位置环控制
@@ -95,6 +142,9 @@ void inline DJI_Motor_set_reverse(DJI_Motor_Ctrl_t* motor)
 
 /**
  * @brief 设置外部角度反馈
+ * @param[in,out] motor 电机控制句柄
+ * @param[in] feedback_angle 角度反馈值指针
+ * @note 原pid默认使用电机自带编码器作为pid角度反馈
  */
 void DJI_Motor_set_angle_feedback(DJI_Motor_Ctrl_t* motor,fp32* feedback_angle)
 {
@@ -338,37 +388,7 @@ static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor)
     );
   }
 
-  /*堵转检测*/
-  if(__DJI_Motor_Ctrl_get_init_state(motor,MOTOR_STALL_DETECT_INIT))
-  {
-    if(motor->stall_flag==0)
-    {
-      if(ABS((float)__DJI_Motor_Ctrl_get_speed(motor))<output_speed*0.2f && output_speed>15.0f)
-      {
-        motor->start_stall_time++;
-      }
-      else
-      {
-        motor->start_stall_time=0;
-      }
-
-      if(motor->start_stall_time==3000)
-      {
-        motor->stall_flag=1;
-        motor->start_stall_time=0;
-      }
-    }
-    else
-    {
-      motor->start_stall_time++;
-      output_speed=0.0f;
-      if(motor->start_stall_time>1000)
-      {
-        motor->start_stall_time=0;
-        motor->stall_flag=0;
-      }
-    }
-  }
+  __DJI_Motor_Ctrl_stall_detect(motor);
 
   return PID_Calc(&(motor->pid_speed_loop),
     __DJI_Motor_Ctrl_get_speed(motor),
