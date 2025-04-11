@@ -639,6 +639,7 @@ static void MX_FDCAN2_Init(void)
     Error_Handler();
   }
 
+  /*ATTENTION:Important setting!Without proper offset setting,message could be read by other CAN bus unexpectedly*/
   hfdcan2.Init.MessageRAMOffset=(hfdcan1.msgRam.EndAddress - SRAMCAN_BASE)/4+1;
 
   if (HAL_FDCAN_Init(&hfdcan2) != HAL_OK)

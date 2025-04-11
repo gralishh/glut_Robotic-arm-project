@@ -1,6 +1,9 @@
 #include "can_bsp.h"
 #include "CAN_receive.h"
 
+#define CAN_DATA_SIZE_8_BYTES FDCAN_DLC_BYTES_8
+#define CAN_DATA_SIZE_4_BYTES FDCAN_DLC_BYTES_4
+
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 extern FDCAN_HandleTypeDef hfdcan3;
@@ -53,16 +56,20 @@ void can_filter_init(void)
 	HAL_FDCAN_ConfigGlobalFilter(&hfdcan3, FDCAN_REJECT, FDCAN_REJECT, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
 	HAL_FDCAN_ConfigFifoWatermark(&hfdcan3, FDCAN_CFG_RX_FIFO0, 1);
 }
+
 /**
 ************************************************************************
 * @brief:      	fdcanx_send_data(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
-* @param:       hfdcan??FDCAN???
-* @param:       id??CAN?豸ID
-* @param:       data???????????
-* @param:       len??????????????
-* @retval:     	void
-* @details:    	????????
-************************************************************************
+* @param       hfdcan??FDCAN???
+* @param       id??CAN?豸ID
+* @param       data???????????
+* @param       len 该参数在此函数中未使用
+* @retval      void
+* @details     
+* @warning     len参数在此函数中不被使用，在扩展帧中却被使用，如要修改
+*              本函数，请同时检查该函数的所有调用的数值是否符合HAL文档中
+*              FDCAN Data Length Code条目的宏定义
+***********************************************************************
 **/
 uint8_t fdcanx_send_data(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
 {	
@@ -82,6 +89,38 @@ uint8_t fdcanx_send_data(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data
 		return 1;//????
 	return 0;	
 }
+
+/**
+************************************************************************
+* @brief:      	fdcanx_send_data(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
+* @param       hfdcan can句柄
+* @param       id     CAN设备ID
+* @param       data   指向要发送的数据的指针
+* @param       len    数据长度，必须为HAL库文档中FDCAN Data Length Code的宏定义之一
+*                     或文件顶部的宏定义之一
+* @retval      数据发送状态
+* @details     
+***********************************************************************
+**/
+uint8_t fdcanx_send_data_ex_mode(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
+{
+	FDCAN_TxHeaderTypeDef TxHeader;
+	
+  TxHeader.Identifier = id;
+  TxHeader.IdType = FDCAN_EXTENDED_ID;
+  TxHeader.TxFrameType = FDCAN_DATA_FRAME;
+  TxHeader.DataLength = len;                            
+  TxHeader.ErrorStateIndicator = FDCAN_ESI_ACTIVE;										
+  TxHeader.BitRateSwitch = FDCAN_BRS_OFF;														 
+  TxHeader.FDFormat = FDCAN_CLASSIC_CAN;															 
+  TxHeader.TxEventFifoControl = FDCAN_NO_TX_EVENTS;									 
+  TxHeader.MessageMarker = 0x00; 			
+    
+  if(HAL_FDCAN_AddMessageToTxFifoQ(hfdcan, &TxHeader, data)!=HAL_OK) 
+		return 1;//????
+	return 0;	
+}
+
 /**
 ************************************************************************
 * @brief:      	fdcanx_receive(FDCAN_HandleTypeDef *hfdcan, uint8_t *buf)
