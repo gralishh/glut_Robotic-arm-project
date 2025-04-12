@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#define CAN_DATA_SIZE_8_BYTES FDCAN_DLC_BYTES_8
+#define CAN_DATA_SIZE_4_BYTES FDCAN_DLC_BYTES_4
+
 void can_bsp_init(void);
 void can_filter_init(void);
 uint8_t fdcanx_send_data(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len);

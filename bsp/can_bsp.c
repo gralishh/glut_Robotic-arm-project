@@ -1,9 +1,6 @@
 #include "can_bsp.h"
 #include "CAN_receive.h"
 
-#define CAN_DATA_SIZE_8_BYTES FDCAN_DLC_BYTES_8
-#define CAN_DATA_SIZE_4_BYTES FDCAN_DLC_BYTES_4
-
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 extern FDCAN_HandleTypeDef hfdcan3;
