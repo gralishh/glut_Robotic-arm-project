@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "ws2812.h"
+#include "bsp_pwm.h"
 #include "remote_control.h" /*??ÓÚ????*/
 #include "can_bsp.h"
 #include "bsp_usart.h"
@@ -63,6 +64,8 @@ FDCAN_HandleTypeDef hfdcan2;
 FDCAN_HandleTypeDef hfdcan3;
 
 SPI_HandleTypeDef hspi6;
+
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart7;
@@ -146,6 +149,7 @@ const osTimerAttr_t motor_timer_ctrl_attributes = {
 /* USER CODE BEGIN PV */
 /*task????*/
 osThreadId chassis_task_handle;
+uint16_t uwu;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -165,6 +169,7 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_FDCAN3_Init(void);
+static void MX_TIM2_Init(void);
 void StartDefaultTask(void *argument);
 void __chassis_task(void *argument);
 void __usart2_measure_task(void *argument);
@@ -231,7 +236,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_FDCAN2_Init();
   MX_FDCAN3_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
   remote_control_init();
   can_bsp_init();
   usart1_init();
@@ -762,6 +769,59 @@ static void MX_SPI6_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 685-1;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 1000-1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
   * @brief UART5 Initialization Function
   * @param None
   * @retval None
@@ -1119,9 +1179,6 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port, POWER_5V_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, PUMP3_IN_Pin|PUMP2_IN_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, PUMP1_IN_Pin|PUMP1_OUT_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : POWER_5V_EN_Pin */
@@ -1130,13 +1187,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(POWER_5V_EN_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PUMP3_IN_Pin PUMP2_IN_Pin */
-  GPIO_InitStruct.Pin = PUMP3_IN_Pin|PUMP2_IN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PUMP1_IN_Pin PUMP1_OUT_Pin */
   GPIO_InitStruct.Pin = PUMP1_IN_Pin|PUMP1_OUT_Pin;
@@ -1173,6 +1223,7 @@ void StartDefaultTask(void *argument)
   {
     //USART1_Recv(dat,1);
     //SERVO1_RS485_Send(&__motor_s,&__motor_r);
+    //set_pwm1_duty(uwu);
     osDelay(50);
   }
   /* USER CODE END 5 */

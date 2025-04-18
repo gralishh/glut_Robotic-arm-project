@@ -57,6 +57,8 @@ typedef enum{
 #define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -67,10 +69,6 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define POWER_5V_EN_Pin GPIO_PIN_15
 #define POWER_5V_EN_GPIO_Port GPIOC
-#define PUMP3_IN_Pin GPIO_PIN_0
-#define PUMP3_IN_GPIO_Port GPIOA
-#define PUMP2_IN_Pin GPIO_PIN_2
-#define PUMP2_IN_GPIO_Port GPIOA
 #define PUMP1_IN_Pin GPIO_PIN_9
 #define PUMP1_IN_GPIO_Port GPIOE
 #define PUMP1_OUT_Pin GPIO_PIN_13
