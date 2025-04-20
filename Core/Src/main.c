@@ -38,6 +38,8 @@
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
 #include "Custom_ctrl.h"
+
+#include "AK_series.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -249,6 +251,8 @@ int main(void)
   DJI_CANBus_init_all();
   WS2812_Ctrl(0,0,0);
 
+  AK_joint_motor_init(&AK70_10_motor,93);
+  AK_joint_motor_enable(&AK70_10_motor);
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   /* USER CODE END 2 */
 
@@ -1200,7 +1204,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+float AK_pos=-140;
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -1217,6 +1221,8 @@ void StartDefaultTask(void *argument)
   #define LEDDARK() WS2812_Ctrl(0,0,0)
 
   DetectTask(argument);
+  //AK_joint_motor_current_ctrl(&AK70_10_motor,0);
+  //AK_joint_motor_speed_ctrl(&AK70_10_motor,10);
 
   /* Infinite loop */
   for(;;)
@@ -1224,6 +1230,7 @@ void StartDefaultTask(void *argument)
     //USART1_Recv(dat,1);
     //SERVO1_RS485_Send(&__motor_s,&__motor_r);
     //set_pwm1_duty(uwu);
+    //AK_joint_motor_pos_speed_ctrl(&AK70_10_motor,AK_pos,100,10);
     osDelay(50);
   }
   /* USER CODE END 5 */

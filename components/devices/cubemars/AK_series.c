@@ -63,9 +63,29 @@ void AK_joint_motor_nonforce_ctrl(AK_Joint_Motor_t *motor)
   AK_joint_motor_current_ctrl(motor,0.0f);
 }
 
-void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor)
+void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor,uint8_t *rx_message)
 {
+  //void motor_receive(float* motor_pos,float* motor_spd,float* cur,int_8* temp,int_8* error,rx_message)
+  //float motor_pos,motor_spd,cur;
+  //int8_t temp,error;
+  //int16_t pos_int = (rx_message)->Data[0] << 8 | (rx_message)->Data[1];
+  //int16_t spd_int = (rx_message)->Data[2] << 8 | (rx_message)->Data[3];
+  //int16_t cur_int = (rx_message)->Data[4] << 8 | (rx_message)->Data[5];
+  //&motor_pos= (float)( pos_int * 0.1f); //电机位置
+  //&motor_spd= (float)( spd_int * 10.0f);//电机速度
+  //&motor_cur= (float) ( cur_int * 0.01f);//电机电流
+  //&motor_temp= (rx_message)->Data[6] ;//电机温度
+  //&motor_error= (rx_message)->Data[7] ;//电机故障码
 
+}
+
+void AK_joint_motor_set_zero_pos(AK_Joint_Motor_t *motor)
+{
+  //int32_t send_index = 0;
+  //uint8_t buffer;
+  motor->mode=CAN_PACKET_SET_ORIGIN_HERE;
+  motor->tx_buffer[0]=0x00;
+  //comm_can_transmit_eid(controller_id |((uint32_t) CAN_PACKET_SET_ORIGIN_HERE << 8), &buffer, send_index);
 }
 
 void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor,AK_hcan_t *can)
@@ -75,6 +95,9 @@ void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor,AK_hcan_t *can)
   {
     switch(motor->mode)
     {
+      case CAN_PACKET_SET_ORIGIN_HERE:
+        data_len=CAN_DATA_SIZE_1_BYTES;
+        break;
       case CAN_PACKET_SET_CURRENT:
       case CAN_PACKET_SET_RPM:
         data_len=CAN_DATA_SIZE_4_BYTES;

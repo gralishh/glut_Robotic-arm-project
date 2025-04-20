@@ -9,6 +9,7 @@
 
 #define CAN_DATA_SIZE_8_BYTES FDCAN_DLC_BYTES_8
 #define CAN_DATA_SIZE_4_BYTES FDCAN_DLC_BYTES_4
+#define CAN_DATA_SIZE_1_BYTES FDCAN_DLC_BYTES_1
 
 void can_bsp_init(void);
 void can_filter_init(void);

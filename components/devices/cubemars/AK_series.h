@@ -16,12 +16,16 @@ typedef enum {
 } CAN_PACKET_ID;
 
 typedef struct{
+
   uint16_t id;
   uint16_t mode;
 
   uint8_t enable;/*输出使能,0为关闭;1为开启,默认关闭*/
 
   uint8_t tx_buffer[8];
+  
+  /*feedback*/
+
 
   float angle;/*automatically flush*/
 } AK_Joint_Motor_t;
@@ -37,7 +41,10 @@ void AK_joint_motor_speed_ctrl(AK_Joint_Motor_t *motor,float rpm);
 void AK_joint_motor_pos_speed_ctrl(AK_Joint_Motor_t *motor,float pos,float spd,float RPA);
 void AK_joint_motor_nonforce_ctrl(AK_Joint_Motor_t *motor);
 
+void AK_joint_motor_set_zero_pos(AK_Joint_Motor_t *motor);
+
 void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor,AK_hcan_t *can);
+void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor,uint8_t *rx_message);
 
 /*test code*/
 
