@@ -56,10 +56,10 @@ void usart2_measure_task(void const *pvParameters)
         }
         else
         {
-            USART2_Drop(1);
+            //USART2_Drop(1);/*在没有数据的时候抛弃数据导致环形缓冲区异常*/
             for(;;)
             {
-				usart2_length =  USART2_GetDataCount();
+				    usart2_length =  USART2_GetDataCount();
                 if( usart2_length > 0)
                 {
                     if(USART2_At(0) == 0xFD && USART2_At(1) == 0xEE)  // Frame head
@@ -87,68 +87,69 @@ void usart2_measure_task(void const *pvParameters)
         vTaskDelay(1);
     }
 }
+
 void usart3_measure_task(void const *pvParameters) 
 {
-    while(1)
-    {
-        next_usart3:
-        usart3_length = USART3_GetDataCount();
-        
-        if(usart3_length >= 10)
-        {
-            if(USART3_At(0) == 0xFD && USART3_At(1) == 0xEE)
-            {
-                USART3_Recv(Transmission_usart3, FEEDBACK_DATA_SIZE);
-                //usart3_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart3);
-                USART3_Drop(4096);
-            }
-            else
-            {
-                USART3_Drop(1);
-                vTaskDelay(1);
-                
-                usart3_length = USART3_GetDataCount();
-                if(usart3_length > 3000)
-                {
-                    USART3_Drop(4096);
-                }
-                
-                goto next_usart3;
-            }
-        }
-        else
-        {
-            USART3_Drop(1);
-            for(;;)
-            {
-                usart3_length =  USART3_GetDataCount();
-                if( usart3_length > 0)
-                {
-                    if(USART3_At(0) == 0xFD && USART3_At(1) == 0xEE)
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        USART3_Drop(1);
-                        vTaskDelay(1);
-                    }
-                    
-                    usart3_length =  USART3_GetDataCount();
-                    if(usart3_length > 3000)
-                    {
-                        USART3_Drop(4096);
-                        break;
-                    }
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
+//    while(1)
+//    {
+//        next_usart3:
+//        usart3_length = USART3_GetDataCount();
+//        
+//        if(usart3_length >= 10)
+//        {
+//            if(USART3_At(0) == 0xFD && USART3_At(1) == 0xEE)
+//            {
+//                USART3_Recv(Transmission_usart3, FEEDBACK_DATA_SIZE);
+//                //usart3_motor_rx = *SERVO_Recv((MOTOR_recv *)Transmission_usart3);
+//                USART3_Drop(4096);
+//            }
+//            else
+//            {
+//                USART3_Drop(1);
+//                vTaskDelay(1);
+//                
+//                usart3_length = USART3_GetDataCount();
+//                if(usart3_length > 3000)
+//                {
+//                    USART3_Drop(4096);
+//                }
+//                
+//                goto next_usart3;
+//            }
+//        }
+//        else
+//        {
+//            USART3_Drop(1);
+//            for(;;)
+//            {
+//                usart3_length =  USART3_GetDataCount();
+//                if( usart3_length > 0)
+//                {
+//                    if(USART3_At(0) == 0xFD && USART3_At(1) == 0xEE)
+//                    {
+//                        break;
+//                    }
+//                    else
+//                    {
+//                        USART3_Drop(1);
+//                        vTaskDelay(1);
+//                    }
+//                    
+//                    usart3_length =  USART3_GetDataCount();
+//                    if(usart3_length > 3000)
+//                    {
+//                        USART3_Drop(4096);
+//                        break;
+//                    }
+//                }
+//                else
+//                {
+//                    break;
+//                }
+//            }
+//        }
     vTaskDelay(1);
-    }
+//    }
 }
      
 

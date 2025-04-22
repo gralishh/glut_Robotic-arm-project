@@ -43,6 +43,7 @@ typedef __packed struct
 	uint16_t cmd_id;
 	key_t   key;
 	float adc_val[6];
+  uint8_t reserve[4];
 	uint16_t crc16;
 } data_t; 
 

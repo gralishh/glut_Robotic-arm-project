@@ -43,52 +43,52 @@ void Data_init(data_t *data_init)
 
 void Custom_Ctrl_Task(void* para)
 {
-  static uint32_t uart7_length=0x00;
+  static uint32_t usart1_length=0x00;
   while(1)
   {
-    next_uart7:
-    uart7_length = UART7_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
+    next_usart1:
+    usart1_length = USART1_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
-    if(uart7_length >= PACK_LENGTH)
+    if(usart1_length >= PACK_LENGTH)
     {
-      if(IS_HEADER(UART7_At(0)))  
+      if(IS_HEADER(USART1_At(0)))  
       {
-        UART7_Recv(RX_BUF, PACK_LENGTH);  
+        USART1_Recv(RX_BUF, PACK_LENGTH);  
         Custom_Ctrl_unpack();
-        UART7_Drop(4096);
+        USART1_Drop(4096);
       }
       else
       {
-        UART7_Drop(1);
+        USART1_Drop(1);
         vTaskDelay(1);
-        uart7_length = UART7_GetDataCount();
-        if(uart7_length > 3000)
+        usart1_length = USART1_GetDataCount();
+        if(usart1_length > 3000)
         {
-            UART7_Drop(4096);
+            USART1_Drop(4096);
         }
-        goto next_uart7;
+        goto next_usart1;
       }
     }
     else
     {
       for(;;)
       {
-		    uart7_length =  UART7_GetDataCount();
-        if( uart7_length > 0)
+		    usart1_length =  USART1_GetDataCount();
+        if( usart1_length > 0)
         {
-            if(IS_HEADER(UART7_At(0)))  // Frame head
+            if(IS_HEADER(USART1_At(0)))  // Frame head
             {
               break;
             }
             else
             {
-              UART7_Drop(1);
+              USART1_Drop(1);
               vTaskDelay(1);
             }
-            uart7_length =  UART7_GetDataCount();
-            if(uart7_length > 3000)
+            usart1_length =  USART1_GetDataCount();
+            if(usart1_length > 3000)
             {
-              UART7_Drop(4096);
+              USART1_Drop(4096);
               break;
             }
         }

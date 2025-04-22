@@ -17,6 +17,7 @@ typedef enum{
   DJI_MOTOR,
   M8010_MOTOR,
   M4310_MOTOR,
+  AK_MOTOR,
 } Motor_Type_e;
 
 #define GENERAL_MOTOR_GET_FEEDBACK(instance_ptr,motor_type,current_ptr,speed_ptr,angle_ptr) \
@@ -99,6 +100,20 @@ typedef enum{
           break; \
       } \
     break; \
+    case AK_MOTOR: \
+      switch(ctrl_state)
+      {
+        case POS_LOOP: \
+          AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t*)instance_ptr,angle,800,100); \
+          break; \
+        case LOCK: \
+          break; \
+        case NON_FORCE: \
+        default: \
+          AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t*)instance_ptr); \
+          break; \
+      }
+      break;
     default: \
     break; \
   } \

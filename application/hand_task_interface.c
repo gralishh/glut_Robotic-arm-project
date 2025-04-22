@@ -1,6 +1,7 @@
 /**
  * @brief 
  * @attention lockup的逻辑大抵没有大🐱饼
+ * @note hand_task内的角度单位为rad
  */
 #include <string.h>
 #include "hand_task_interface.h"
@@ -185,6 +186,8 @@ void hand_task_init()
   //joint_pitch
   __SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,145.0f*PITCH_MAP_K+PITCH_MAP_D);
   __SET_JOINT_ANGLE(HAND_PITCH,PITCH_MAP_D);
+
+  //limit
   __SET_JOINT_LIMIT(HAND_J1,-2.68,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
   __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.1),1.18*(1.1));
@@ -194,12 +197,12 @@ void hand_task_init()
     hand_task_get_feedback();
     __hand_idle_ctrl();
   }
-  while(0.0f==__GET_JOINT_ANGLE(HAND_J1))
-  {
-    osDelay(20);
-    hand_task_get_feedback();
-    __hand_idle_ctrl();
-  }
+  //while(0.0f==__GET_JOINT_ANGLE(HAND_J1))/*等待J1控制板初始化*/
+  //{
+  //  osDelay(20);
+  //  hand_task_get_feedback();
+  //  __hand_idle_ctrl();
+  //}
   WS2812_Ctrl(30,100,50);
   J1_D=-__GET_JOINT_ANGLE(HAND_J1);
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
