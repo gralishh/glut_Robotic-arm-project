@@ -116,7 +116,7 @@ void chassis_task_init()
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightBack,PID_POSITION,15,0,0,1000,0);
 
   __chassis_idle_ctrl();
-  DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
+  //DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
 }
 
 /**

@@ -101,6 +101,7 @@ void gimbal_task_init()
   DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x205);
   DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,20,0,0.001,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0,0,1000,0);
+  DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag=1;
   //DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
 
