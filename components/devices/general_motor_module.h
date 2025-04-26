@@ -41,6 +41,12 @@ typedef enum{
       *current_ptr =((Joint_Motor_t*)instance_ptr)->para.tor; \
       *speed_ptr   =((Joint_Motor_t*)instance_ptr)->para.vel; \
       *angle_ptr   =((Joint_Motor_t*)instance_ptr)->para.pos; \
+      break; \
+    case AK_MOTOR: \
+      *current_ptr =((AK_Joint_Motor_t*)instance_ptr)->current; \
+      *speed_ptr   =((AK_Joint_Motor_t*)instance_ptr)->spd; \
+      *angle_ptr   =((AK_Joint_Motor_t*)instance_ptr)->pos; \
+      break; \
     default: \
       break; \
   } \
@@ -101,10 +107,10 @@ typedef enum{
       } \
     break; \
     case AK_MOTOR: \
-      switch(ctrl_state)
-      {
+      switch(ctrl_state) \
+      { \
         case POS_LOOP: \
-          AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t*)instance_ptr,angle,800,100); \
+          AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t*)instance_ptr,angle,1500,1900); \
           break; \
         case LOCK: \
           break; \
@@ -112,8 +118,8 @@ typedef enum{
         default: \
           AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t*)instance_ptr); \
           break; \
-      }
-      break;
+      } \
+      break; \
     default: \
     break; \
   } \
@@ -122,5 +128,6 @@ typedef enum{
 #include "DJI_motor.h"
 #include "dm4310_drv.h"
 #include "M8010_motor.h"
+#include "AK_series.h"
 
 #endif

@@ -28,12 +28,13 @@ extern FDCAN_HandleTypeDef hfdcan2;
 /*global macro variable*/
 #define HAND_CTRL_CAN 
 // joint mapping parameter
-#define J1_MAP_K   0.167
-#define J1_MAP_D   J1_D
-#define J2_MAP_K   1
+//#define J1_MAP_K   0.167 /*for m8010*/
+#define J1_MAP_K   (3.14f/180.0f)
+#define J1_MAP_D   0
+#define J2_MAP_K   1.0f
 #define J2_MAP_D   0
-#define J3_MAP_K   (-1/19.2)
-#define J3_MAP_D   0.1
+#define J3_MAP_K   (-1f/19.2f)
+#define J3_MAP_D   0.1f
 #define PITCH_MAP_K  (PI/2/(135-50))
 #define PITCH_MAP_D  (-50*PITCH_MAP_K)
 #define ROLL_MAP_K  (PITCH_MAP_K/2)
@@ -53,6 +54,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 
 /*global motor handler*/
 extern M8010_motor_t joint1_motor;
+extern AK_Joint_Motor_t AK70_10_motor;
 extern Joint_Motor_t DM_Motor_J2;
 DJI_Motor_Ctrl_t DJI_Motor_J3;
 DJI_Motor_Ctrl_t DJI_Motor_headendL;
@@ -61,6 +63,7 @@ DJI_Motor_Ctrl_t DJI_Motor_headendR;
 /*global variable*/
 static fp32 J1_D=0;
 
+/*custom controller remap(custom controller -> joint_angle)*/
 float custom_controller_K[5]={1,1,1,-1,1};
 float custom_controller_D[5]={0,0,0,1.56,0};
 
@@ -137,10 +140,14 @@ void hand_task_init()
   __RESET_TICKS();
 
   /*电机初始化*/
-  // J1
+  // J1[M8010]
   __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
   __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
   M8010_motor_init(&joint1_motor,3,0.76,0.088);
+  // J1[AK]
+  __SET_MOTOR_INSTANCE(AK_J1,&AK70_10_motor);
+  __SET_MOTOR_TYPE(AK_J1,AK_MOTOR);
+
 
   // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
@@ -163,7 +170,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,10000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,3000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
   DJI_Motor_J3.circle_count_flag=1;
 
@@ -171,8 +178,8 @@ void hand_task_init()
   __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,9000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,5000,1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,3000,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,3000,1000);
   DJI_Motor_headendL.circle_count_flag=1;
 
   // Headend_R
@@ -197,12 +204,18 @@ void hand_task_init()
     hand_task_get_feedback();
     __hand_idle_ctrl();
   }
-  //while(0.0f==__GET_JOINT_ANGLE(HAND_J1))/*等待J1控制板初始化*/
-  //{
-  //  osDelay(20);
-  //  hand_task_get_feedback();
-  //  __hand_idle_ctrl();
-  //}
+  while(0.0f==__GET_JOINT_ANGLE(HAND_J1))/*等待J1控制板初始化*/
+  {
+    osDelay(20);
+    hand_task_get_feedback();
+    //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
+    __hand_nonforce();/*防止移动*/
+  }
+
+  AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
+  hand_task_get_feedback();
+  __hand_idle_ctrl();
+
   WS2812_Ctrl(30,100,50);
   J1_D=-__GET_JOINT_ANGLE(HAND_J1);
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
@@ -229,7 +242,8 @@ void hand_task_get_feedback()
   }
 
   /*joint angle map*/
-  __GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
+  //__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(AK_J1) +J1_MAP_D;
   __GET_JOINT_ANGLE(HAND_J2)=J2_MAP_K*__GET_MOTOR_ANGLE(DM_J2)    +J2_MAP_D;
   __GET_JOINT_ANGLE(HAND_J3)=J3_MAP_K*__GET_MOTOR_ANGLE(DJI_J3)   +J3_MAP_D;
   __GET_JOINT_ANGLE(HAND_PITCH)=HANDLER_PTR->joint_angle[HAND_PITCH];
@@ -331,8 +345,10 @@ void hand_task_output()
 {
   uint16_t index;
   /*joint map to motor state*/
-  if(__GET_MOTOR_CTRL_MODE(M8010_J1)==POS_LOOP)
-    __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[HAND_J1]-J1_MAP_D)/J1_MAP_K);
+  //if(__GET_MOTOR_CTRL_MODE(M8010_J1)==POS_LOOP)
+  //  __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[HAND_J1]-J1_MAP_D)/J1_MAP_K);
+  if(__GET_MOTOR_CTRL_MODE(AK_J1)==POS_LOOP)
+    __SET_MOTOR_ANGLE(AK_J1,(HANDLER_PTR->joint_angle[HAND_J1]-J1_MAP_D)/J1_MAP_K);
   if(__GET_MOTOR_CTRL_MODE(DM_J2)==POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J2,(HANDLER_PTR->joint_angle[HAND_J2]-J2_MAP_D)/J2_MAP_K);
   if(__GET_MOTOR_CTRL_MODE(DJI_J3)==POS_LOOP)
@@ -360,9 +376,13 @@ void hand_task_output()
 void __hand_nonforce()
 {
   int index;
-  for(index=0;index<HAND_MOTOR_COUNT;index++)
+  for(index=0;index<HAND_JOINT_COUNT;index++)
   {
     __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);// 设置关节输出值为当前关节角度
+  }
+
+  for(index=0;index<HAND_MOTOR_COUNT;index++)
+  {
     __SET_MOTOR_NONFORCE(index);
   }
 }
@@ -399,6 +419,7 @@ void __hand_custom_ctrl(void)
       (cc_joint_angle[3]-custom_controller_D[3])*custom_controller_K[3],-cc_joint_angle[5],J1_EN|J2_EN|J3_EN|J4_EN|J5_EN);
 }
 
+/**/
 void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 {
   if(EN&J5_EN)
@@ -427,10 +448,11 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
   {
     if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.08f)
     {
-      __ADD_JOINT_ANGLE(HAND_J1,
-        J1>HANDLER_PTR->joint_angle[HAND_J1]?
-           0.00105f:
-          -0.00105f);
+      __SET_JOINT_ANGLE(HAND_J1,J1);
+      //__ADD_JOINT_ANGLE(HAND_J1,
+      //  J1>HANDLER_PTR->joint_angle[HAND_J1]?
+      //     0.00105f:
+      //    -0.00105f);
      // __ADD_JOINT_ANGLE(HAND_J1,0.002f*(J1-HANDLER_PTR->joint_angle[HAND_J1]));
     }
     else if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.01f)

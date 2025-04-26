@@ -53,9 +53,14 @@ void Custom_Ctrl_Task(void* para)
     {
       if(IS_HEADER(USART1_At(0)))  
       {
-        USART1_Recv(RX_BUF, PACK_LENGTH);  
+        //if(USART1_At(5)==0x02 && USART1_At(6)==0x03)
+        USART1_Recv(RX_BUF, sizeof(frame_header_t)+sizeof(uint16_t));  
+        if(((data_t*)RX_BUF)->cmd_id==0x0302)
+          USART1_Recv((void*)&(((data_t*)RX_BUF)->key),sizeof(float)*6+sizeof(uint8_t)*4+sizeof(uint16_t));
+
+
         Custom_Ctrl_unpack();
-        USART1_Drop(4096);
+        //USART1_Drop(4096);
       }
       else
       {

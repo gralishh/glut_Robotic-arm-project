@@ -18,6 +18,7 @@ typedef enum{
 
 typedef enum{
   M8010_J1,
+  AK_J1,
   DM_J2,
   DJI_J3,
   DJI_HE_L,

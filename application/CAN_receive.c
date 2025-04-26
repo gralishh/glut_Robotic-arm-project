@@ -9,6 +9,7 @@
 #include "Ex_encoder.h"
 #include "DJI_motor_canbus.h"
 #include "dm4310_drv.h"
+#include "AK_series.h"
 
 extern Joint_Motor_t DM_Motor_J2;
 
@@ -96,6 +97,10 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 		{
       case 0x000:
         dm4310_fbdata(&DM_Motor_J2,rx_message,FDCAN_DLC_BYTES_8);
+        break;
+      case 0x295d:
+        __AK_joint_motor_feedback_hook(&AK70_10_motor,rx_message);
+        break;
       default:
       ;
     }

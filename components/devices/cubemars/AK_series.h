@@ -25,7 +25,11 @@ typedef struct{
   uint8_t tx_buffer[8];
   
   /*feedback*/
-
+  float pos;
+  float spd;
+  float current;
+  int8_t temp; 
+  int8_t error;
 
   float angle;/*automatically flush*/
 } AK_Joint_Motor_t;

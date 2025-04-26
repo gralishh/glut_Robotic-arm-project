@@ -68,14 +68,14 @@ void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor,uint8_t *rx_message)
   //void motor_receive(float* motor_pos,float* motor_spd,float* cur,int_8* temp,int_8* error,rx_message)
   //float motor_pos,motor_spd,cur;
   //int8_t temp,error;
-  //int16_t pos_int = (rx_message)->Data[0] << 8 | (rx_message)->Data[1];
-  //int16_t spd_int = (rx_message)->Data[2] << 8 | (rx_message)->Data[3];
-  //int16_t cur_int = (rx_message)->Data[4] << 8 | (rx_message)->Data[5];
-  //&motor_pos= (float)( pos_int * 0.1f); //电机位置
-  //&motor_spd= (float)( spd_int * 10.0f);//电机速度
-  //&motor_cur= (float) ( cur_int * 0.01f);//电机电流
-  //&motor_temp= (rx_message)->Data[6] ;//电机温度
-  //&motor_error= (rx_message)->Data[7] ;//电机故障码
+  int16_t pos_int = (rx_message[0] << 8) | rx_message[1];
+  int16_t spd_int = (rx_message[2] << 8) | rx_message[3];
+  int16_t cur_int = (rx_message[4] << 8) | rx_message[5];
+  motor->pos= (float)( pos_int * 0.1f); //电机位置
+  motor->spd= (float)( spd_int * 10.0f);//电机速度
+  motor->current= (float) ( cur_int * 0.01f);//电机电流
+  motor->temp= rx_message[6] ;//电机温度
+  motor->error= rx_message[7] ;//电机故障码
 
 }
 
