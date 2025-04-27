@@ -315,6 +315,26 @@
           <WinNumber>1</WinNumber>
           <ItemText>DM_Motor_J2,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>31</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>remote_data,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>32</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rx_header</ItemText>
+        </Ww>
+        <Ww>
+          <count>33</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>rx_message</ItemText>
+        </Ww>
+        <Ww>
+          <count>34</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>uplift_ecd</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>
@@ -390,6 +410,10 @@
         <Entry>
           <Name>System Viewer\FDCAN2</Name>
           <WinId>35900</WinId>
+        </Entry>
+        <Entry>
+          <Name>System Viewer\FDCAN3</Name>
+          <WinId>35905</WinId>
         </Entry>
         <Entry>
           <Name>System Viewer\USART1</Name>

@@ -7,6 +7,7 @@
 #include "cmsis_os2.h"
 #include "detect_task.h"
 #include "Custom_ctrl.h" 
+#include "Ex_encoder.h"
 
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
@@ -14,6 +15,7 @@
 
 /*extern*/
 extern FDCAN_HandleTypeDef hfdcan1;
+extern FDCAN_HandleTypeDef hfdcan3;
 
 /*ABS*/
 #define ABS(X) ((X)>0?(X):-(X))
@@ -22,12 +24,13 @@ extern FDCAN_HandleTypeDef hfdcan1;
 #define UL_MAP_K   1
 #define UL_MAP_D   0
 #define UL_MAX_ENCODE 420
-#define UL_MIN_ENCODE 25
+#define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
 
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
+External_ecd_handler_t uplift_ecd;
 
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
@@ -104,6 +107,8 @@ void gimbal_task_init()
   DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag=1;
   //DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
+
+  External_ecd_init_on_can(&uplift_ecd,0x3ff,OID_ECD,0x004,&hfdcan3,0x000);
 
   __SET_JOINT_LIMIT(GIMBAL_UPLIFT,UL_MIN_ENCODE,UL_MAX_ENCODE);
   for(int i=0;i<40;i++)

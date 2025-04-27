@@ -254,6 +254,7 @@ int main(void)
   AK_joint_motor_init(&AK70_10_motor,93);
   AK_joint_motor_enable(&AK70_10_motor);
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
+  HAL_Delay(3000);/*delay for initalization of motor*/
   /* USER CODE END 2 */
 
   /* Init scheduler */

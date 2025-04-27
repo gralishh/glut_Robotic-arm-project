@@ -33,7 +33,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define J1_MAP_D   0
 #define J2_MAP_K   1.0f
 #define J2_MAP_D   0
-#define J3_MAP_K   (-1f/19.2f)
+#define J3_MAP_K   (-1.0f/19.2f)
 #define J3_MAP_D   0.1f
 #define PITCH_MAP_K  (PI/2/(135-50))
 #define PITCH_MAP_D  (-50*PITCH_MAP_K)

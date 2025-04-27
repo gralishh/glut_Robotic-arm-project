@@ -54,6 +54,32 @@ typedef struct{
   fp32 joint_angle[5];
 } CUSTOM_CTRL_T;
 
+/*Í¼´«Ò£¿ØÆ÷*/
+typedef __packed struct
+{
+    uint8_t sof_1;
+    uint8_t sof_2;
+    uint64_t ch_0:11;
+    uint64_t ch_1:11;
+    uint64_t ch_2:11;
+    uint64_t ch_3:11;
+    uint64_t mode_sw:2;
+    uint64_t pause:1;
+    uint64_t fn_1:1;
+    uint64_t fn_2:1;
+    uint64_t wheel:11;
+    uint64_t trigger:1;
+
+    int16_t mouse_x;
+    int16_t mouse_y;
+    int16_t mouse_z;
+    uint8_t mouse_left:2;
+    uint8_t mouse_right:2;
+    uint8_t mouse_middle:2;
+    uint16_t key;
+    uint16_t crc16;
+}remote_data_t;
+
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
 data_t* Custom_Ctrl_get_rx_pack_ptr(void);
 void Custom_Ctrl_unpack(void);
