@@ -4,6 +4,8 @@
 #include "main.h" 
 #include "struct_typedef.h"
 
+#define GET_KEYBOARD_KEY(KEY) ((1<<KEY)&(remote_data.key))
+
 typedef __packed struct
 {
 	uint8_t data[30];
@@ -54,6 +56,25 @@ typedef struct{
   fp32 joint_angle[5];
 } CUSTOM_CTRL_T;
 
+enum {
+  KEY_W=0,
+  KEY_S,
+  KEY_A,
+  KEY_D,
+  KEY_SHIFT,
+  KEY_CTRL,
+  KEY_Q,
+  KEY_E,
+  KEY_R,
+  KEY_F,
+  KEY_G,
+  KEY_Z,
+  KEY_X,
+  KEY_C,
+  KEY_V,
+  KEY_B,
+};
+
 /*Í¼´«Ò£¿ØÆ÷*/
 typedef __packed struct
 {
@@ -79,6 +100,8 @@ typedef __packed struct
     uint16_t key;
     uint16_t crc16;
 }remote_data_t;
+
+extern remote_data_t remote_data;
 
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
 data_t* Custom_Ctrl_get_rx_pack_ptr(void);

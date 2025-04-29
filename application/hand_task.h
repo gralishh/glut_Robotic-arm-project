@@ -17,7 +17,7 @@ typedef enum{
 }HAND_JOINT_INDEX;
 
 typedef enum{
-  M8010_J1,
+//  M8010_J1,
   AK_J1,
   DM_J2,
   DJI_J3,

@@ -1187,6 +1187,11 @@
               <FileType>1</FileType>
               <FilePath>..\components\devices\cubemars\AK_series.c</FilePath>
             </File>
+            <File>
+              <FileName>servo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\devices\servo.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

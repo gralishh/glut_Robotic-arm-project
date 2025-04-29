@@ -8,6 +8,7 @@
 #include "detect_task.h"
 #include "Custom_ctrl.h" 
 #include "Ex_encoder.h"
+#include "servo.h"
 
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
@@ -38,6 +39,7 @@ static void __gimbal_rc_ctrl(void);
 static void __gimbal_uplift_rc_ctrl(void);
 static void __gimbal_uplift_shouldRoll_ctrl(void);
 static void __gimbal_uplift_custom_ctrl(void);
+static void __gimbal_any_ctrl(void);
 
 static void __uplift_move2_subctrl(fp32 UL,uint8_t EN);
 static void __pump_subctrl(void);
@@ -107,6 +109,16 @@ void gimbal_task_init()
   DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag=1;
   //DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
+
+  __SET_JOINT_LIMIT(GIMBAL_CAMERA_YAW,260-500,700-500);
+  __SET_JOINT_ANGLE(GIMBAL_CAMERA_YAW,0);
+  servo_init(PWM1,700,260,500);
+  servo_enable(PWM1);
+
+  __SET_JOINT_LIMIT(GIMBAL_CAMERA_PITCH,350-500,540-500);
+  __SET_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,0);
+  servo_init(PWM2,540, 350, 500);
+  servo_enable(PWM2);
 
   External_ecd_init_on_can(&uplift_ecd,0x3ff,OID_ECD,0x004,&hfdcan3,0x000);
 
@@ -225,6 +237,7 @@ void gimbal_task_set_output()
     default:
       __gimbal_nonforce();
   }
+  __gimbal_any_ctrl();
 }
 
 /**
@@ -270,12 +283,22 @@ void __gimbal_rc_ctrl()
 {
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00012f);
   __pump_subctrl();
+
+  if(GET_KEYBOARD_KEY(KEY_C))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
+  if(GET_KEYBOARD_KEY(KEY_V))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
 }
 
 void __gimbal_uplift_rc_ctrl()
 {
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00018f);
   __pump_subctrl();
+
+  if(GET_KEYBOARD_KEY(KEY_C))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
+  if(GET_KEYBOARD_KEY(KEY_V))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
 }
 
 void __gimbal_uplift_custom_ctrl()
@@ -292,6 +315,11 @@ void __gimbal_uplift_custom_ctrl()
     middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00018f;
   }
 
+  if(GET_KEYBOARD_KEY(KEY_C))
+    middle_pos-=660*0.00018f;
+  if(GET_KEYBOARD_KEY(KEY_V))
+    middle_pos+=660*0.00018f;
+
   if(middle_pos<UL_MIN_ENCODE)
     middle_pos=UL_MIN_ENCODE;
   else if(middle_pos>UL_MAX_ENCODE)
@@ -300,9 +328,18 @@ void __gimbal_uplift_custom_ctrl()
   __uplift_move2_subctrl(middle_pos+(UL_MAX_ENCODE-UL_MIN_ENCODE)/2*(cc_joint_angle[4]-0.5),0x01);
 }
 
+void __gimbal_any_ctrl(void)
+{
+  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW,(float)-remote_data.mouse_x/50.0);
+  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
+
+  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,(float)-remote_data.mouse_y/80.0);
+  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+}
+
 void __pump_subctrl()
 {
-  static PUMP_STATE_T pump;
+  static PUMP_STATE_T pump=PUMP_RESET;
   if(__IS_MODE_SWITCHED())
   {
     HANDLER_PTR->tick=500;
@@ -310,16 +347,16 @@ void __pump_subctrl()
   /*Æø±Ã¿ØÖÆ*/
   if(cc_key_value.k1)
   {
+    pump=PUMP_PUSH;
     __RESET_TICKS();
     __HALT_TICKS_COUNTING();
-    pump=PUMP_PULL;
   }
   else 
   {
     __HALT_TICKS_COUNTING();
     if(__GET_TICKS()<500)
     {
-      pump=PUMP_PUSH;
+      pump=PUMP_PULL;
       __HOLD_TICKS_COUNTING();
     }
     else
@@ -327,6 +364,7 @@ void __pump_subctrl()
       pump=PUMP_RESET;
     }
   }
+  
   //if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
   //{
   //  if(pump==PUMP_PULL)

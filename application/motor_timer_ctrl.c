@@ -9,6 +9,7 @@
 #include "DJI_motor_canbus.h"
 #include "dm4310_drv.h"
 #include "AK_series.h"
+#include "servo.h"
 
 #include "detect_task.h"
 
@@ -59,6 +60,7 @@ void motor_timer_ctrl_callback(void)
   __DJI_CANBus_ctrl_loop(&DJI_CAN1_Bus_ctrl);
   __DJI_CANBus_ctrl_loop(&DJI_CAN2_Bus_ctrl);
   __DJI_CANBus_ctrl_loop(&DJI_CAN3_Bus_ctrl);
+  __SERVO_CTRL_HOOK();
 
   //__dm4310_mit_output_ctrl(hfdcan?,DM_Motor_J2);
   /*****hand_task*****/

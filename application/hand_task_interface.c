@@ -107,6 +107,7 @@ static void __hand_pitch_pos_init(void);
 #define __SET_MOTOR_CURRENT(index,value) {(HANDLER_PTR->motor_current[index]=value);(HANDLER_PTR->motor_ctrl_mode[index]=GIVING_CURRENT);}
 #define __SET_MOTOR_LOCKUP(index) (HANDLER_PTR->motor_ctrl_mode[index]=LOCK)
 #define __SET_MOTOR_NONFORCE(index) (HANDLER_PTR->motor_ctrl_mode[index]=NON_FORCE)
+#define __SET_MOTOR_CTRL_MODE(index,mode) (HANDLER_PTR->motor_ctrl_mode[index]=mode)
 
 /*关节控制*/
 #define __GET_JOINT_ANGLE(index) (HANDLER_PTR->feedback_joint_angle[index])
@@ -141,9 +142,9 @@ void hand_task_init()
 
   /*电机初始化*/
   // J1[M8010]
-  __SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
-  __SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  M8010_motor_init(&joint1_motor,3,0.76,0.088);
+  //__SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
+  //__SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
+  //M8010_motor_init(&joint1_motor,3,0.76,0.088);
   // J1[AK]
   __SET_MOTOR_INSTANCE(AK_J1,&AK70_10_motor);
   __SET_MOTOR_TYPE(AK_J1,AK_MOTOR);
