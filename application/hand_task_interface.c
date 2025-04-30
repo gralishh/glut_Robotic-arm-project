@@ -148,6 +148,8 @@ void hand_task_init()
   // J1[AK]
   __SET_MOTOR_INSTANCE(AK_J1,&AK70_10_motor);
   __SET_MOTOR_TYPE(AK_J1,AK_MOTOR);
+  AK_joint_motor_init(&AK70_10_motor,93);
+  AK_joint_motor_enable(&AK70_10_motor);
 
 
   // J2
@@ -171,7 +173,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,3000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,4000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
   DJI_Motor_J3.circle_count_flag=1;
 
@@ -179,16 +181,17 @@ void hand_task_init()
   __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,3000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,3000,1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,5000,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,2000,1000);  DJI_Motor_set_offline_detect(&DJI_Motor_headendL,10,0);
   DJI_Motor_headendL.circle_count_flag=1;
 
   // Headend_R
   __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,9000,1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,5000,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,80,0,0,5000,0);
+  DJI_Motor_set_offline_detect(&DJI_Motor_headendR,10,0);
   DJI_Motor_headendR.circle_count_flag=1;
 
   //joint_pitch
@@ -198,7 +201,7 @@ void hand_task_init()
   //limit
   __SET_JOINT_LIMIT(HAND_J1,-2.68,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
-  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.1),1.18*(1.1));
+  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.15),1.18*(1.1));
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -458,10 +461,10 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     }
     else if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.01f)
     {
-      __ADD_JOINT_ANGLE(HAND_J1,
-        J1>HANDLER_PTR->joint_angle[HAND_J1]?
-           0.0007f:
-          -0.0007f);
+      //__ADD_JOINT_ANGLE(HAND_J1,
+      //  J1>HANDLER_PTR->joint_angle[HAND_J1]?
+      //     0.0014f:
+      //    -0.0014f);
      // __ADD_JOINT_ANGLE(HAND_J1,0.002f*(J1-HANDLER_PTR->joint_angle[HAND_J1]));
     }
   }
@@ -472,8 +475,8 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     {
       __ADD_JOINT_ANGLE(HAND_J2,
         J2>HANDLER_PTR->joint_angle[HAND_J2]?
-          0.0015f:
-          -0.0015f);
+          0.0023f:
+          -0.0023f);
       //__ADD_JOINT_ANGLE(HAND_J2,0.002f*(J2-HANDLER_PTR->joint_angle[HAND_J2]));
     }
     else if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.01f)

@@ -38,6 +38,7 @@
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
 #include "Custom_ctrl.h"
+#include "Vofa.h"
 
 #include "AK_series.h"
 /* USER CODE END Includes */
@@ -68,6 +69,7 @@ FDCAN_HandleTypeDef hfdcan3;
 SPI_HandleTypeDef hspi6;
 
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim12;
 
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart7;
@@ -151,7 +153,7 @@ const osTimerAttr_t motor_timer_ctrl_attributes = {
 /* USER CODE BEGIN PV */
 /*task????*/
 osThreadId chassis_task_handle;
-uint16_t uwu;
+Vofa_HandleTypedef vofa_handler;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -172,6 +174,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_FDCAN3_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM12_Init(void);
 void StartDefaultTask(void *argument);
 void __chassis_task(void *argument);
 void __usart2_measure_task(void *argument);
@@ -239,6 +242,7 @@ int main(void)
   MX_FDCAN2_Init();
   MX_FDCAN3_Init();
   MX_TIM2_Init();
+  MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
   remote_control_init();
@@ -251,8 +255,7 @@ int main(void)
   DJI_CANBus_init_all();
   WS2812_Ctrl(0,0,0);
 
-  AK_joint_motor_init(&AK70_10_motor,93);
-  AK_joint_motor_enable(&AK70_10_motor);
+  Vofa_Init(&vofa_handler,VOFA_MODE_SKIP);
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   HAL_Delay(3000);/*delay for initalization of motor*/
   /* USER CODE END 2 */
@@ -823,6 +826,55 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 2 */
   HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
+  * @brief TIM12 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM12_Init(void)
+{
+
+  /* USER CODE BEGIN TIM12_Init 0 */
+
+  /* USER CODE END TIM12_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM12_Init 1 */
+
+  /* USER CODE END TIM12_Init 1 */
+  htim12.Instance = TIM12;
+  htim12.Init.Prescaler = 24-1;
+  htim12.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim12.Init.Period = 2000-1;
+  htim12.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim12.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim12) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim12, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim12, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM12_Init 2 */
+
+  /* USER CODE END TIM12_Init 2 */
+  HAL_TIM_MspPostInit(&htim12);
 
 }
 

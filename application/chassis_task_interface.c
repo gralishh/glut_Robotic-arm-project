@@ -101,7 +101,7 @@ void chassis_task_init()
   __SET_MOTOR_INSTANCE(DJI_RF,&DJI_Motor_RightFront);
   __SET_MOTOR_TYPE(DJI_RF,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightFront,&DJI_CAN1_Bus_ctrl,M3508,0x202);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront,PID_POSITION,22,0,0.00,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront,PID_POSITION,28,0,0.00,5000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightFront,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_LB,&DJI_Motor_LeftBack);
@@ -290,10 +290,12 @@ void __chassis_rc_ctrl()
   if(GET_KEYBOARD_KEY(KEY_D))
     HANDLER_PTR->vy=-770*VY_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_Q))
-    HANDLER_PTR->wz=770*WZ_CTRL_SEN;
+    HANDLER_PTR->wz=660*WZ_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_E))
-    HANDLER_PTR->wz=-770*WZ_CTRL_SEN;
+    HANDLER_PTR->wz=-660*WZ_CTRL_SEN;
 
+  if(remote_data.mouse_x!=0)
+    HANDLER_PTR->wz=-remote_data.mouse_x*10*WZ_CTRL_SEN;
 
 
   __SET_MOTOR_SPEED(DJI_LF, - HANDLER_PTR->vx - HANDLER_PTR->vy + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
@@ -323,15 +325,15 @@ void __chassis_union_rc_ctrl()
   HANDLER_PTR->wz=0;
 
   if(GET_KEYBOARD_KEY(KEY_W))
-    HANDLER_PTR->vx=-330*VX_CTRL_SEN;
+    HANDLER_PTR->vx=-220*VX_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_S))
-    HANDLER_PTR->vx=330*VX_CTRL_SEN;
+    HANDLER_PTR->vx=220*VX_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_A))
-    HANDLER_PTR->vy=330*VY_CTRL_SEN;
+    HANDLER_PTR->vy=220*VY_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_D))
-    HANDLER_PTR->vy=-330*VY_CTRL_SEN;
+    HANDLER_PTR->vy=-220*VY_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_Q))
-    HANDLER_PTR->wz=330*WZ_CTRL_SEN;
+    HANDLER_PTR->wz=220*WZ_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_E))
     HANDLER_PTR->wz=-330*WZ_CTRL_SEN;
 

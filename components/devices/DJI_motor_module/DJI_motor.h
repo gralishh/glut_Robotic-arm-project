@@ -37,7 +37,8 @@ typedef enum{
   MOTOR_ANGLE_LIMIT_INIT     =0x01<<3,
   MOTOR_SPEED_LIMIT_INIT     =0x01<<4,
   MOTOR_CURRENT_LIMIT_INIT   =0x01<<5,
-  MOTOR_STALL_DETECT_INIT    =0x01<<6
+  MOTOR_STALL_DETECT_INIT    =0x01<<6,
+  MOTOR_OFFLINE_DETECT_INIT  =0x01<<7
 } Motor_Ctrl_init_state_e;
 
 typedef struct __DJI_Motor_Bus_t DJI_Motor_Bus_t;
@@ -97,8 +98,17 @@ typedef struct __DJI_Motor_Ctrl_t{
   fp32 circle_count;//转子圈数
 
 /*堵转检测*/
-  uint16_t start_stall_time;
+  uint16_t stall_loop_count;
+  uint16_t stall_loop_count_compare;
+  fp32 stall_delta_angle;
+  uint8_t stall_current;
   uint8_t stall_flag;
+
+/*掉电检测*/
+  uint16_t non_feedback_loop_count;
+  uint16_t non_feedback_counter_compare;/* 掉电检测计数器比较值*/
+  uint8_t offline_flag;
+  uint8_t offline_recover;
 } DJI_Motor_Ctrl_t;
 
 /*preset_bus_handler*/
@@ -122,6 +132,7 @@ void DJI_Motor_Speed_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 max_out,fp32 max_iout);
 void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband);
 void DJI_Motor_set_stall_detect(DJI_Motor_Ctrl_t* motor);
+void DJI_Motor_set_offline_detect(DJI_Motor_Ctrl_t* motor,uint16_t counter,uint8_t recoverable);
 
 /*电机控制接口*/
 void DJI_Motor_set_angle(DJI_Motor_Ctrl_t* motor, fp32 angle);//
@@ -133,8 +144,13 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
 /*电机反馈接口*/
 void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle);
 uint8_t DJI_Motor_get_stall_flag(DJI_Motor_Ctrl_t* motor);
+uint8_t DJI_Motor_get_offline_flag(DJI_Motor_Ctrl_t* motor);
+
+/*电机状态控制接口*/
+void DJI_Motor_clear_offline_flag(DJI_Motor_Ctrl_t* motor);
 
 /*DJI_Motor循环控制接口*/
+void __DJI_Motor_ctrl_loop(DJI_Motor_Ctrl_t* motor);
 void __DJI_Motor_speed_ctrl_loop(DJI_Motor_Ctrl_t* motor);
 void __DJI_Motor_pos_ctrl_loop(DJI_Motor_Ctrl_t* motor);
 void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor);
@@ -148,6 +164,7 @@ static void __DJI_Motor_preset_pid_m3508(DJI_Motor_Ctrl_t* motor);
 static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor);
 static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor);
 
+static void __DJI_Motor_warning(void);
 //static void __DJI_Motor_circle_
 
 #endif

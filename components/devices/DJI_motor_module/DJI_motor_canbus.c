@@ -64,23 +64,7 @@ void __DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus)
   for(index=0;index<__DJI_CANBus_get_motor_count(bus);index++)
   {
     DJI_Motor_Ctrl_t* motor = __DJI_CANBus_get_motor_instance(bus,index);
-    switch(motor->mode)
-    {
-      case SPEED_LOOP:
-        __DJI_Motor_speed_ctrl_loop(motor);
-        break;
-
-      case LOCK:
-      case POS_LOOP:
-        __DJI_Motor_pos_ctrl_loop(motor);
-        break;
-
-      default:
-      case NON_FORCE:
-      case GIVING_CURRENT:
-        __DJI_Motor_current_ctrl_loop(__DJI_CANBus_get_motor_instance(bus,index));
-        break;
-    }
+    __DJI_Motor_ctrl_loop(motor);
   }
 
   if(bus->enable)

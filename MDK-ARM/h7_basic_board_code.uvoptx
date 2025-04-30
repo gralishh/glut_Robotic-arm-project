@@ -355,6 +355,16 @@
           <WinNumber>1</WinNumber>
           <ItemText>pump</ItemText>
         </Ww>
+        <Ww>
+          <count>39</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>DJI_Motor_headendR,0x10</ItemText>
+        </Ww>
+        <Ww>
+          <count>40</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>DJI_Motor_headendL</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>
