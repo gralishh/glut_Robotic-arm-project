@@ -157,6 +157,7 @@ uint8_t DJI_Motor_get_offline_flag(DJI_Motor_Ctrl_t* motor);
 
 /*电机状态控制接口*/
 void DJI_Motor_clear_offline_flag(DJI_Motor_Ctrl_t* motor);
+void DJI_Motor_clear_circle_count(DJI_Motor_Ctrl_t* motor);
 
 /*DJI_Motor循环控制接口*/
 void __DJI_Motor_ctrl_loop(DJI_Motor_Ctrl_t* motor);

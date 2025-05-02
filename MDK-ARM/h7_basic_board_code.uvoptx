@@ -375,6 +375,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>delta_angle2,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>43</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>i</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>

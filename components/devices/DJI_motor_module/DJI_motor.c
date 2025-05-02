@@ -319,6 +319,11 @@ void DJI_Motor_clear_offline_flag(DJI_Motor_Ctrl_t* motor)
   motor->offline_flag=0;
 }
 
+void DJI_Motor_clear_circle_count(DJI_Motor_Ctrl_t* motor)
+{
+  motor->circle_count=0;
+}
+
 /**
  * @brief 电机控制钩子函数
  * @note 被定时调用

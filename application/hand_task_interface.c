@@ -15,6 +15,7 @@
 #include "cmsis_os2.h"
 #include "ws2812.h"
 #include "Custom_ctrl.h"
+#include "bsp_buzzer.h"
 
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
@@ -76,7 +77,7 @@ static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
 
 static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
-static void __hand_pitch_pos_init(void);
+static uint8_t __hand_pitch_pos_init(void);
 
 
 /*general handler method*/
@@ -202,7 +203,7 @@ void hand_task_init()
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendR);
 
   //joint_pitch
-  __SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,145.0f*PITCH_MAP_K+PITCH_MAP_D);
+  __SET_JOINT_LIMIT(HAND_PITCH,5*PITCH_MAP_K+PITCH_MAP_D,150.0f*PITCH_MAP_K+PITCH_MAP_D);
   __SET_JOINT_ANGLE(HAND_PITCH,PITCH_MAP_D);
 
   //limit
@@ -213,23 +214,38 @@ void hand_task_init()
   {
     osDelay(20);
     hand_task_get_feedback();
-    __hand_idle_ctrl();
   }
+
+  J1_D=-__GET_JOINT_ANGLE(HAND_J1);
+  DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
+  for(int i=0;i<40;i++)
+  {
+    hand_task_get_feedback();
+    __hand_nonforce();
+    if(__hand_pitch_pos_init())
+    {
+      break;
+    }
+    hand_task_output();
+    osDelay(50);/*极大影响初始化，慎调*/
+  }
+
   while(0.0f==__GET_JOINT_ANGLE(HAND_J1))/*等待J1控制板初始化*/
   {
     osDelay(20);
     hand_task_get_feedback();
     //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
     __hand_nonforce();/*防止移动*/
+    /*上述注释代码不会产生任何移动*/
   }
-
   AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
   hand_task_get_feedback();
   __hand_idle_ctrl();
 
+  __hand_idle_ctrl();
+  __hand_nonforce();
   WS2812_Ctrl(30,100,50);
-  J1_D=-__GET_JOINT_ANGLE(HAND_J1);
-  DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
+  //buzzer_off();
 }
 
 /**
@@ -408,6 +424,8 @@ void __hand_idle_ctrl()
   __ADD_JOINT_ANGLE(HAND_J2,0);
   __ADD_JOINT_ANGLE(HAND_J3,0);
 
+  __hand_pitch_pos_init();
+
 }
 
 void __hand_rc_ctrl()
@@ -512,9 +530,58 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
   }
 }
 
-void __hand_pitch_pos_init(void)
+uint8_t __hand_pitch_pos_init(void)
 {
+  static int loop_count=0;
+  static float last_L_angle=0.0f;
+  static float init_start_flag=1;
+  static uint8_t init_complete_flag=0;
+  if(__IS_MODE_SWITCHED())
+  {
+    init_start_flag=0;
+    init_complete_flag=0;
+    loop_count=0;
+    last_L_angle=0.0f;
+  }
+
   
+  if(init_complete_flag != 1 && GET_KEYBOARD_KEY(KEY_G))
+  {
+    init_start_flag=1;
+  }
+
+  if(init_complete_flag==0 && init_start_flag==1)
+  {
+    if(loop_count < 5 )
+    {
+      __SET_MOTOR_CURRENT(DJI_HE_R,-1000);
+      __SET_MOTOR_CURRENT(DJI_HE_L,1000);
+      loop_count++;
+    }
+    else if(ABS(last_L_angle-__GET_MOTOR_ANGLE(DJI_HE_L))>0.3 && init_complete_flag!=1)
+    {
+      last_L_angle=__GET_MOTOR_ANGLE(DJI_HE_L);
+      __SET_MOTOR_CURRENT(DJI_HE_R,-700);
+      __SET_MOTOR_CURRENT(DJI_HE_L,700);
+    }
+    else 
+    {
+      init_start_flag=0;
+      init_complete_flag=1;
+      //buzzer_on(0,0);
+      //__SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,145.0f*PITCH_MAP_K+PITCH_MAP_D);
+      __SET_JOINT_ANGLE(HAND_PITCH,PITCH_MAP_D);
+      __SET_JOINT_ANGLE(HAND_ROLL,0.0f);
+      __SET_MOTOR_CURRENT(DJI_HE_R,0);
+      __SET_MOTOR_CURRENT(DJI_HE_L,0);
+      DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_HE_R));
+      DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_HE_L));
+      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_R));
+      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_L));
+      return 1;
+    }
+  }
+  return 0;
 }
 
 void __hand_custom_map_subctrl(void)

@@ -43,6 +43,7 @@ static void __gimbal_any_ctrl(void);
 
 static void __uplift_move2_subctrl(fp32 UL,uint8_t EN);
 static void __pump_subctrl(void);
+static void __pump_nonctrl(void);
 
 
 /*general handler method*/
@@ -272,11 +273,13 @@ void __gimbal_nonforce()
     __SET_JOINT_ANGLE(index,HANDLER_PTR->feedback_joint_angle[index]);// 设置关节输出值为当前关节角度
     __SET_MOTOR_NONFORCE(index);
   }
+  __pump_nonctrl();
 }
 
 void __gimbal_idle_ctrl()
 {
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,0);
+  __pump_subctrl();
 }
 
 void __gimbal_rc_ctrl()
@@ -398,6 +401,11 @@ void __pump_subctrl()
       break;
   }
 
+}
+
+void __pump_nonctrl(void)
+{
+  PUMP1_OFF();
 }
 
 void __uplift_move2_subctrl(fp32 UL,uint8_t EN)
