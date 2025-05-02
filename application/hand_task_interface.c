@@ -34,7 +34,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define J2_MAP_K   1.0f
 #define J2_MAP_D   0
 #define J3_MAP_K   (-1.0f/19.2f)
-#define J3_MAP_D   0.1f
+#define J3_MAP_D   J3_D
 #define PITCH_MAP_K  (PI/2/(135-50))
 #define PITCH_MAP_D  (-50*PITCH_MAP_K)
 #define ROLL_MAP_K  (PITCH_MAP_K/2)
@@ -62,6 +62,7 @@ DJI_Motor_Ctrl_t DJI_Motor_headendR;
 
 /*global variable*/
 static fp32 J1_D=0;
+static fp32 J3_D=0;
 
 /*custom controller remap(custom controller -> joint_angle)*/
 float custom_controller_K[5]={1,1,1,-1,1};
@@ -173,26 +174,32 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,4000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,4500.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
-  DJI_Motor_J3.circle_count_flag=1;
+  //DJI_Motor_J3.circle_count_flag=1;
+  //DJI_Motor_set_sum_angle(&DJI_Motor_J3);
+  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J3);
 
   // Headend_L
   __SET_MOTOR_INSTANCE(DJI_HE_L,&DJI_Motor_headendL);
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,5000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,2000,1000);  DJI_Motor_set_offline_detect(&DJI_Motor_headendL,10,0);
-  DJI_Motor_headendL.circle_count_flag=1;
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,5500,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,2000,1000);  DJI_Motor_set_offline_detect(&DJI_Motor_headendL,8,0);
+  //DJI_Motor_headendL.circle_count_flag=1;
+  //DJI_Motor_set_sum_angle(&DJI_Motor_headendL);
+  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendL);
 
   // Headend_R
   __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,5000,1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,5500,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,80,0,0,5000,0);
-  DJI_Motor_set_offline_detect(&DJI_Motor_headendR,10,0);
-  DJI_Motor_headendR.circle_count_flag=1;
+  DJI_Motor_set_offline_detect(&DJI_Motor_headendR,8,0);
+  //DJI_Motor_headendR.circle_count_flag=1;
+  //DJI_Motor_set_sum_angle(&DJI_Motor_headendR);
+  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendR);
 
   //joint_pitch
   __SET_JOINT_LIMIT(HAND_PITCH,0+PITCH_MAP_D,145.0f*PITCH_MAP_K+PITCH_MAP_D);
@@ -201,7 +208,7 @@ void hand_task_init()
   //limit
   __SET_JOINT_LIMIT(HAND_J1,-2.68,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
-  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.15),1.18*(1.1));
+  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.12),1.18*(1.1));
   for(int i=0;i<40;i++)
   {
     osDelay(20);

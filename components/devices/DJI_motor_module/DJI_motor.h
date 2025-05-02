@@ -74,8 +74,6 @@ typedef struct __DJI_Motor_Ctrl_t{
   Motor_Ctrl_init_state_e init_state;
   //电机反转标志,会使发送的电流与反馈的速度，转矩，角度置为负值
   uint8_t reverse_flag;
-  //电机转子计数标志,启用圈速计数反馈
-  uint8_t circle_count_flag;
 
 /*目标值*/
   fp32 set_speed;//目标速度 range:0~2PI 下同
@@ -93,9 +91,18 @@ typedef struct __DJI_Motor_Ctrl_t{
 
 /*角度反馈*/
   fp32 *ref_ptr;// 反馈变量指针,可以为该结构体的angle成员
+  uint16_t last_ecd;
   fp32 ecd_angle;// 转子角度反馈
   fp32 last_ecd_angle;// 上一转子角度反馈
-  fp32 circle_count;//转子圈数
+
+/*WARNING:不要同时使用两种测量方式*/
+/*多圈角度测量:转子圈数*/
+uint8_t circle_count_flag;//电机转子计数标志,启用圈速计数反馈
+fp32 circle_count;//多圈角度:转子圈数
+/*多圈角度测量:角度累加*/
+uint8_t angle_sum_flag;
+int32_t ecd_sum;
+fp32 angle_sum;
 
 /*堵转检测*/
   uint16_t stall_loop_count;
@@ -130,6 +137,8 @@ void DJI_Motor_Pos_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
 void DJI_Motor_Speed_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mod,
   fp32 Kp,fp32 Ki,fp32 Kd,
   fp32 max_out,fp32 max_iout);
+void DJI_Motor_set_multiple_circle_angle(DJI_Motor_Ctrl_t* motor);
+void DJI_Motor_set_sum_angle(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband);
 void DJI_Motor_set_stall_detect(DJI_Motor_Ctrl_t* motor);
 void DJI_Motor_set_offline_detect(DJI_Motor_Ctrl_t* motor,uint16_t counter,uint8_t recoverable);

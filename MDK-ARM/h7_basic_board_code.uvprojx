@@ -1222,6 +1222,11 @@
               <FileType>1</FileType>
               <FilePath>..\components\support\angle_process.c</FilePath>
             </File>
+            <File>
+              <FileName>Vofa.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\support\Vofa.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

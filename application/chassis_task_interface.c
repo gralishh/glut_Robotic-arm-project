@@ -95,25 +95,25 @@ void chassis_task_init()
   __SET_MOTOR_INSTANCE(DJI_LF,&DJI_Motor_LeftFront);
   __SET_MOTOR_TYPE(DJI_LF,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_LeftFront,&DJI_CAN1_Bus_ctrl,M3508,0x201);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftFront,PID_POSITION,22,0,0.00,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftFront,PID_POSITION,22,0,0.00,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_LeftFront,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_RF,&DJI_Motor_RightFront);
   __SET_MOTOR_TYPE(DJI_RF,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightFront,&DJI_CAN1_Bus_ctrl,M3508,0x202);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront,PID_POSITION,28,0,0.00,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront,PID_POSITION,28,0,0.00,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightFront,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_LB,&DJI_Motor_LeftBack);
   __SET_MOTOR_TYPE(DJI_LB,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_LeftBack,&DJI_CAN1_Bus_ctrl,M3508,0x204);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftBack,PID_POSITION,22,0,0.00,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftBack,PID_POSITION,22,0,0.00,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_LeftBack,PID_POSITION,15,0,0,1000,0);
 
   __SET_MOTOR_INSTANCE(DJI_RB,&DJI_Motor_RightBack);
   __SET_MOTOR_TYPE(DJI_RB,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightBack,&DJI_CAN1_Bus_ctrl,M3508,0x203);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack,PID_POSITION,22,0,0.00,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack,PID_POSITION,22,0,0.00,9000,0);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightBack,PID_POSITION,15,0,0,1000,0);
 
   __chassis_idle_ctrl();
@@ -176,7 +176,7 @@ void chassis_task_mode_flush()
   else if(switch_is_up(get_remote_control_point()->rc.s[1]))
   {
     if(switch_is_mid(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(CHASSIS_MODE_RC_CTRL);
+      __SET_STRUCT_MODE(CHASSIS_MODE_SLOW_CTRL);
     else 
       __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
   }
@@ -218,6 +218,9 @@ void chassis_task_set_output()
       break;
     case CHASSIS_MODE_UNION_CTRL:
       __chassis_union_rc_ctrl();
+      break;
+    case CHASSIS_MODE_SLOW_CTRL:
+      __chassis_rc_slow_ctrl();
       break;
     case CHASSIS_MODE_NONFORCE:
     default:
@@ -282,17 +285,17 @@ void __chassis_rc_ctrl()
   HANDLER_PTR->wz=-RC_CTRL_PTR->rc.ch[0]*WZ_CTRL_SEN;
 
   if(GET_KEYBOARD_KEY(KEY_W))
-    HANDLER_PTR->vx=-770*VX_CTRL_SEN;
+    HANDLER_PTR->vx=-660*VX_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_S))
-    HANDLER_PTR->vx=770*VX_CTRL_SEN;
+    HANDLER_PTR->vx=660*VX_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_A))
-    HANDLER_PTR->vy=770*VY_CTRL_SEN;
+    HANDLER_PTR->vy=660*VY_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_D))
-    HANDLER_PTR->vy=-770*VY_CTRL_SEN;
+    HANDLER_PTR->vy=-660*VY_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_Q))
-    HANDLER_PTR->wz=660*WZ_CTRL_SEN;
+    HANDLER_PTR->wz=440*WZ_CTRL_SEN;
   if(GET_KEYBOARD_KEY(KEY_E))
-    HANDLER_PTR->wz=-660*WZ_CTRL_SEN;
+    HANDLER_PTR->wz=-440*WZ_CTRL_SEN;
 
   if(remote_data.mouse_x!=0)
     HANDLER_PTR->wz=-remote_data.mouse_x*10*WZ_CTRL_SEN;
@@ -310,6 +313,22 @@ void __chassis_rc_slow_ctrl(void)
   HANDLER_PTR->vx=-RC_CTRL_PTR->rc.ch[3]*VX_CTRL_SEN*0.4f;
   HANDLER_PTR->vy=-RC_CTRL_PTR->rc.ch[2]*VY_CTRL_SEN*0.4f;
   HANDLER_PTR->wz=-RC_CTRL_PTR->rc.ch[0]*WZ_CTRL_SEN*0.9f;
+
+  if(GET_KEYBOARD_KEY(KEY_W))
+    HANDLER_PTR->vx=-330*VX_CTRL_SEN;
+  if(GET_KEYBOARD_KEY(KEY_S))
+    HANDLER_PTR->vx=330*VX_CTRL_SEN;
+  if(GET_KEYBOARD_KEY(KEY_A))
+    HANDLER_PTR->vy=330*VY_CTRL_SEN;
+  if(GET_KEYBOARD_KEY(KEY_D))
+    HANDLER_PTR->vy=-330*VY_CTRL_SEN;
+  if(GET_KEYBOARD_KEY(KEY_Q))
+    HANDLER_PTR->wz=440*WZ_CTRL_SEN;
+  if(GET_KEYBOARD_KEY(KEY_E))
+    HANDLER_PTR->wz=-440*WZ_CTRL_SEN;
+
+  if(remote_data.mouse_x!=0)
+    HANDLER_PTR->wz=-remote_data.mouse_x*10*WZ_CTRL_SEN;
 
   __SET_MOTOR_SPEED(DJI_LF, - HANDLER_PTR->vx - HANDLER_PTR->vy + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
   __SET_MOTOR_SPEED(DJI_RF,   HANDLER_PTR->vx - HANDLER_PTR->vy + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);

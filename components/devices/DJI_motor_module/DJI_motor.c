@@ -19,7 +19,7 @@
 #define __DJI_Motor_Ctrl_get_speed(motor_ptr) ((motor_ptr->recv_pack).speed_rpm)
 #define __DJI_Motor_Ctrl_get_ecd(motor_ptr) ((motor_ptr->recv_pack).ecd)
 #define __DJI_Motor_Ctrl_get_ecd_angle(motor_ptr) (motor_ptr->ecd_angle)
-#define __DJI_Motor_Ctrl_get_angle(motor_ptr) ((motor_ptr->circle_count)*PI*2+*(motor_ptr->ref_ptr))
+#define __DJI_Motor_Ctrl_get_angle(motor_ptr) (motor_ptr->angle_sum_flag?motor_ptr->angle_sum:(motor_ptr->circle_count)*PI*2+*(motor_ptr->ref_ptr))
 #define __DJI_Motor_Ctrl_get_init_state(motor_ptr,state_flag) ((motor_ptr->init_state)&(state_flag))
 #define __DJI_Motor_Ctrl_set_init_state(motor_ptr,state_flag) ((motor_ptr->init_state)|=(state_flag))
 
@@ -180,6 +180,18 @@ void DJI_Motor_Speed_PID_init(DJI_Motor_Ctrl_t* motor,enum PID_MODE pid_mode,
   fp32 pid[3]={Kp,Ki,Kd};
   PID_Init(&(motor->pid_speed_loop),pid_mode,pid,max_out,max_iout,0.01,10);
   __DJI_Motor_Ctrl_set_init_state(motor,MOTOR_SPEED_PID_INIT);
+}
+
+void DJI_Motor_set_multiple_circle_angle(DJI_Motor_Ctrl_t* motor)
+{
+  motor->circle_count_flag = 1;
+  motor->angle_sum_flag = 0;
+}
+
+void DJI_Motor_set_sum_angle(DJI_Motor_Ctrl_t* motor)
+{
+  motor->circle_count_flag = 0;
+  motor->angle_sum_flag = 1;
 }
 
 void DJI_Motor_PID_set_deadband(DJI_Motor_Ctrl_t* motor,fp32 deadband)
@@ -385,6 +397,7 @@ void __DJI_Motor_current_ctrl_loop(DJI_Motor_Ctrl_t* motor)
  */
 void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
 {
+  motor->last_ecd=motor->recv_pack.ecd;
   //memcpy((void*)&(motor->recv_pack),rx_msg,sizeof(uint8_t)*8);//报文高低8位方向相反，不能直接memcpy
   // 报文赋值
   motor->recv_pack.ecd=rx_msg[0]<<8;
@@ -411,14 +424,28 @@ void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,uint8_t* rx_msg)
   // 刷新圈数
   if(motor->circle_count_flag)
   {
-    if(motor->ecd_angle>(2*PI*2/4)&&motor->last_ecd_angle<(2*PI*1/4))
+    if(motor->ecd_angle>(2*PI*7/8)&&motor->last_ecd_angle<(2*PI*1/8))
     {
       motor->circle_count--;
     }
-    else if(motor->last_ecd_angle>(2*PI*2/4)&&motor->ecd_angle<(2*PI*1/4))
+    else if(motor->last_ecd_angle>(2*PI*7/8)&&motor->ecd_angle<(2*PI*1/8))
     {
       motor->circle_count++;
     }
+  }
+
+  // 圈数累加
+  if(motor->angle_sum_flag)
+  {
+    int32_t delta_angle=(motor->recv_pack.ecd)-(motor->last_ecd);
+    if(delta_angle > 8191/2) 
+      delta_angle -= 8191; 
+    else if(delta_angle < -8191/2) 
+      delta_angle += 8191;
+
+    motor->ecd_sum+=delta_angle;
+
+    motor->angle_sum=motor->ecd_sum*2*PI/8191;
   }
 
   // 掉线检测计数置零
@@ -461,6 +488,6 @@ static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor)
 
 static void __DJI_Motor_warning(void)
 {
-  //buzzer_on(0,0);
+  buzzer_on(0,0);
 }
 

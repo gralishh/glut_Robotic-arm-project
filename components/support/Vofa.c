@@ -7,6 +7,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "bsp_usart.h"
+
 static const uint8_t cmdTail[] = VOFA_CMD_TAIL;
 static const uint8_t justFloatTail[4] = {0x00, 0x00, 0x80, 0x7f};
 
