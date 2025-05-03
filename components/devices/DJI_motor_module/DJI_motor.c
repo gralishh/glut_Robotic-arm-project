@@ -493,6 +493,6 @@ static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor)
 
 static void __DJI_Motor_warning(void)
 {
-  buzzer_on(0,0);
+  //buzzer_on(0,0);
 }
 

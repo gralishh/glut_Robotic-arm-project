@@ -227,7 +227,7 @@ void hand_task_init()
       break;
     }
     hand_task_output();
-    osDelay(50);/*极大影响初始化，慎调*/
+    osDelay(1);/*极大影响初始化，慎调*/
   }
 
   while(0.0f==__GET_JOINT_ANGLE(HAND_J1))/*等待J1控制板初始化*/
@@ -547,12 +547,17 @@ uint8_t __hand_pitch_pos_init(void)
   
   if(init_complete_flag != 1 && GET_KEYBOARD_KEY(KEY_G))
   {
+      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_R));
+      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_L));
     init_start_flag=1;
   }
 
   if(init_complete_flag==0 && init_start_flag==1)
   {
-    if(loop_count < 5 )
+
+    osDelay(50);
+
+    if(loop_count < 10 )
     {
       __SET_MOTOR_CURRENT(DJI_HE_R,-1000);
       __SET_MOTOR_CURRENT(DJI_HE_L,1000);
@@ -576,8 +581,6 @@ uint8_t __hand_pitch_pos_init(void)
       __SET_MOTOR_CURRENT(DJI_HE_L,0);
       DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_HE_R));
       DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_HE_L));
-      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_R));
-      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_L));
       return 1;
     }
   }
