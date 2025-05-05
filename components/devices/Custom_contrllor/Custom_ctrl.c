@@ -3,6 +3,8 @@
 #include "bsp_usart.h"
 #include "cmsis_os.h"
 
+#include "detect_task.h"
+
 #define HEADER 0xa5
 #define CTRL_HEADER1 0xa9
 #define CTRL_HEADER2 0x53
@@ -59,7 +61,6 @@ void Custom_Ctrl_Task(void* para)
   static uint32_t usart1_length=0x00;
   while(1)
   {
-    next_usart1:
     usart1_length = USART1_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
     if(IS_HEADER(USART1_At(0)) )  
@@ -72,7 +73,10 @@ void Custom_Ctrl_Task(void* para)
       if(usart1_length >= CTRL_PACK_LENGTH)
       {
         if(IS_CTRL_HEADER(USART1_At(0),USART1_At(1)))
+        {
           USART1_Recv(CTRL_RX_BUF, sizeof(remote_data_t));  
+          DetectHook(CAMERA_TOE);
+        }
         else
           USART1_Drop(1);
       }

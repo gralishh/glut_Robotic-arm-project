@@ -172,34 +172,51 @@ void gimbal_task_mode_flush()
   static uint8_t last_mode=GIMBAL_MODE_NONFORCE;
   last_mode=HANDLER_PTR->ctrl_mode;
 
-  /**/
-  if(switch_is_mid(get_remote_control_point()->rc.s[1]))
+  switch(GET_SWITCH())
   {
-    if(switch_is_down(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
-    else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
+    case 1:
       __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
-    else if(switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(GIMBAL_MODE_UPLIFT_RC_CTRL);
-  }
-  else if(switch_is_up(get_remote_control_point()->rc.s[1]))
-  {
-    if(switch_is_mid(get_remote_control_point()->rc.s[0]))
+      break;
+    case 2:
       __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
-    else
-      __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
-  }
-  else
-  {
-    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+      break;
+    case 0:
+    default:
+      __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
 
-  if(switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
-  {
-    __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
-  }
+  /**/
+  //if(switch_is_mid(get_remote_control_point()->rc.s[1]))
+  //{
+  //  if(switch_is_down(get_remote_control_point()->rc.s[0]))
+  //    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  //  else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
+  //    __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
+  //  else if(switch_is_up(get_remote_control_point()->rc.s[0]))
+  //    __SET_STRUCT_MODE(GIMBAL_MODE_UPLIFT_RC_CTRL);
+  //}
+  //else if(switch_is_up(get_remote_control_point()->rc.s[1]))
+  //{
+  //  if(switch_is_mid(get_remote_control_point()->rc.s[0]))
+  //    __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
+  //  else
+  //    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  //}
+  //else
+  //{
+  //  __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  //}
 
-	if(toe_is_error(DBUSTOE))
+  //if(switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
+  //{
+  //  __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
+  //}
+
+	//if(toe_is_error(DBUSTOE))
+  //{
+  //  __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
+  //}
+  if(toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
   {
     __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }

@@ -62,32 +62,13 @@
 enum errorList
 {
   DBUSTOE = 0,
-	RefereeSystemTOE,
-	
-	TOE_EXTER_ENCODER_pitch_2,
-	TOE_EXTER_ENCODER_roll_3,
-	
-	TOE_EXTER_ENCODER_1,
-	TOE_EXTER_ENCODER_2,
-  TOE_EXTER_ENCODER_3,
-	
-	TOE_2006_HAND_x_4_ID,
-	TOE_2006_HAND_pitch_2_ID,
-	
-	TOE_2006_roll_1_ID,
-	
-	TOE_3508_M1_ID,
+  CAMERA_TOE,
+  TOE_3508_M1_ID,
   TOE_3508_M2_ID,
   TOE_3508_M3_ID,
   TOE_3508_M4_ID,
+	//RefereeSystemTOE,
 
-  TOE_3508_RISE1_height_L_5_ID,
-  TOE_3508_RISE2_height_R_6_ID,
-	TOE_3508_LeftRight_7_ID,
-  TOE_encoder_HAND_x_4_ID,
-
-	TOE_2006_VIEW_pitch_6_ID,
-	TOE_encoder_x_4,
 
   errorListLength,
 };

@@ -4,7 +4,15 @@
 #include "main.h" 
 #include "struct_typedef.h"
 
+/*???*/
+
+#define CHANNLE_OFFSET_MAX 660
+#define CHANNLE_OFFSET_MIN -660
+
 #define GET_KEYBOARD_KEY(KEY) ((1<<KEY)&(remote_data.key))
+#define GET_CH_VALUE(CH) ((int64_t)(remote_data.ch_##CH-1024))
+#define GET_WHEEL_VALUE() (remote_data.wheel)
+#define GET_SWITCH() (remote_data.mode_sw)
 
 
 typedef __packed struct

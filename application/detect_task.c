@@ -278,15 +278,7 @@ static void DetectInit(uint32_t time)
     uint16_t setItem[errorListLength][3] =
         {			//errorListLength为枚举类型，它在枚举中的值为9，说明有8组3为数组
             {30, 40, 15}, //SBUS
-            {/*2*/2, 3, 14},   //yaw
-            {/*2*/2, 3, 13},   //pitch
-            {10, 10, 12}, //trigger
-            {10, 10, 11}, //motor1
-            {10, 10, 10}, //motor2
-            {10, 10, 9},  //motor3
-            {10, 10, 8},  //motor4
-						{100, 40, 7},  //motor4
-        
+            {30, 40, 14}
         };
 
   for (uint8_t i = 0; i < errorListLength; i++)
