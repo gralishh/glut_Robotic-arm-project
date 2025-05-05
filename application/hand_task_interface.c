@@ -209,7 +209,7 @@ void hand_task_init()
   //limit
   __SET_JOINT_LIMIT(HAND_J1,-2.68,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
-  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.12),1.18*(1.1));
+  __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.2),1.18*(1.2));
   for(int i=0;i<40;i++)
   {
     osDelay(20);
@@ -475,7 +475,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 
   if(EN&J1_EN)
   {
-    if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.08f)
+    if(ABS(J1-HANDLER_PTR->joint_angle[HAND_J1])>0.03f)
     {
       __SET_JOINT_ANGLE(HAND_J1,J1);
       //__ADD_JOINT_ANGLE(HAND_J1,
@@ -519,7 +519,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 
   if(EN&J3_EN)
   {
-    if(ABS(J3-HANDLER_PTR->joint_angle[HAND_J3])>0.020f)
+    if(ABS(J3-HANDLER_PTR->joint_angle[HAND_J3])>0.010f)
     {
       __ADD_JOINT_ANGLE(HAND_J3,
         J3>HANDLER_PTR->joint_angle[HAND_J3]?

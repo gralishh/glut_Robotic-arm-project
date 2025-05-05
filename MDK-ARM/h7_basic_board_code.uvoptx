@@ -208,190 +208,65 @@
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler,0x10</ItemText>
+          <ItemText>J1_D</ItemText>
         </Ww>
         <Ww>
           <count>10</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CC_handler</ItemText>
+          <ItemText>uwu,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>11</count>
           <WinNumber>1</WinNumber>
-          <ItemText>custom_controller_K</ItemText>
+          <ItemText>rx_header</ItemText>
         </Ww>
         <Ww>
           <count>12</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_uplift</ItemText>
+          <ItemText>rx_message</ItemText>
         </Ww>
         <Ww>
           <count>13</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rc_ctrl,0x0A</ItemText>
+          <ItemText>index</ItemText>
         </Ww>
         <Ww>
           <count>14</count>
           <WinNumber>1</WinNumber>
-          <ItemText>USART2_RxBuf0</ItemText>
+          <ItemText>pump</ItemText>
         </Ww>
         <Ww>
           <count>15</count>
           <WinNumber>1</WinNumber>
-          <ItemText>joint1_motor</ItemText>
+          <ItemText>pump</ItemText>
         </Ww>
         <Ww>
           <count>16</count>
           <WinNumber>1</WinNumber>
-          <ItemText>(CC_handler.rx_pack.adc_val[3]-1.56)*(-1)</ItemText>
+          <ItemText>delta_angle1,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>17</count>
           <WinNumber>1</WinNumber>
-          <ItemText>J1_D</ItemText>
+          <ItemText>delta_angle2,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>18</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gimbal_task_handler,0x10</ItemText>
+          <ItemText>i</ItemText>
         </Ww>
         <Ww>
           <count>19</count>
           <WinNumber>1</WinNumber>
-          <ItemText>uwu,0x0A</ItemText>
+          <ItemText>init_start_flag</ItemText>
         </Ww>
         <Ww>
           <count>20</count>
           <WinNumber>1</WinNumber>
-          <ItemText>AK_pos</ItemText>
-        </Ww>
-        <Ww>
-          <count>21</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>22</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>usart3_length</ItemText>
-        </Ww>
-        <Ww>
-          <count>23</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>USART3_RxCBuf,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>24</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>USART2_RxCBuf</ItemText>
-        </Ww>
-        <Ww>
-          <count>25</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>USART10_RxCBuf</ItemText>
-        </Ww>
-        <Ww>
-          <count>26</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>USART1_RxCBuf,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>27</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>USART1_RxCBuf_Arr</ItemText>
-        </Ww>
-        <Ww>
-          <count>28</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>AK70_10_motor,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>29</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_CAN2_Bus_ctrl</ItemText>
-        </Ww>
-        <Ww>
-          <count>30</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>31</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>remote_data,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>32</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>rx_header</ItemText>
-        </Ww>
-        <Ww>
-          <count>33</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>rx_message</ItemText>
-        </Ww>
-        <Ww>
-          <count>34</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>uplift_ecd</ItemText>
-        </Ww>
-        <Ww>
-          <count>35</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>servo_list,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>36</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>index</ItemText>
-        </Ww>
-        <Ww>
-          <count>37</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>pump</ItemText>
-        </Ww>
-        <Ww>
-          <count>38</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>pump</ItemText>
-        </Ww>
-        <Ww>
-          <count>39</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendR,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>40</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendL</ItemText>
-        </Ww>
-        <Ww>
-          <count>41</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>delta_angle1,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>42</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>delta_angle2,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>43</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>i</ItemText>
-        </Ww>
-        <Ww>
-          <count>44</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>init_start_flag</ItemText>
-        </Ww>
-        <Ww>
-          <count>45</count>
-          <WinNumber>1</WinNumber>
           <ItemText>init_complete_flag</ItemText>
         </Ww>
         <Ww>
-          <count>46</count>
+          <count>21</count>
           <WinNumber>1</WinNumber>
           <ItemText>loop_count</ItemText>
         </Ww>

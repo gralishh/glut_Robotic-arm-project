@@ -6,6 +6,7 @@
 
 #define GET_KEYBOARD_KEY(KEY) ((1<<KEY)&(remote_data.key))
 
+
 typedef __packed struct
 {
 	uint8_t data[30];
