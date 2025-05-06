@@ -23,6 +23,7 @@ void USART1_Free(void);
 
 void USART1_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
 void USART1_ERR_HOOK(void);
+void USART1_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
 
 
 /*UART7(4pin口0)*/
@@ -36,6 +37,7 @@ void UART7_Free(void);
 
 void UART7_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
 void UART7_ERR_HOOK(void);
+void UART7_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
 
 
 /*USART10(4pin口1)*/
@@ -49,6 +51,7 @@ void USART10_Free(void);
 
 void USART10_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
 void USART10_ERR_HOOK(void);
+void USART10_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
 
 
 /*USART2(RS485通信)*/
@@ -62,6 +65,7 @@ void USART2_Free(void);
 
 void USART2_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
 void USART2_ERR_HOOK(void);
+void USART2_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
 
 
 /*USART3(RS485通信)*/
@@ -75,5 +79,6 @@ void USART3_Free(void);
 
 void USART3_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
 void USART3_ERR_HOOK(void);
+void USART3_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
 
 #endif 

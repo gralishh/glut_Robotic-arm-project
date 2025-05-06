@@ -27,6 +27,7 @@
 #include "remote_control.h" /*??ÓÚ????*/
 #include "can_bsp.h"
 #include "bsp_usart.h"
+#include "timers.h"
 
 #include "task.h"
 #include "chassis_task.h"
@@ -39,6 +40,7 @@
 #include "DJI_motor_canbus.h"
 #include "Custom_ctrl.h"
 #include "Vofa.h"
+#include "ui.h"
 
 #include "AK_series.h"
 /* USER CODE END Includes */
@@ -150,6 +152,11 @@ osTimerId_t motor_timer_ctrlHandle;
 const osTimerAttr_t motor_timer_ctrl_attributes = {
   .name = "motor_timer_ctrl"
 };
+/* Definitions for RM_UI_Timer */
+osTimerId_t RM_UI_TimerHandle;
+const osTimerAttr_t RM_UI_Timer_attributes = {
+  .name = "RM_UI_Timer"
+};
 /* USER CODE BEGIN PV */
 /*task????*/
 osThreadId chassis_task_handle;
@@ -184,6 +191,7 @@ void __usart3_measure_task(void *argument);
 void __Custom_Ctrl_Task(void *argument);
 void __catcher_task(void *argument);
 void __motor_timr_ctrl_callback(void *argument);
+void __RM_UI_Timer(void *argument);
 
 /* USER CODE BEGIN PFP */
 
@@ -253,6 +261,7 @@ int main(void)
   usart2_init();
   usart3_init();
   DJI_CANBus_init_all();
+  ui_init_g();
   WS2812_Ctrl(0,0,0);
 
   Vofa_Init(&vofa_handler,VOFA_MODE_SKIP);
@@ -275,8 +284,12 @@ int main(void)
   /* creation of motor_timer_ctrl */
   motor_timer_ctrlHandle = osTimerNew(__motor_timr_ctrl_callback, osTimerPeriodic, NULL, &motor_timer_ctrl_attributes);
 
+  /* creation of RM_UI_Timer */
+  RM_UI_TimerHandle = osTimerNew(__RM_UI_Timer, osTimerPeriodic, NULL, &RM_UI_Timer_attributes);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   motor_ctrl_init();
+  xTimerStart(RM_UI_TimerHandle ,50);
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
@@ -1428,6 +1441,14 @@ void __motor_timr_ctrl_callback(void *argument)
   /* USER CODE BEGIN __motor_timr_ctrl_callback */
   motor_timer_ctrl_callback();
   /* USER CODE END __motor_timr_ctrl_callback */
+}
+
+/* __RM_UI_Timer function */
+void __RM_UI_Timer(void *argument)
+{
+  /* USER CODE BEGIN __RM_UI_Timer */
+  ui_update_g();
+  /* USER CODE END __RM_UI_Timer */
 }
 
 /**

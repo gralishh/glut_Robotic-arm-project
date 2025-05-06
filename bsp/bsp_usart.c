@@ -61,7 +61,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     USART3_ERR_HOOK();
 }
 
-
 /***************全局设置***************/
 #define MAX_RING_BUF_SIZE 4096
 #define DMA_DOUBLE_BUFFER_MODE 0
@@ -132,6 +131,13 @@ unsigned char USART3_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
     CircBuf_Push(&rx_circbuf,buf_ptr,Size);\
     HAL_UARTEx_ReceiveToIdle_DMA(huart_ptr,buf_ptr,buf_size);\
 
+#define TX_CPLT_HOOK(huart,tx_circbuf,buf_ptr)\
+    unsigned int buf_len = CircBuf_GetUsedSize(&tx_circbuf);\
+    if(buf_len > 0) {\
+        uint16_t send_len = CircBuf_Pop(&tx_circbuf, buf_ptr, 300);\
+        HAL_UART_Transmit_DMA(&huart, buf_ptr, send_len);\
+    }\
+
 /**
  * @brief 发送代码模板,
  * 因tx代码结构相同,直接使用宏来方便修改
@@ -139,20 +145,19 @@ unsigned char USART3_RxCBuf_Arr[ MAX_RING_BUF_SIZE ] = {0};
  * @param huart uart的handle
  * @param tx_circbuf 发送环形缓冲区
  * @param buf_ptr 发送缓冲区指针
- * @param buf_size 发送缓冲区大小
+ * @param data
+ * @param len 缓冲区大小
  * @note circbuf 先push又pop的操作有些多余,
  * 可以改为传输完成中断装载新数据,send函数里只对tx_circlbuf操作
  */
-#define TX_TEMPLATE(huart,tx_circbuf,buf_ptr,buf_size)\
-    unsigned int result = HAL_OK;\
-    unsigned int isBuffNotEmpty = CircBuf_GetUsedSize(&tx_circbuf);\
-    result = CircBuf_Push(&tx_circbuf, data, len);\
-    if(isBuffNotEmpty == 0)\
-    {\
-        len = CircBuf_Pop(&tx_circbuf, buf_ptr, buf_size);\
+#define TX_TEMPLATE(huart,tx_circbuf,buf_ptr)\
+    unsigned int result = CircBuf_Push(&tx_circbuf, data, len);\
+    if(HAL_DMA_STATE_READY == HAL_DMA_GetState(huart.hdmatx)) {\
+        uint16_t send_len = CircBuf_Pop(&tx_circbuf, buf_ptr, 300);\
+        HAL_UART_Transmit_DMA(&huart, buf_ptr, send_len);\
     }\
-    HAL_UART_Transmit_DMA(&huart, buf_ptr, len);\
     return result;\
+
 
 
 
@@ -167,6 +172,7 @@ void usart1_init(void)
   /*初始化环形缓冲*/
   CircBuf_Init(&USART1_TxCBuf, USART1_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
   CircBuf_Init(&USART1_RxCBuf, USART1_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  HAL_DMA_RegisterCallback((&huart1)->hdmarx, HAL_DMA_XFER_CPLT_CB_ID, USART1_TX_CPLT_HOOK);
   __HAL_DMA_ENABLE((&huart1)->hdmarx);
   __HAL_DMA_ENABLE((&huart1)->hdmatx);
 }
@@ -188,9 +194,14 @@ void USART1_ERR_HOOK(void)
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1,USART1_RxBuf0,USART1_BUF_SIZE);
 }
 
+void USART1_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma)
+{
+  TX_CPLT_HOOK(huart1,USART1_TxCBuf,USART1_TxBuf);
+}
+
 unsigned int USART1_Send(uint8_t *data, unsigned short len)
 {
-  TX_TEMPLATE(huart1,USART1_TxCBuf,USART1_TxBuf,USART1_BUF_SIZE);
+  TX_TEMPLATE(huart1,USART1_TxCBuf,USART1_TxBuf);
 }
 
 unsigned int USART1_Recv(unsigned char *data, unsigned short len)
@@ -236,6 +247,7 @@ void uart7_init(void)
   /*初始化环形缓冲*/
   CircBuf_Init(&UART7_TxCBuf, UART7_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
   CircBuf_Init(&UART7_RxCBuf, UART7_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  HAL_DMA_RegisterCallback((&huart7)->hdmarx, HAL_DMA_XFER_CPLT_CB_ID, UART7_TX_CPLT_HOOK);
   __HAL_DMA_ENABLE((&huart7)->hdmarx);
   __HAL_DMA_ENABLE((&huart7)->hdmatx);
 }
@@ -256,10 +268,14 @@ void UART7_ERR_HOOK(void)
   memset(UART7_RxBuf0,0,UART7_BUF_SIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart7,UART7_RxBuf0,UART7_BUF_SIZE);
 }
+void UART7_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma)
+{
+  TX_CPLT_HOOK(huart7,UART7_TxCBuf,UART7_TxBuf);
+}
 
 unsigned int UART7_Send(uint8_t *data, unsigned short len)
 {
-  TX_TEMPLATE(huart7,UART7_TxCBuf,UART7_TxBuf,UART7_BUF_SIZE);
+  TX_TEMPLATE(huart7,UART7_TxCBuf,UART7_TxBuf);
 }
 
 unsigned int UART7_Recv(unsigned char *data, unsigned short len)
@@ -305,6 +321,7 @@ void usart10_init(void)
   /*初始化环形缓冲*/
   CircBuf_Init(&USART10_TxCBuf, USART10_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
   CircBuf_Init(&USART10_RxCBuf, USART10_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  HAL_DMA_RegisterCallback((&huart10)->hdmarx, HAL_DMA_XFER_CPLT_CB_ID, USART10_TX_CPLT_HOOK);
   __HAL_DMA_ENABLE((&huart10)->hdmarx);
   __HAL_DMA_ENABLE((&huart10)->hdmatx);
 }
@@ -325,10 +342,14 @@ void USART10_ERR_HOOK(void)
   memset(USART10_RxBuf0,0,USART10_BUF_SIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart10,USART10_RxBuf0,USART10_BUF_SIZE);
 }
+void USART10_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma)
+{
+  TX_CPLT_HOOK(huart10,USART10_TxCBuf,USART10_TxBuf);
+}
 
 unsigned int USART10_Send(uint8_t *data, unsigned short len)
 {
-  TX_TEMPLATE(huart10,USART10_TxCBuf,USART10_TxBuf,USART10_BUF_SIZE);
+  TX_TEMPLATE(huart10,USART10_TxCBuf,USART10_TxBuf);
 }
 
 unsigned int USART10_Recv(unsigned char *data, unsigned short len)
@@ -374,6 +395,7 @@ void usart2_init(void)
   /*初始化环形缓冲*/
   CircBuf_Init(&USART2_TxCBuf, USART2_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
   CircBuf_Init(&USART2_RxCBuf, USART2_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  HAL_DMA_RegisterCallback((&huart2)->hdmarx, HAL_DMA_XFER_CPLT_CB_ID, USART2_TX_CPLT_HOOK);
   __HAL_DMA_ENABLE((&huart2)->hdmarx);
   __HAL_DMA_ENABLE((&huart2)->hdmatx);
 }
@@ -395,10 +417,14 @@ void USART2_ERR_HOOK(void)
   //memset(USART2_RxBuf0,0,USART2_BUF_SIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2,USART2_RxBuf0,USART2_BUF_SIZE);
 }
+void USART2_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma)
+{
+  TX_CPLT_HOOK(huart2,USART2_TxCBuf,USART2_TxBuf);
+}
 
 unsigned int USART2_Send(uint8_t *data, unsigned short len)
 {
-  TX_TEMPLATE(huart2,USART2_TxCBuf,USART2_TxBuf,USART2_BUF_SIZE);
+  TX_TEMPLATE(huart2,USART2_TxCBuf,USART2_TxBuf);
 }
 
 unsigned int USART2_Recv(unsigned char *data, unsigned short len)
@@ -445,6 +471,7 @@ void usart3_init(void)
   /*初始化环形缓冲*/
   CircBuf_Init(&USART3_TxCBuf, USART3_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
   CircBuf_Init(&USART3_RxCBuf, USART3_RxCBuf_Arr, MAX_RING_BUF_SIZE);
+  HAL_DMA_RegisterCallback((&huart3)->hdmarx, HAL_DMA_XFER_CPLT_CB_ID, USART3_TX_CPLT_HOOK);
   __HAL_DMA_ENABLE((&huart3)->hdmarx);
   __HAL_DMA_ENABLE((&huart3)->hdmatx);
 }
@@ -465,10 +492,14 @@ void USART3_ERR_HOOK(void)
   memset(USART3_RxBuf0,0,USART3_BUF_SIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart3,USART3_RxBuf0,USART3_BUF_SIZE);
 }
+void USART3_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma)
+{
+  TX_CPLT_HOOK(huart3,USART3_TxCBuf,USART3_TxBuf);
+}
 
 unsigned int USART3_Send(uint8_t *data, unsigned short len)
 {
-  TX_TEMPLATE(huart3,USART3_TxCBuf,USART3_TxBuf,USART3_BUF_SIZE);
+  TX_TEMPLATE(huart3,USART3_TxCBuf,USART3_TxBuf);
 }
 
 unsigned int USART3_Recv(unsigned char *data, unsigned short len)
