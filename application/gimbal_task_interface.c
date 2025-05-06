@@ -105,7 +105,7 @@ void gimbal_task_init()
   __SET_MOTOR_INSTANCE(DJI_UL,&DJI_Motor_uplift);
   __SET_MOTOR_TYPE(DJI_UL,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,20,0,0.001,9000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,21,0,0.001,8000,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0,0,1000,0);
   DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag=1;
@@ -175,6 +175,7 @@ void gimbal_task_mode_flush()
   switch(GET_SWITCH())
   {
     case 1:
+      //__SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
       __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
       break;
     case 2:
@@ -302,6 +303,7 @@ void __gimbal_idle_ctrl()
 void __gimbal_rc_ctrl()
 {
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00012f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00012f);
   __pump_subctrl();
 
   if(GET_KEYBOARD_KEY(KEY_C))
@@ -313,6 +315,7 @@ void __gimbal_rc_ctrl()
 void __gimbal_uplift_rc_ctrl()
 {
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00018f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00018f);
   __pump_subctrl();
 
   if(GET_KEYBOARD_KEY(KEY_C))

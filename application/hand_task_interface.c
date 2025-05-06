@@ -139,7 +139,7 @@ static uint8_t __hand_pitch_pos_init(void);
 #define __BUTTON_PRESS_SWITCH_WRAP(button,mode_var,id,loop_cnt,func)\
 {\
   static uint8_t press_loop_cnt = 0;\
-  if(button && press_loop_cnt<loop_cnt && mode_var!=id)\
+  if(button && press_loop_cnt<loop_cnt)\
   {\
     press_loop_cnt++;\
   }\
@@ -320,6 +320,7 @@ void hand_task_mode_flush()
   {
     case 1:
       //__SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
       break;
     case 2:
       __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
@@ -358,7 +359,7 @@ void hand_task_mode_flush()
   //}
 
   static uint8_t mode_var=0;
-  if(__GET_STRUCT_MODE()!=HAND_MODE_NONFORCE)
+  if(__GET_STRUCT_MODE()==HAND_MODE_IDLE)
   {
     __BUTTON_PRESS_SWITCH_WRAP(GET_KEYBOARD_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
   }
