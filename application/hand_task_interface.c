@@ -76,6 +76,8 @@ static void __hand_custom_ctrl(void);
 static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
 
+static void __hand_catch_ground(void);
+
 static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
 static uint8_t __hand_pitch_pos_init(void);
 
@@ -118,6 +120,7 @@ static uint8_t __hand_pitch_pos_init(void);
 #define __JOINT_LIMIT(index,value) angle_limit(value,HANDLER_PTR->max_joint_angle[index],HANDLER_PTR->min_joint_angle[index])
 #define __SET_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,value));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
 #define __ADD_JOINT_ANGLE(index,value) {(HANDLER_PTR->joint_angle[index]=__JOINT_LIMIT(index,HANDLER_PTR->joint_angle[index]+(value)));(HANDLER_PTR->motor_ctrl_mode[index]=POS_LOOP);}
+#define __GET_JOINT_MAX_LIM(index) (HANDLER_PTR->max_joint_angle[index])
 
 /*时间控制*/
 #define __RESET_TICKS() (HANDLER_PTR->tick=0)
@@ -132,6 +135,27 @@ static uint8_t __hand_pitch_pos_init(void);
 #define __RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index]=__GET_TICKS_TIME())
 #define __RESET_RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index]=0)
 #define __IS_MODE_SWITCHED() (1==HANDLER_PTR->mode_switch)
+
+#define __BUTTON_PRESS_SWITCH_WRAP(button,mode_var,id,loop_cnt,func)\
+{\
+  static uint8_t press_loop_cnt = 0;\
+  if(button && press_loop_cnt<loop_cnt)\
+  {\
+    press_loop_cnt++;\
+  }\
+  else if(press_loop_cnt==loop_cnt)\
+  {\
+    mode_var=mode_var==id?0:id;\
+  }\
+  if(button==0)\
+  {\
+    press_loop_cnt=0;\
+  }\
+  if(mode_var==id)\
+  {\
+    func();\
+  }\
+}\
 
 
 void hand_task_init()
@@ -296,6 +320,7 @@ void hand_task_mode_flush()
   {
     case 1:
       //__SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
       break;
     case 2:
       __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
@@ -332,6 +357,17 @@ void hand_task_mode_flush()
   //{
   //  __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
   //}
+
+  static uint8_t mode_var=0;
+  if(__GET_STRUCT_MODE()==HAND_MODE_IDLE)
+  {
+    __BUTTON_PRESS_SWITCH_WRAP(GET_KEYBOARD_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
+  }
+  else
+  {
+    mode_var=0;
+  }
+
 
   if(toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
   {
@@ -683,6 +719,11 @@ void __hand_gold_catch_ctrl(void)
   if(__GET_JOINT_ANGLE(HAND_PITCH)>0)
     __SET_JOINT_ANGLE(HAND_PITCH,0);
   __hand_move2_subctrl(0,-0.950,0,0,0,J2_EN);
+}
+
+void __hand_catch_ground(void)
+{
+  __hand_move2_subctrl(-PI/4,-PI*2/3,0.0f,__GET_JOINT_MAX_LIM(HAND_PITCH),0.0f,J1_EN|J2_EN|J3_EN|J4_EN);
 }
 
 void __hand_pose_ctrl(void)
