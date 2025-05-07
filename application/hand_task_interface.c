@@ -199,9 +199,8 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,4500.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,6000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
-  //DJI_Motor_J3.circle_count_flag=1;
   //DJI_Motor_set_sum_angle(&DJI_Motor_J3);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J3);
 
@@ -211,7 +210,6 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,5500,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,2000,1000);  DJI_Motor_set_offline_detect(&DJI_Motor_headendL,8,0);
-  //DJI_Motor_headendL.circle_count_flag=1;
   //DJI_Motor_set_sum_angle(&DJI_Motor_headendL);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendL);
 
@@ -222,7 +220,6 @@ void hand_task_init()
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,5500,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,80,0,0,5000,0);
   DJI_Motor_set_offline_detect(&DJI_Motor_headendR,8,0);
-  //DJI_Motor_headendR.circle_count_flag=1;
   //DJI_Motor_set_sum_angle(&DJI_Motor_headendR);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendR);
 
@@ -263,10 +260,8 @@ void hand_task_init()
     /*上述注释代码不会产生任何移动*/
   }
   AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
+  osDelay(10);
   hand_task_get_feedback();
-  __hand_idle_ctrl();
-
-  __hand_idle_ctrl();
   __hand_nonforce();
   WS2812_Ctrl(30,100,50);
   //buzzer_off();
@@ -411,6 +406,8 @@ void hand_task_set_output()
     default:
       __hand_nonforce();
   }
+
+  /*掉电检测*/
 }
 
 /**
