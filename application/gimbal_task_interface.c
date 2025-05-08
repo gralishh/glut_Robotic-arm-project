@@ -10,6 +10,8 @@
 #include "Ex_encoder.h"
 #include "servo.h"
 
+#include "referee.h"
+
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
@@ -217,6 +219,11 @@ void gimbal_task_mode_flush()
   //{
   //  __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   //}
+  if(GetMatchReady())
+  {
+    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  }
+
   if(toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
   {
     __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);

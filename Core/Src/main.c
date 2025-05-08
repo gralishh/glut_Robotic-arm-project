@@ -35,6 +35,7 @@
 #include "hand_task.h"
 #include "catcher_task.h"
 #include "detect_task.h" 
+#include "referee_usart_task.h"
 #include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
@@ -147,6 +148,13 @@ const osThreadAttr_t CatcherTask_attributes = {
   .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for referee_task */
+osThreadId_t referee_taskHandle;
+const osThreadAttr_t referee_task_attributes = {
+  .name = "referee_task",
+  .stack_size = 518 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for motor_timer_ctrl */
 osTimerId_t motor_timer_ctrlHandle;
 const osTimerAttr_t motor_timer_ctrl_attributes = {
@@ -190,6 +198,7 @@ void __hand_task(void *argument);
 void __usart3_measure_task(void *argument);
 void __Custom_Ctrl_Task(void *argument);
 void __catcher_task(void *argument);
+void __referee_task(void *argument);
 void __motor_timr_ctrl_callback(void *argument);
 void __RM_UI_Timer(void *argument);
 
@@ -321,6 +330,9 @@ int main(void)
 
   /* creation of CatcherTask */
   CatcherTaskHandle = osThreadNew(__catcher_task, NULL, &CatcherTask_attributes);
+
+  /* creation of referee_task */
+  referee_taskHandle = osThreadNew(__referee_task, NULL, &referee_task_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1433,6 +1445,25 @@ void __catcher_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __catcher_task */
+}
+
+/* USER CODE BEGIN Header___referee_task */
+/**
+* @brief Function implementing the referee_task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___referee_task */
+void __referee_task(void *argument)
+{
+  /* USER CODE BEGIN __referee_task */
+  referee_usart_task(argument);
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __referee_task */
 }
 
 /* __motor_timr_ctrl_callback function */

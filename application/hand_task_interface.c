@@ -353,6 +353,11 @@ void hand_task_mode_flush()
   //  __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
   //}
 
+  if(GetMatchReady())
+  {
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+  }
+
   static uint8_t mode_var=0;
   if(__GET_STRUCT_MODE()==HAND_MODE_IDLE)
   {

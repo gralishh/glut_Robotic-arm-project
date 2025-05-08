@@ -8,6 +8,8 @@
 #include "detect_task.h"
 #include "Custom_ctrl.h"
 
+#include "referee.h"
+
 #define HANDLER chassis_task_handler
 #define HANDLER_PTR chassis_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
@@ -201,6 +203,10 @@ void chassis_task_mode_flush()
   //{
   //  __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
   //}
+  if(GetMatchReady())
+  {
+    __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
+  }
 
   if(toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
   {
