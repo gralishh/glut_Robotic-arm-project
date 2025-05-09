@@ -460,16 +460,16 @@ typedef __packed struct         // 0x0104
 
 extern void init_referee_struct_data(void);
 extern void referee_data_solve(uint8_t *frame);
-extern uint16_t Get_chassis_power_limit();
-extern uint8_t GetEenmyColor();
-extern int16_t Get_shooter_42mm_speed_limit();
-extern uint8_t GetRobotID();
-extern uint8_t GetHp();
+extern uint16_t Get_chassis_power_limit(void);
+extern uint8_t GetEenmyColor(void);
+extern int16_t Get_shooter_42mm_speed_limit(void);
+extern uint8_t GetRobotID(void);
+extern uint8_t GetHp(void);
 extern uint8_t GetMatchReady(void);
 extern void get_chassis_power_and_buffer(fp32 *power, fp32 *buffer);
-extern float GetPowerBuffer();  //得到底盘实时缓存功率
-extern float GetRealPower(); //得到底盘实时功率
-extern float GetPowerHeat();  //得到枪口热度
-extern int16_t GetBullet();  //获取发射弹量
-extern float bullet_speed();
+extern float GetPowerBuffer(void);  //得到底盘实时缓存功率
+extern float GetRealPower(void); //得到底盘实时功率
+extern float GetPowerHeat(void);  //得到枪口热度
+extern int16_t GetBullet(void);  //获取发射弹量
+extern float bullet_speed(void);
 #endif

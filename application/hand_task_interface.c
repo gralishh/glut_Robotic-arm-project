@@ -79,8 +79,11 @@ static void __hand_gold_catch_ctrl(void);
 static void __hand_catch_ground(void);
 
 static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
-static uint8_t __hand_pitch_pos_init(void);
 
+static uint8_t __hand_J1_init(void);
+static void __hand_J2_init(void);
+static void __hand_J3_init(void);
+static uint8_t __hand_pitch_pos_init(void);
 
 /*general handler method*/
 /** 
@@ -181,16 +184,6 @@ void hand_task_init()
   // J2
   __SET_MOTOR_INSTANCE(DM_J2,&DM_Motor_J2);
   __SET_MOTOR_TYPE(DM_J2,M4310_MOTOR);
-  for(int i=0;i<10;i++)
-  {
-    disable_motor_mode(&hfdcan2,1,MIT_MODE);
-    osDelay(20);
-  }
-  for(int i=0;i<40;i++)
-  {
-    enable_motor_mode(&hfdcan2,1,POS_MODE);
-    osDelay(20);
-  }
   joint_motor_init(&DM_Motor_J2,1,POS_MODE,1.0,1.0);
 
   // J3
@@ -209,7 +202,8 @@ void hand_task_init()
   __SET_MOTOR_TYPE(DJI_HE_L,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendL,&DJI_CAN2_Bus_ctrl,M2006,0x201);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendL,PID_POSITION,22,0.001,0,5500,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,2000,1000);  DJI_Motor_set_offline_detect(&DJI_Motor_headendL,8,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL,PID_POSITION,75,0,0,2000,1000);  
+  //DJI_Motor_set_offline_detect(&DJI_Motor_headendL,8,0);
   //DJI_Motor_set_sum_angle(&DJI_Motor_headendL);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendL);
 
@@ -219,7 +213,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
   DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,5500,1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,80,0,0,5000,0);
-  DJI_Motor_set_offline_detect(&DJI_Motor_headendR,8,0);
+  //DJI_Motor_set_offline_detect(&DJI_Motor_headendR,8,0);
   //DJI_Motor_set_sum_angle(&DJI_Motor_headendR);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendR);
 
@@ -231,13 +225,21 @@ void hand_task_init()
   __SET_JOINT_LIMIT(HAND_J1,-2.68,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
   __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.2),1.18*(1.2));
-  for(int i=0;i<40;i++)
+
+  while(
+    toe_is_error(TOE_HE_L) ||
+    toe_is_error(TOE_HE_R) ||
+    toe_is_error(TOE_J1) ||
+    toe_is_error(TOE_J2) ||
+    toe_is_error(TOE_J3) 
+  );
+
+  for(int i=0;i<50;i++)
   {
     osDelay(20);
     hand_task_get_feedback();
   }
 
-  J1_D=-__GET_JOINT_ANGLE(HAND_J1);
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
   for(int i=0;i<40;i++)
   {
@@ -248,18 +250,22 @@ void hand_task_init()
       break;
     }
     hand_task_output();
-    osDelay(1);/*极大影响初始化，慎调*/
+    osDelay(1);
   }
 
-  while(0.0f==__GET_JOINT_ANGLE(HAND_J1))/*等待J1控制板初始化*/
-  {
-    osDelay(20);
+  do{
     hand_task_get_feedback();
-    //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
-    __hand_nonforce();/*防止移动*/
-    /*上述注释代码不会产生任何移动*/
+  }while(!__hand_J1_init());
+
+  while(toe_is_error(TOE_J2))
+    ;
+  for(int i=0;i<10;i++)
+  {
+    __hand_J2_init();
+    osDelay(10);
   }
-  AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
+  
+
   osDelay(10);
   hand_task_get_feedback();
   __hand_nonforce();
@@ -412,7 +418,17 @@ void hand_task_set_output()
       __hand_nonforce();
   }
 
-  /*掉电检测*/
+  /*掉电检测*/ 
+  if(toe_is_error(TOE_HE_L))
+    0==0;
+  if(toe_is_error(TOE_HE_R))
+    0==0;
+  if(toe_is_error(TOE_J1))
+    0==0;
+  if(toe_is_error(TOE_J2))
+    0==0;
+  if(toe_is_error(TOE_J3))
+    0==0;
 }
 
 /**
@@ -614,8 +630,10 @@ uint8_t __hand_pitch_pos_init(void)
 
     osDelay(50);
 
-    if(loop_count < 10 )
+    if(loop_count < 10)
     {
+      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_R));
+      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_L));
       __SET_MOTOR_CURRENT(DJI_HE_R,-1000);
       __SET_MOTOR_CURRENT(DJI_HE_L,1000);
       loop_count++;
@@ -642,6 +660,42 @@ uint8_t __hand_pitch_pos_init(void)
     }
   }
   return 0;
+}
+
+uint8_t __hand_J1_init(void)
+{ 
+  static uint8_t send_init_delay_count=0;
+  if(0.0f!=__GET_JOINT_ANGLE(HAND_J1)  ||toe_is_error(TOE_J1))/*等待J1控制板初始化*/
+  {
+    //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
+    //__hand_nonforce();/*防止移动*/
+    /*上述注释代码不会产生任何移动*/
+    __SET_MOTOR_CTRL_MODE(HAND_J1,NON_FORCE);
+    if(send_init_delay_count==0)
+    {
+      AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
+      send_init_delay_count=50;
+      osDelay(30);
+    }
+    AK_joint_motor_nonforce_ctrl(__GET_MOTOR_INSTANCE(AK_J1));
+    send_init_delay_count--;
+    return 0;
+  }
+  send_init_delay_count=50;
+  return 1;
+}
+
+void __hand_J2_init(void)
+{
+  __SET_MOTOR_CTRL_MODE(HAND_J2,NON_FORCE);
+  disable_motor_mode(&hfdcan2,1,MIT_MODE);
+  osDelay(1);
+  enable_motor_mode(&hfdcan2,1,POS_MODE);
+}
+
+void __hand_J3_init(void)
+{
+
 }
 
 void __hand_custom_map_subctrl(void)

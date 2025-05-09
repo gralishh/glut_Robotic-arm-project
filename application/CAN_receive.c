@@ -106,6 +106,9 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
       case 0x201:
         DetectHook(TOE_HE_L);
         break;
+      case 0x204:
+        DetectHook(TOE_J3);
+        break;
       case 0x208:
         DetectHook(TOE_HE_R);
         break;

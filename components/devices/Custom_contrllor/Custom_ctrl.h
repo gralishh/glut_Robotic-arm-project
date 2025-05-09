@@ -3,6 +3,7 @@
 
 #include "main.h" 
 #include "struct_typedef.h"
+#include "referee.h"
 
 /*???*/
 
@@ -19,14 +20,6 @@ typedef __packed struct
 {
 	uint8_t data[30];
 } robot_interactive_data_t;
-
-typedef __packed struct
-{
-  uint8_t  sof;
-  uint16_t data_length;
-  uint8_t  seq;
-  uint8_t  crc8;
-} frame_header_t;
 
 typedef __packed struct
 {
