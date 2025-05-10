@@ -64,7 +64,7 @@ void __External_ecd_can_feedback_hook(FDCAN_HandleTypeDef* CANX,uint16_t id,uint
   for(index=0;index<Ex_ecd_bus.can_ecd_count;index++)
   {
     ecd=(Ex_ecd_bus.can_communication_ecd)[index];
-    if(ecd->can!=CANX&&ecd->bus_id!=id&&
+    if(ecd->can!=CANX||ecd->bus_id!=id||
       ((OID_ECD_FEEDBACK_T*)(void*)msg)->id!=ecd->device_id
     )
       continue;

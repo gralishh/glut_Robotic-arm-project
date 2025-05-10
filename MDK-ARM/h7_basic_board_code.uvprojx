@@ -1142,6 +1142,11 @@
               <FileType>1</FileType>
               <FilePath>..\application\referee_usart_task.c</FilePath>
             </File>
+            <File>
+              <FileName>general_movement.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\general_movement.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

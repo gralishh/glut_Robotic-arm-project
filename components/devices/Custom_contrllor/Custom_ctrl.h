@@ -12,7 +12,7 @@
 
 #define GET_KEYBOARD_KEY(KEY) ((1<<KEY)&(remote_data.key))
 #define GET_CH_VALUE(CH) ((int64_t)(remote_data.ch_##CH-1024))
-#define GET_WHEEL_VALUE() (remote_data.wheel)
+#define GET_WHEEL_VALUE() (remote_data.wheel-1024)
 #define GET_SWITCH() (remote_data.mode_sw)
 
 

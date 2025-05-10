@@ -9,7 +9,8 @@ typedef enum{
   SPEED_LOOP,
   POS_LOOP,
   GIVING_CURRENT,
-  LOCK
+  LOCK,
+  OFFLINE,
 } Motor_Ctrl_mode_e;
 
 typedef enum{
@@ -72,6 +73,7 @@ typedef enum{
           DJI_Motor_lockup(instance_ptr); \
           break; \
         case NON_FORCE: \
+        case OFFLINE:\
         default: \
           DJI_Motor_set_nonforce(instance_ptr); \
           break; \
@@ -87,6 +89,7 @@ typedef enum{
           M8010_motor_lock((M8010_motor_t*)instance_ptr); \
           break; \
         case NON_FORCE: \
+        case OFFLINE:\
         default: \
           M8010_motor_nonforce((M8010_motor_t*)instance_ptr); \
           break; \
@@ -101,6 +104,7 @@ typedef enum{
         case LOCK: \
           break; \
         case NON_FORCE: \
+        case OFFLINE:\
         default: \
           pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,0.0001); \
           break; \
@@ -110,11 +114,12 @@ typedef enum{
       switch(ctrl_state) \
       { \
         case POS_LOOP: \
-          AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t*)instance_ptr,angle,2500,3500); \
+          AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t*)instance_ptr,angle,3500,4500); \
           break; \
         case LOCK: \
           break; \
         case NON_FORCE: \
+        case OFFLINE:\
         default: \
           AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t*)instance_ptr); \
           break; \

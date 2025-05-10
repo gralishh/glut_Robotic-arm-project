@@ -17,6 +17,8 @@
 #include "Custom_ctrl.h"
 #include "bsp_buzzer.h"
 
+#include "general_movement.h"
+
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
@@ -33,7 +35,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define J1_MAP_K   (3.14f/180.0f)
 #define J1_MAP_D   0
 #define J2_MAP_K   1.0f
-#define J2_MAP_D   0
+#define J2_MAP_D   -2.06f
 #define J3_MAP_K   (-1.0f/19.2f)
 #define J3_MAP_D   J3_D
 #define PITCH_MAP_K  (PI/2/(135-50))
@@ -81,9 +83,11 @@ static void __hand_catch_ground(void);
 static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN);
 
 static uint8_t __hand_J1_init(void);
-static void __hand_J2_init(void);
+static uint8_t __hand_J2_init(void);
 static void __hand_J3_init(void);
 static uint8_t __hand_pitch_pos_init(void);
+
+static void __hand_move_GGM(void);
 
 /*general handler method*/
 /** 
@@ -101,6 +105,9 @@ static uint8_t __hand_pitch_pos_init(void);
 #define __GET_MOTOR_TYPE(index) (HANDLER_PTR->motor_type[index])
 #define __SET_MOTOR_TYPE(index,type) (HANDLER_PTR->motor_type[index]=(type))
 #define __GET_MOTOR_CTRL_MODE(index) (HANDLER_PTR->motor_ctrl_mode[index])
+#define __SET_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index]=1)
+#define __CLEAR_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index]=0)
+#define __IS_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index])
 
 /*获取电机反馈*/
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
@@ -192,7 +199,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,20,0.000,0.5,6000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,22,0.000,0.5,6000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
   //DJI_Motor_set_sum_angle(&DJI_Motor_J3);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J3);
@@ -222,9 +229,15 @@ void hand_task_init()
   __SET_JOINT_ANGLE(HAND_PITCH,PITCH_MAP_D);
 
   //limit
-  __SET_JOINT_LIMIT(HAND_J1,-2.68,0);
+  __SET_JOINT_LIMIT(HAND_J1,-3.10,0);
   __SET_JOINT_LIMIT(HAND_J2,-3.14/7*5,3.14/7*5);
   __SET_JOINT_LIMIT(HAND_J3,-1.18*(1.2),1.18*(1.2));
+
+  __CLEAR_MOTOR_OFFLINE(AK_J1);
+  __CLEAR_MOTOR_OFFLINE(DM_J2);
+  __CLEAR_MOTOR_OFFLINE(DJI_J3);
+  __CLEAR_MOTOR_OFFLINE(DJI_HE_L);
+  __CLEAR_MOTOR_OFFLINE(DJI_HE_R);
 
   while(
     toe_is_error(TOE_HE_L) ||
@@ -259,12 +272,8 @@ void hand_task_init()
 
   while(toe_is_error(TOE_J2))
     ;
-  for(int i=0;i<10;i++)
-  {
-    __hand_J2_init();
-    osDelay(10);
-  }
-  
+
+  while(!__hand_J2_init());
 
   osDelay(10);
   hand_task_get_feedback();
@@ -300,6 +309,9 @@ void hand_task_get_feedback()
   __GET_JOINT_ANGLE(HAND_J3)=J3_MAP_K*__GET_MOTOR_ANGLE(DJI_J3)   +J3_MAP_D;
   __GET_JOINT_ANGLE(HAND_PITCH)=HANDLER_PTR->joint_angle[HAND_PITCH];
   __GET_JOINT_ANGLE(HAND_ROLL)=HANDLER_PTR->joint_angle[HAND_ROLL];
+  // 已知电机角度 theta_L 和 theta_R 时，计算关节角度：
+  __GET_JOINT_ANGLE(HAND_PITCH)= PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
+  __GET_JOINT_ANGLE(HAND_ROLL)= ROLL_MAP_D  + 0.5f * ROLL_MAP_K  * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
   /*
   __GET_JOINT_ANGLE(index,
     ...
@@ -367,7 +379,17 @@ void hand_task_mode_flush()
   static uint8_t mode_var=0;
   if(__GET_STRUCT_MODE()==HAND_MODE_IDLE)
   {
-    __BUTTON_PRESS_SWITCH_WRAP(GET_KEYBOARD_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
+    //__BUTTON_PRESS_SWITCH_WRAP(GET_KEYBOARD_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
+    //__BUTTON_PRESS_SWITCH_WRAP
+    if(GET_KEYBOARD_KEY(KEY_Z))
+      set_movement(GGM);
+    if(remote_data.trigger)
+      __hand_rc_ctrl();
+
+    if(get_movement()==GGM)
+    {
+      __hand_move_GGM();
+    }
   }
   else
   {
@@ -387,6 +409,7 @@ void hand_task_mode_flush()
     __RESET_TICKS();
     __HALT_TICKS_COUNTING();
     HANDLER_PTR->mode_switch=1;
+    set_movement(0);
   }
 }
 
@@ -419,16 +442,40 @@ void hand_task_set_output()
   }
 
   /*掉电检测*/ 
-  if(toe_is_error(TOE_HE_L))
-    0==0;
-  if(toe_is_error(TOE_HE_R))
-    0==0;
-  if(toe_is_error(TOE_J1))
-    0==0;
-  if(toe_is_error(TOE_J2))
-    0==0;
-  if(toe_is_error(TOE_J3))
-    0==0;
+  if(toe_is_error(TOE_HE_L) || __IS_MOTOR_OFFLINE(DJI_HE_L))
+  {
+    __SET_MOTOR_CTRL_MODE(DJI_HE_L,OFFLINE);
+    __SET_MOTOR_OFFLINE(DJI_HE_L);
+  }
+  if(toe_is_error(TOE_HE_R) || __IS_MOTOR_OFFLINE(DJI_HE_R))
+  {
+    __SET_MOTOR_CTRL_MODE(DJI_HE_R,OFFLINE);
+    __SET_MOTOR_OFFLINE(DJI_HE_R);
+  }
+  if(toe_is_error(TOE_J1) || __IS_MOTOR_OFFLINE(AK_J1))
+  {
+    __SET_MOTOR_CTRL_MODE(AK_J1,OFFLINE);
+    __SET_MOTOR_OFFLINE(AK_J1);
+  }
+  if(toe_is_error(TOE_J2) || __IS_MOTOR_OFFLINE(DM_J2))
+  {
+    __SET_MOTOR_CTRL_MODE(DM_J2,OFFLINE);
+    __SET_MOTOR_OFFLINE(DM_J2);
+  }
+  if(toe_is_error(TOE_J3) || __IS_MOTOR_OFFLINE(DJI_J3))
+  {
+    __SET_MOTOR_CTRL_MODE(DJI_J3,OFFLINE);
+    __SET_MOTOR_OFFLINE(DM_J2);
+  }
+
+  if(toe_is_error(TOE_HE_L) &&
+    toe_is_error(TOE_HE_R) &&
+    toe_is_error(TOE_J1) &&
+    toe_is_error(TOE_J2) &&
+    toe_is_error(TOE_J3) )
+  {
+    hand_task_init();
+  }
 }
 
 /**
@@ -506,10 +553,10 @@ void __hand_rc_ctrl()
   __ADD_JOINT_ANGLE(HAND_J3,-RC_CTRL_PTR->rc.ch[4]*0.000025f*J3_MAP_K);
 
   __ADD_JOINT_ANGLE(HAND_PITCH, GET_CH_VALUE(1)*0.0001f*PITCH_MAP_K);
-  __ADD_JOINT_ANGLE(HAND_ROLL , GET_CH_VALUE(3)*0.0001f*ROLL_MAP_K);
-  __ADD_JOINT_ANGLE(HAND_J1   ,-GET_CH_VALUE(2)*0.0000007f);
+  __ADD_JOINT_ANGLE(HAND_ROLL , GET_CH_VALUE(2)*0.0001f*ROLL_MAP_K);
+  __ADD_JOINT_ANGLE(HAND_J1   ,-GET_CH_VALUE(3)*0.0000007f);
   __ADD_JOINT_ANGLE(HAND_J2   ,-GET_CH_VALUE(0)*0.0000015f);
-  __ADD_JOINT_ANGLE(HAND_J3   ,-GET_WHEEL_VALUE()*0.000025f*J3_MAP_K);
+  __ADD_JOINT_ANGLE(HAND_J3   ,GET_WHEEL_VALUE()*0.000025f*J3_MAP_K);
 }
 
 void __hand_custom_ctrl(void)
@@ -542,7 +589,7 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
     if(ABS(J4-HANDLER_PTR->joint_angle[HAND_PITCH])>0.020f)
     {
       __ADD_JOINT_ANGLE(HAND_PITCH,
-        J4>HANDLER_PTR->joint_angle[HAND_PITCH]?0.001f:-0.001f);
+        J4>HANDLER_PTR->joint_angle[HAND_PITCH]?0.008f:-0.008);
     }
   }
 
@@ -685,12 +732,17 @@ uint8_t __hand_J1_init(void)
   return 1;
 }
 
-void __hand_J2_init(void)
+uint8_t __hand_J2_init(void)
 {
-  __SET_MOTOR_CTRL_MODE(HAND_J2,NON_FORCE);
-  disable_motor_mode(&hfdcan2,1,MIT_MODE);
-  osDelay(1);
-  enable_motor_mode(&hfdcan2,1,POS_MODE);
+  if(toe_is_error(TOE_J2) || DM_Motor_J2.para.state == 0x00)
+  {
+    __SET_MOTOR_CTRL_MODE(HAND_J2,NON_FORCE);
+    disable_motor_mode(&hfdcan2,1,MIT_MODE);
+    osDelay(1);
+    enable_motor_mode(&hfdcan2,1,POS_MODE);
+    return 0;
+  }
+  return 1;
 }
 
 void __hand_J3_init(void)
@@ -847,6 +899,22 @@ void __hand_pose_ctrl(void)
     __hand_gold_catch_ctrl();
   else
     ;
+}
+
+void __hand_move_GGM(void)
+{
+  if(get_step()==GGM_hand_to_pos)
+  {
+    if(
+      is_angle_around(GGM_STEP2_J1_ANGLE,__GET_JOINT_ANGLE(HAND_J1),0.2f) &&
+      is_angle_around(GGM_STEP2_J2_ANGLE,__GET_JOINT_ANGLE(HAND_J2),0.2f) &&
+      is_angle_around(GGM_STEP2_J3_ANGLE,__GET_JOINT_ANGLE(HAND_J3),0.2f) &&
+      is_angle_around(GGM_STEP2_PITCH_ANGLE,__GET_JOINT_ANGLE(HAND_PITCH),0.2f)
+    )
+      next_step();
+    else
+     __hand_move2_subctrl(GGM_STEP2_J1_ANGLE,GGM_STEP2_J2_ANGLE,GGM_STEP2_J3_ANGLE,GGM_STEP2_PITCH_ANGLE,0.0f,J1_EN|J2_EN|J3_EN|J4_EN);
+  }
 }
 
 /*
