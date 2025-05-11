@@ -36,6 +36,7 @@ typedef enum{
 #define SM_STEP2_J2_ANGLE     0
 #define SM_STEP2_J3_ANGLE     0
 #define SM_STEP2_PITCH_ANGLE  0
+#define SM_STEP3_HEIGHT       0
 #define SM_CPLT_HEIGHT        0
 
 typedef enum{

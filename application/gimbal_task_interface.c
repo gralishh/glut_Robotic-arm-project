@@ -51,6 +51,7 @@ static void __pump_subctrl(void);
 static void __pump_nonctrl(void);
 
 static void __gimbal_move_GGM(void);
+static void __gimbal_move_SM(void);
 
 
 /*general handler method*/
@@ -249,22 +250,40 @@ void gimbal_task_mode_flush()
   //  __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   //}
 
+  /*PUMP*/
   {
     static uint8_t press_loop_cnt = 0;
-    if(GET_KEYBOARD_KEY(KEY_F) && press_loop_cnt<10)
+    if((GET_KEY(KEY_F) || remote_data.fn_1) && press_loop_cnt<6)
     {
       press_loop_cnt++;
     }
-    else if(press_loop_cnt==10)
+    else if(press_loop_cnt==5)
     {
       pump1=pump1==1?0:1;
     }
-    if(GET_KEYBOARD_KEY(KEY_F)==0)
+    if(GET_KEY(KEY_F)==0)
     {
       press_loop_cnt=0;
     }
   }
 
+  {
+    static uint8_t press_loop_cnt = 0;
+    if(GET_KEY(KEY_R) && press_loop_cnt<6)
+    {
+      press_loop_cnt++;
+    }
+    else if(press_loop_cnt==5)
+    {
+      pump2=pump2==1?0:1;
+    }
+    if(GET_KEY(KEY_R)==0)
+    {
+      press_loop_cnt=0;
+    }
+  }
+
+  /*movement*/
   if(get_movement()==GGM)
   {
     __gimbal_move_GGM();
@@ -367,9 +386,9 @@ void __gimbal_rc_ctrl()
   }
   __pump_subctrl();
 
-  if(GET_KEYBOARD_KEY(KEY_C))
+  if(GET_KEY(KEY_C))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
-  if(GET_KEYBOARD_KEY(KEY_V))
+  if(GET_KEY(KEY_V))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
 }
 
@@ -379,9 +398,9 @@ void __gimbal_uplift_rc_ctrl()
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00018f);
   __pump_subctrl();
 
-  if(GET_KEYBOARD_KEY(KEY_C))
+  if(GET_KEY(KEY_C))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
-  if(GET_KEYBOARD_KEY(KEY_V))
+  if(GET_KEY(KEY_V))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
 }
 
@@ -399,9 +418,9 @@ void __gimbal_uplift_custom_ctrl()
     middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00018f;
   }
 
-  if(GET_KEYBOARD_KEY(KEY_C))
+  if(GET_KEY(KEY_C))
     middle_pos-=660*0.00018f;
-  if(GET_KEYBOARD_KEY(KEY_V))
+  if(GET_KEY(KEY_V))
     middle_pos+=660*0.00018f;
 
   if(middle_pos<UL_MIN_ENCODE)
@@ -410,12 +429,13 @@ void __gimbal_uplift_custom_ctrl()
     middle_pos = UL_MAX_ENCODE;
 
   __uplift_move2_subctrl(middle_pos+(UL_MAX_ENCODE-UL_MIN_ENCODE)/2*(cc_joint_angle[4]-0.5),0x01);
+
+  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW,(float)-remote_data.mouse_x/50.0);
+  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
 }
 
 void __gimbal_any_ctrl(void)
 {
-  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW,(float)-remote_data.mouse_x/50.0);
-  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
 
   __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,(float)-remote_data.mouse_y/80.0);
   servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
@@ -423,7 +443,7 @@ void __gimbal_any_ctrl(void)
 
 void __pump_subctrl()
 {
-  //if(cc_key_value.k1 || GET_KEYBOARD_KEY(KEY_F))
+  //if(cc_key_value.k1 || GET_KEY(KEY_F))
   //{
   //  pump=PUMP_PULL;
   //  __RESET_TICKS();
@@ -523,6 +543,7 @@ void __gimbal_move_GGM(void)
   }
   else if(get_step()==GGM_uplift_down)
   {
+    pump1=1;
     if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),GGM_STEP3_HEIGHT,5))
     {
       next_step();
@@ -544,6 +565,45 @@ void __gimbal_move_GGM(void)
     }
   }
 
+}
+
+void __gimbal_move_SM(void)
+{
+  if(get_step()==SM_uplift_to_pos)
+  {
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_STEP1_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,SM_STEP1_HEIGHT);
+    }
+  }
+
+  if(get_step()==SM_uplift_down)
+  {
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_STEP3_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,SM_STEP3_HEIGHT);
+    }
+  }
+
+  if(get_step()==SM_complete)
+  {
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_CPLT_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,SM_CPLT_HEIGHT);
+    }
+  }
 }
 
 #undef HANDLER 

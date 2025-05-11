@@ -8,6 +8,8 @@
 #include "detect_task.h"
 #include "Custom_ctrl.h"
 
+#include "core_cm7.h"
+
 #include "referee.h"
 
 #define HANDLER chassis_task_handler
@@ -203,6 +205,30 @@ void chassis_task_mode_flush()
   //{
   //  __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
   //}
+
+  /*底盘任务没有阻塞,将复位放置于此*/
+  if(GET_KEY(KEY_SHIFT) && GET_KEY(KEY_CTRL) && GET_KEY(KEY_B))
+  {
+		__set_FAULTMASK(1); //关闭所有中断
+    NVIC_SystemReset(); //进行软件复位
+  }
+
+//  if(toe_is_error(TOE_HE_L) &&
+//    toe_is_error(TOE_HE_R) &&
+//    toe_is_error(TOE_J1) &&
+//    toe_is_error(TOE_J2) &&
+//    toe_is_error(TOE_J3) &&
+//    toe_is_error(TOE_UPLIFT) &&
+//    toe_is_error(TOE_3508_M1_ID) &&
+//    toe_is_error(TOE_3508_M2_ID) &&
+//    toe_is_error(TOE_3508_M3_ID) &&
+//    toe_is_error(TOE_3508_M4_ID) 
+//  )
+//  {
+//		__set_FAULTMASK(1); //关闭所有中断
+//    NVIC_SystemReset(); //进行软件复位
+//  }
+
   if(GetMatchReady())
   {
     __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
@@ -308,22 +334,43 @@ void __chassis_rc_ctrl()
     HANDLER_PTR->vy=-GET_CH_VALUE(3)*VY_CTRL_SEN;
     HANDLER_PTR->wz=-GET_CH_VALUE(0)*WZ_CTRL_SEN;
 
-    if(GET_KEYBOARD_KEY(KEY_W))
-      HANDLER_PTR->vx=-770*VX_CTRL_SEN;
-    if(GET_KEYBOARD_KEY(KEY_S))
-      HANDLER_PTR->vx=770*VX_CTRL_SEN;
-    if(GET_KEYBOARD_KEY(KEY_A))
-      HANDLER_PTR->vy=770*VY_CTRL_SEN;
-    if(GET_KEYBOARD_KEY(KEY_D))
-      HANDLER_PTR->vy=-770*VY_CTRL_SEN;
-    if(GET_KEYBOARD_KEY(KEY_Q))
-      HANDLER_PTR->wz=440*WZ_CTRL_SEN;
-    if(GET_KEYBOARD_KEY(KEY_E))
-      HANDLER_PTR->wz=-440*WZ_CTRL_SEN;
+    if(GET_KEY(KEY_W))
+      HANDLER_PTR->vx=-440*VX_CTRL_SEN;
+    if(GET_KEY(KEY_S))
+      HANDLER_PTR->vx=440*VX_CTRL_SEN;
+    if(GET_KEY(KEY_A))
+      HANDLER_PTR->vy=440*VY_CTRL_SEN;
+    if(GET_KEY(KEY_D))
+      HANDLER_PTR->vy=-440*VY_CTRL_SEN;
+    if(GET_KEY(KEY_Q))
+      HANDLER_PTR->wz=330*WZ_CTRL_SEN;
+    if(GET_KEY(KEY_E))
+      HANDLER_PTR->wz=-330*WZ_CTRL_SEN;
+
+    if(GET_KEY(KEY_SHIFT))
+    {
+      if(GET_KEY(KEY_W))
+        HANDLER_PTR->vx=-770*VX_CTRL_SEN;
+      if(GET_KEY(KEY_S))
+        HANDLER_PTR->vx=770*VX_CTRL_SEN;
+      if(GET_KEY(KEY_A))
+        HANDLER_PTR->vy=770*VY_CTRL_SEN;
+      if(GET_KEY(KEY_D))
+        HANDLER_PTR->vy=-770*VY_CTRL_SEN;
+      if(GET_KEY(KEY_Q))
+        HANDLER_PTR->wz=330*WZ_CTRL_SEN;
+      if(GET_KEY(KEY_E))
+        HANDLER_PTR->wz=-330*WZ_CTRL_SEN;
+    }
 
     if(remote_data.mouse_x!=0)
     HANDLER_PTR->wz=-remote_data.mouse_x*10*WZ_CTRL_SEN;
   }
+
+  if(HANDLER_PTR->wz>440*WZ_CTRL_SEN)
+    HANDLER_PTR->wz=440*WZ_CTRL_SEN;
+  if(HANDLER_PTR->wz<-440*WZ_CTRL_SEN)
+    HANDLER_PTR->wz=-440*WZ_CTRL_SEN;
 
 
   __SET_MOTOR_SPEED(DJI_LF, - HANDLER_PTR->vx - HANDLER_PTR->vy + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
@@ -343,17 +390,17 @@ void __chassis_rc_slow_ctrl(void)
   HANDLER_PTR->vy=-GET_CH_VALUE(3)*0.4f*VY_CTRL_SEN;
   HANDLER_PTR->wz=-GET_CH_VALUE(0)*0.9f*WZ_CTRL_SEN;
 
-  if(GET_KEYBOARD_KEY(KEY_W))
+  if(GET_KEY(KEY_W))
     HANDLER_PTR->vx=-330*VX_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_S))
+  if(GET_KEY(KEY_S))
     HANDLER_PTR->vx=330*VX_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_A))
+  if(GET_KEY(KEY_A))
     HANDLER_PTR->vy=330*VY_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_D))
+  if(GET_KEY(KEY_D))
     HANDLER_PTR->vy=-330*VY_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_Q))
+  if(GET_KEY(KEY_Q))
     HANDLER_PTR->wz=440*WZ_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_E))
+  if(GET_KEY(KEY_E))
     HANDLER_PTR->wz=-440*WZ_CTRL_SEN;
 
   if(remote_data.mouse_x!=0)
@@ -372,23 +419,23 @@ void __chassis_union_rc_ctrl()
   HANDLER_PTR->vy=-RC_CTRL_PTR->rc.ch[2]*VY_CTRL_SEN;
   HANDLER_PTR->wz=0;
 
-  if(GET_KEYBOARD_KEY(KEY_W))
+  if(GET_KEY(KEY_W))
     HANDLER_PTR->vx=-220*VX_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_S))
+  if(GET_KEY(KEY_S))
     HANDLER_PTR->vx=220*VX_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_A))
+  if(GET_KEY(KEY_A))
     HANDLER_PTR->vy=220*VY_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_D))
+  if(GET_KEY(KEY_D))
     HANDLER_PTR->vy=-220*VY_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_Q))
+  if(GET_KEY(KEY_Q))
     HANDLER_PTR->wz=220*WZ_CTRL_SEN;
-  if(GET_KEYBOARD_KEY(KEY_E))
+  if(GET_KEY(KEY_E))
     HANDLER_PTR->wz=-330*WZ_CTRL_SEN;
 
-  __SET_MOTOR_SPEED(DJI_LF, - HANDLER_PTR->vx*0.5 - HANDLER_PTR->vy*0.5 + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
-  __SET_MOTOR_SPEED(DJI_RF,   HANDLER_PTR->vx*0.5 - HANDLER_PTR->vy*0.5 + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
-  __SET_MOTOR_SPEED(DJI_RB,   HANDLER_PTR->vx*0.5 + HANDLER_PTR->vy*0.5 + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
-  __SET_MOTOR_SPEED(DJI_LB, - HANDLER_PTR->vx*0.5 + HANDLER_PTR->vy*0.5 + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_LF, - HANDLER_PTR->vx*0.5f - HANDLER_PTR->vy*0.5f + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_RF,   HANDLER_PTR->vx*0.5f - HANDLER_PTR->vy*0.5f + ( CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_RB,   HANDLER_PTR->vx*0.5f + HANDLER_PTR->vy*0.5f + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+  __SET_MOTOR_SPEED(DJI_LB, - HANDLER_PTR->vx*0.5f + HANDLER_PTR->vy*0.5f + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
 }
 
 #undef HANDLER 
