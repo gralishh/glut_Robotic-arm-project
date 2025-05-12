@@ -201,7 +201,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,22,0.000,0.5,6000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,21.5,0.000,0.5,6000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
   //DJI_Motor_set_sum_angle(&DJI_Motor_J3);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J3);
@@ -220,8 +220,8 @@ void hand_task_init()
   __SET_MOTOR_INSTANCE(DJI_HE_R,&DJI_Motor_headendR);
   __SET_MOTOR_TYPE(DJI_HE_R,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_headendR,&DJI_CAN2_Bus_ctrl,M2006,0x208);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,22,0.001,0,5500,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,80,0,0,5000,0);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR,PID_POSITION,10,0.001,0,5500,1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR,PID_POSITION,75,0,0,2000,0);
   //DJI_Motor_set_offline_detect(&DJI_Motor_headendR,8,0);
   //DJI_Motor_set_sum_angle(&DJI_Motor_headendR);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendR);
@@ -399,12 +399,18 @@ void hand_task_mode_flush()
     //__BUTTON_PRESS_SWITCH_WRAP
     if(GET_KEY(KEY_Z))
       set_movement(GGM);
+    if(GET_KEY(KEY_X))
+      set_movement(SM);
     if(remote_data.trigger)
       __hand_rc_ctrl();
 
     if(get_movement()==GGM)
     {
       __hand_move_GGM();
+    }
+    else if(get_movement()==SM)
+    {
+      __hand_move_SM();
     }
   }
   else

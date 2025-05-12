@@ -257,11 +257,11 @@ void gimbal_task_mode_flush()
     {
       press_loop_cnt++;
     }
-    else if(press_loop_cnt==5)
+    if(press_loop_cnt==5)
     {
       pump1=pump1==1?0:1;
     }
-    if(GET_KEY(KEY_F)==0)
+    if((GET_KEY(KEY_F) || remote_data.fn_1)==0)
     {
       press_loop_cnt=0;
     }
@@ -269,15 +269,15 @@ void gimbal_task_mode_flush()
 
   {
     static uint8_t press_loop_cnt = 0;
-    if(GET_KEY(KEY_R) && press_loop_cnt<6)
+    if((GET_KEY(KEY_R)  || remote_data.fn_2)&& press_loop_cnt<2)
     {
       press_loop_cnt++;
     }
-    else if(press_loop_cnt==5)
+    if(press_loop_cnt==1)
     {
       pump2=pump2==1?0:1;
     }
-    if(GET_KEY(KEY_R)==0)
+    if((GET_KEY(KEY_R) || remote_data.fn_2)==0)
     {
       press_loop_cnt=0;
     }
@@ -287,6 +287,10 @@ void gimbal_task_mode_flush()
   if(get_movement()==GGM)
   {
     __gimbal_move_GGM();
+  }
+  else if(get_movement()==SM)
+  {
+    __gimbal_move_SM();
   }
 
   if(GetMatchReady())
@@ -379,17 +383,17 @@ void __gimbal_idle_ctrl()
 
 void __gimbal_rc_ctrl()
 {
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00012f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00024f);
   if(!remote_data.trigger)
   {
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00012f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00024f);
   }
   __pump_subctrl();
 
   if(GET_KEY(KEY_C))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00024f);
   if(GET_KEY(KEY_V))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00024f);
 }
 
 void __gimbal_uplift_rc_ctrl()
@@ -399,9 +403,9 @@ void __gimbal_uplift_rc_ctrl()
   __pump_subctrl();
 
   if(GET_KEY(KEY_C))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00024f);
   if(GET_KEY(KEY_V))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00024f);
 }
 
 void __gimbal_uplift_custom_ctrl()
@@ -415,17 +419,22 @@ void __gimbal_uplift_custom_ctrl()
   __pump_subctrl();
   if(-300>RC_CTRL_PTR->rc.ch[1] || RC_CTRL_PTR->rc.ch[1]>300)
   {
-    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00018f;
+    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00024f;
+  }
+
+  if(-300>GET_CH_VALUE(1) || GET_CH_VALUE(1)>300)
+  {
+    middle_pos+=GET_CH_VALUE(1)*0.00024f;
   }
 
   if(GET_KEY(KEY_C))
-    middle_pos-=660*0.00018f;
+    middle_pos-=660*0.00024f;
   if(GET_KEY(KEY_V))
-    middle_pos+=660*0.00018f;
+    middle_pos+=660*0.00024f;
 
-  if(middle_pos<UL_MIN_ENCODE)
+  if(middle_pos<UL_MIN_ENCODE+105)
     middle_pos=UL_MIN_ENCODE;
-  else if(middle_pos>UL_MAX_ENCODE)
+  else if(middle_pos>UL_MAX_ENCODE-105)
     middle_pos = UL_MAX_ENCODE;
 
   __uplift_move2_subctrl(middle_pos+(UL_MAX_ENCODE-UL_MIN_ENCODE)/2*(cc_joint_angle[4]-0.5),0x01);
@@ -583,6 +592,7 @@ void __gimbal_move_SM(void)
 
   if(get_step()==SM_uplift_down)
   {
+    pump2=1;
     if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_STEP3_HEIGHT,5))
     {
       next_step();
@@ -595,6 +605,7 @@ void __gimbal_move_SM(void)
 
   if(get_step()==SM_complete)
   {
+    pump1=0;
     if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_CPLT_HEIGHT,5))
     {
       next_step();

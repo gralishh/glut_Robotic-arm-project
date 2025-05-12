@@ -8,7 +8,7 @@
 #include "detect_task.h"
 #include "Custom_ctrl.h"
 
-#include "core_cm7.h"
+#include "cmsis_armcc.h"
 
 #include "referee.h"
 
@@ -207,10 +207,23 @@ void chassis_task_mode_flush()
   //}
 
   /*底盘任务没有阻塞,将复位放置于此*/
-  if(GET_KEY(KEY_SHIFT) && GET_KEY(KEY_CTRL) && GET_KEY(KEY_B))
+  if((GET_KEY(KEY_SHIFT) && GET_KEY(KEY_CTRL) && GET_KEY(KEY_B)))
   {
 		__set_FAULTMASK(1); //关闭所有中断
     NVIC_SystemReset(); //进行软件复位
+  }
+
+  {
+    static uint16_t count=0;
+    if(count<1000 && remote_data.pause)
+      count++;
+    if(count==1000)
+    {
+      __set_FAULTMASK(1); //关闭所有中断
+      NVIC_SystemReset(); //进行软件复位
+    }
+    if(!remote_data.pause)
+      count=0;
   }
 
 //  if(toe_is_error(TOE_HE_L) &&

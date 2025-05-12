@@ -58,4 +58,5 @@ void __SERVO_CTRL_HOOK(void)
     }
   }
   set_pwm1_duty(servo_list[PWM1].duty);
+  set_pwm2_duty(servo_list[PWM2].duty);
 }
