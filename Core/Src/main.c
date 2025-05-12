@@ -218,7 +218,7 @@ void __RM_UI_Timer(void *argument);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-  for(int aaaa = 10000000 ; aaaa > 0 ; aaaa--)
+  for(int aaaa = 1000000 ; aaaa > 0 ; aaaa--)
 	{
     ;
 	}
@@ -262,6 +262,7 @@ int main(void)
   MX_TIM12_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2,TIM_CHANNEL_3);
   remote_control_init();
   can_bsp_init();
   usart1_init();

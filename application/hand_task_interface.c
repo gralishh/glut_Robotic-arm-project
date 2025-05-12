@@ -85,7 +85,7 @@ static void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t
 static uint8_t __hand_J1_init(uint8_t);
 static uint8_t __hand_J2_init(void);
 static uint8_t __hand_J3_init(void);
-static uint8_t __hand_pitch_pos_init(void);
+static uint8_t __hand_pitch_pos_init(uint8_t);
 
 static void __hand_move_GGM(void);
 static void __hand_move_SM(void);
@@ -172,7 +172,7 @@ static void __hand_move_SM(void);
 
 void hand_task_init()
 {
-  osDelay(3000);
+  osDelay(1000);
 
   /*基础初始化*/
   __HALT_TICKS_COUNTING();
@@ -252,11 +252,12 @@ void hand_task_init()
   hand_task_get_feedback();
 
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
+  __hand_pitch_pos_init(1);
   for(int i=0;i<40;i++)
   {
     hand_task_get_feedback();
     __hand_nonforce();
-    if(__hand_pitch_pos_init())
+    if(__hand_pitch_pos_init(0))
     {
       break;
     }
@@ -381,10 +382,6 @@ void hand_task_mode_flush()
   //}
 
 
-  //if(switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
-  //{
-  //  __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
-  //}
 
   if(GetMatchReady())
   {
@@ -401,6 +398,8 @@ void hand_task_mode_flush()
       set_movement(GGM);
     if(GET_KEY(KEY_X))
       set_movement(SM);
+    if(GET_KEY(KEY_G))
+      __hand_pitch_pos_init(1);
     if(remote_data.trigger)
       __hand_rc_ctrl();
 
@@ -564,6 +563,7 @@ void __hand_idle_ctrl()
   __ADD_JOINT_ANGLE(HAND_J2,0);
   __ADD_JOINT_ANGLE(HAND_J3,0);
 
+  __hand_pitch_pos_init(0);
 }
 
 void __hand_rc_ctrl()
@@ -679,26 +679,20 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
   }
 }
 
-uint8_t __hand_pitch_pos_init(void)
+uint8_t __hand_pitch_pos_init(uint8_t reset)
 {
   static int loop_count=0;
   static float last_L_angle=0.0f;
   static float init_start_flag=1;
   static uint8_t init_complete_flag=0;
-  if(__IS_MODE_SWITCHED())
+  if(reset)
   {
-    init_start_flag=0;
+    init_start_flag=1;
     init_complete_flag=0;
     loop_count=0;
     last_L_angle=0.0f;
-  }
-
-  
-  if(init_complete_flag != 1 && GET_KEY(KEY_G))
-  {
-      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_R));
-      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_HE_L));
-    init_start_flag=1;
+    __CLEAR_MOTOR_OFFLINE(DJI_HE_L);
+    __CLEAR_MOTOR_OFFLINE(DJI_HE_R);
   }
 
   if(init_complete_flag==0 && init_start_flag==1)
@@ -835,7 +829,7 @@ uint8_t __hand_J3_init(void)
 
     osDelay(50);
 
-    if(loop_count < 10)
+    if(loop_count < 20)
     {
       DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_J3));
       __SET_MOTOR_CURRENT(DJI_J3,1000);

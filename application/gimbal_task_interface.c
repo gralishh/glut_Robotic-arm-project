@@ -432,9 +432,9 @@ void __gimbal_uplift_custom_ctrl()
   if(GET_KEY(KEY_V))
     middle_pos+=660*0.00024f;
 
-  if(middle_pos<UL_MIN_ENCODE+105)
+  if(middle_pos<UL_MIN_ENCODE)
     middle_pos=UL_MIN_ENCODE;
-  else if(middle_pos>UL_MAX_ENCODE-105)
+  else if(middle_pos>UL_MAX_ENCODE)
     middle_pos = UL_MAX_ENCODE;
 
   __uplift_move2_subctrl(middle_pos+(UL_MAX_ENCODE-UL_MIN_ENCODE)/2*(cc_joint_angle[4]-0.5),0x01);
