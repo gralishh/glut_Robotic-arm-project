@@ -9,6 +9,9 @@
 #include "Custom_ctrl.h" 
 #include "Ex_encoder.h"
 #include "servo.h"
+#include "general_movement.h"
+
+#include "referee.h"
 
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
@@ -24,7 +27,7 @@ extern FDCAN_HandleTypeDef hfdcan3;
 // joint mapping parameter
 #define UL_MAP_K   1
 #define UL_MAP_D   0
-#define UL_MAX_ENCODE 420
+#define UL_MAX_ENCODE 438
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
@@ -32,6 +35,8 @@ extern FDCAN_HandleTypeDef hfdcan3;
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
+static uint8_t pump1=0;
+static uint8_t pump2=0;
 
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
@@ -44,6 +49,9 @@ static void __gimbal_any_ctrl(void);
 static void __uplift_move2_subctrl(fp32 UL,uint8_t EN);
 static void __pump_subctrl(void);
 static void __pump_nonctrl(void);
+
+static void __gimbal_move_GGM(void);
+static void __gimbal_move_SM(void);
 
 
 /*general handler method*/
@@ -94,6 +102,27 @@ static void __pump_nonctrl(void);
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME()/PROCESS_TIME)
 #define __IS_MODE_SWITCHED() (1==HANDLER_PTR->mode_switch)
 
+#define __BUTTON_PRESS_SWITCH_WRAP(button,mode_var,id,loop_cnt,func)\
+{\
+  static uint8_t press_loop_cnt = 0;\
+  if(button && press_loop_cnt<loop_cnt)\
+  {\
+    press_loop_cnt++;\
+  }\
+  else if(press_loop_cnt==loop_cnt)\
+  {\
+    mode_var=mode_var==id?0:id;\
+  }\
+  if(button==0)\
+  {\
+    press_loop_cnt=0;\
+  }\
+  if(mode_var==id)\
+  {\
+    func();\
+  }\
+}\
+
 
 void gimbal_task_init()
 {
@@ -106,29 +135,32 @@ void gimbal_task_init()
   __SET_MOTOR_TYPE(DJI_UL,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x205);
   DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,21,0,0.001,8000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0,0,1000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0,0,1900,0);
   DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag=1;
   //DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
 
   __SET_JOINT_LIMIT(GIMBAL_CAMERA_YAW,260-500,700-500);
   __SET_JOINT_ANGLE(GIMBAL_CAMERA_YAW,0);
-  servo_init(PWM1,700,260,500);
+  servo_init(PWM1,532,380,500);
   servo_enable(PWM1);
 
   __SET_JOINT_LIMIT(GIMBAL_CAMERA_PITCH,350-500,540-500);
   __SET_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,0);
-  servo_init(PWM2,540, 350, 500);
+  servo_init(PWM2,532, 380, 500);
   servo_enable(PWM2);
 
   External_ecd_init_on_can(&uplift_ecd,0x3ff,OID_ECD,0x004,&hfdcan3,0x000);
 
   __SET_JOINT_LIMIT(GIMBAL_UPLIFT,UL_MIN_ENCODE,UL_MAX_ENCODE);
+
+  while(toe_is_error(TOE_UPLIFT));
+
   for(int i=0;i<40;i++)
   {
     osDelay(20);
     gimbal_task_get_feedback();
-    __gimbal_idle_ctrl();
+    __gimbal_nonforce();
   }
   DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
 }
@@ -169,6 +201,7 @@ void gimbal_task_get_feedback()
  */
 void gimbal_task_mode_flush()
 {
+  static uint8_t nonforce_start_flag=0;
   static uint8_t last_mode=GIMBAL_MODE_NONFORCE;
   last_mode=HANDLER_PTR->ctrl_mode;
 
@@ -182,6 +215,7 @@ void gimbal_task_mode_flush()
       __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
       break;
     case 0:
+      nonforce_start_flag=1;
     default:
       __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
@@ -217,6 +251,60 @@ void gimbal_task_mode_flush()
   //{
   //  __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   //}
+
+  /*PUMP*/
+  {
+    static uint8_t press_loop_cnt = 0;
+    if((GET_KEY(KEY_F) || remote_data.fn_1) && press_loop_cnt<6)
+    {
+      press_loop_cnt++;
+    }
+    if(press_loop_cnt==5)
+    {
+      pump1=pump1==1?0:1;
+    }
+    if((GET_KEY(KEY_F) || remote_data.fn_1)==0)
+    {
+      press_loop_cnt=0;
+    }
+  }
+
+  {
+    static uint8_t press_loop_cnt = 0;
+    if((GET_KEY(KEY_R)  || remote_data.fn_2)&& press_loop_cnt<2)
+    {
+      press_loop_cnt++;
+    }
+    if(press_loop_cnt==1)
+    {
+      pump2=pump2==1?0:1;
+    }
+    if((GET_KEY(KEY_R) || remote_data.fn_2)==0)
+    {
+      press_loop_cnt=0;
+    }
+  }
+
+  /*movement*/
+  if(get_movement()==GGM)
+  {
+    __gimbal_move_GGM();
+  }
+  else if(get_movement()==SM)
+  {
+    __gimbal_move_SM();
+  }
+
+  if(GetMatchReady())
+  {
+    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  }
+
+  if(!nonforce_start_flag)
+  {
+    __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
+  }
+
   if(toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
   {
     __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
@@ -302,14 +390,17 @@ void __gimbal_idle_ctrl()
 
 void __gimbal_rc_ctrl()
 {
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00012f);
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00012f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00048f);
+  if(!remote_data.trigger)
+  {
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00048f);
+  }
   __pump_subctrl();
 
-  if(GET_KEYBOARD_KEY(KEY_C))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
-  if(GET_KEYBOARD_KEY(KEY_V))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
+  if(GET_KEY(KEY_C))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00024f);
+  if(GET_KEY(KEY_V))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00024f);
 }
 
 void __gimbal_uplift_rc_ctrl()
@@ -318,10 +409,10 @@ void __gimbal_uplift_rc_ctrl()
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00018f);
   __pump_subctrl();
 
-  if(GET_KEYBOARD_KEY(KEY_C))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00012f);
-  if(GET_KEYBOARD_KEY(KEY_V))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00012f);
+  if(GET_KEY(KEY_C))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,-660*0.00024f);
+  if(GET_KEY(KEY_V))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,660*0.00024f);
 }
 
 void __gimbal_uplift_custom_ctrl()
@@ -335,13 +426,18 @@ void __gimbal_uplift_custom_ctrl()
   __pump_subctrl();
   if(-300>RC_CTRL_PTR->rc.ch[1] || RC_CTRL_PTR->rc.ch[1]>300)
   {
-    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00018f;
+    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00048f;
   }
 
-  if(GET_KEYBOARD_KEY(KEY_C))
-    middle_pos-=660*0.00018f;
-  if(GET_KEYBOARD_KEY(KEY_V))
-    middle_pos+=660*0.00018f;
+  if(-300>GET_CH_VALUE(1) || GET_CH_VALUE(1)>300)
+  {
+    middle_pos+=GET_CH_VALUE(1)*0.00048f;
+  }
+
+  if(GET_KEY(KEY_C))
+    middle_pos-=660*0.00048f;
+  if(GET_KEY(KEY_V))
+    middle_pos+=660*0.00048f;
 
   if(middle_pos<UL_MIN_ENCODE)
     middle_pos=UL_MIN_ENCODE;
@@ -349,44 +445,42 @@ void __gimbal_uplift_custom_ctrl()
     middle_pos = UL_MAX_ENCODE;
 
   __uplift_move2_subctrl(middle_pos+(UL_MAX_ENCODE-UL_MIN_ENCODE)/2*(cc_joint_angle[4]-0.5),0x01);
+
+  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW,(float)-remote_data.mouse_x/50.0);
+  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
 }
 
 void __gimbal_any_ctrl(void)
 {
-  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW,(float)-remote_data.mouse_x/50.0);
-  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
 
-  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,(float)-remote_data.mouse_y/80.0);
-  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+  if(__GET_STRUCT_MODE()!=GIMBAL_MODE_IDLE)
+  {
+    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,(float)remote_data.mouse_y/120.0);
+    servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+  }
 }
 
 void __pump_subctrl()
 {
-  static PUMP_STATE_T pump=PUMP_RESET;
-  if(__IS_MODE_SWITCHED())
-  {
-    HANDLER_PTR->tick=500;
-  }
-  /*Æø±Ã¿ØÖÆ*/
-  if(cc_key_value.k1)
-  {
-    pump=PUMP_PUSH;
-    __RESET_TICKS();
-    __HALT_TICKS_COUNTING();
-  }
-  else 
-  {
-    __HALT_TICKS_COUNTING();
-    if(__GET_TICKS()<500)
-    {
-      pump=PUMP_PULL;
-      __HOLD_TICKS_COUNTING();
-    }
-    else
-    {
-      pump=PUMP_RESET;
-    }
-  }
+  //if(cc_key_value.k1 || GET_KEY(KEY_F))
+  //{
+  //  pump=PUMP_PULL;
+  //  __RESET_TICKS();
+  //  __HALT_TICKS_COUNTING();
+  //}
+  //else 
+  //{
+  //  __HALT_TICKS_COUNTING();
+  //  if(__GET_TICKS()<500)
+  //  {
+  //    pump=PUMP_PULL;
+  //    __HOLD_TICKS_COUNTING();
+  //  }
+  //  else
+  //  {
+  //    pump=PUMP_RESET;
+  //  }
+  //}
   
   //if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
   //{
@@ -407,17 +501,25 @@ void __pump_subctrl()
   //  }
   //}
 
-  switch(pump)
+  switch(pump1)
   {
     case PUMP_PULL:
-      PUMP1_PULL();
-      break;
-    case PUMP_PUSH:
-      PUMP1_PUSH();
+      PUMP1_ON();
       break;
     case PUMP_RESET:
     default:
       PUMP1_OFF();
+      break;
+  }
+
+  switch(pump2)
+  {
+    case PUMP_PULL:
+      PUMP2_ON();
+      break;
+    case PUMP_RESET:
+    default:
+      PUMP2_OFF();
       break;
   }
 
@@ -426,6 +528,7 @@ void __pump_subctrl()
 void __pump_nonctrl(void)
 {
   PUMP1_OFF();
+  PUMP2_OFF();
 }
 
 void __uplift_move2_subctrl(fp32 UL,uint8_t EN)
@@ -435,11 +538,91 @@ void __uplift_move2_subctrl(fp32 UL,uint8_t EN)
     if(ABS(UL-HANDLER_PTR->joint_angle[GIMBAL_UPLIFT])>1.0f)
     {
       __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,
-        UL>HANDLER_PTR->joint_angle[GIMBAL_UPLIFT]?0.1f:-0.1f);
+        UL>HANDLER_PTR->joint_angle[GIMBAL_UPLIFT]?0.2f:-0.2f);
     }
     else
     {
     
+    }
+  }
+}
+
+void __gimbal_move_GGM(void)
+{
+  if(get_step()==GGM_uplift_to_higher)
+  {
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),GGM_STEP1_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,GGM_STEP1_HEIGHT);
+    }
+  }
+  else if(get_step()==GGM_uplift_down)
+  {
+    pump1=1;
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),GGM_STEP3_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,GGM_STEP3_HEIGHT);
+    }
+  }
+  else if(get_step()==GGM_complete)
+  {
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),GGM_CPLT_HEIGHT,5))
+    {
+      set_movement(0);
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,GGM_CPLT_HEIGHT);
+    }
+  }
+
+}
+
+void __gimbal_move_SM(void)
+{
+  if(get_step()==SM_uplift_to_pos)
+  {
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_STEP1_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,SM_STEP1_HEIGHT);
+    }
+  }
+
+  if(get_step()==SM_uplift_down)
+  {
+    pump2=1;
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_STEP3_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,SM_STEP3_HEIGHT);
+    }
+  }
+
+  if(get_step()==SM_complete)
+  {
+    pump1=0;
+    if(is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT),SM_CPLT_HEIGHT,5))
+    {
+      next_step();
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT,SM_CPLT_HEIGHT);
     }
   }
 }

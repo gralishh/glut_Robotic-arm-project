@@ -3,15 +3,16 @@
 
 #include "main.h" 
 #include "struct_typedef.h"
+#include "referee.h"
 
 /*???*/
 
 #define CHANNLE_OFFSET_MAX 660
 #define CHANNLE_OFFSET_MIN -660
 
-#define GET_KEYBOARD_KEY(KEY) ((1<<KEY)&(remote_data.key))
+#define GET_KEY(KEY) ((1<<KEY)&(remote_data.key))
 #define GET_CH_VALUE(CH) ((int64_t)(remote_data.ch_##CH-1024))
-#define GET_WHEEL_VALUE() (remote_data.wheel)
+#define GET_WHEEL_VALUE() (remote_data.wheel-1024)
 #define GET_SWITCH() (remote_data.mode_sw)
 
 
@@ -19,14 +20,6 @@ typedef __packed struct
 {
 	uint8_t data[30];
 } robot_interactive_data_t;
-
-typedef __packed struct
-{
-  uint8_t  sof;
-  uint16_t data_length;
-  uint8_t  seq;
-  uint8_t  crc8;
-} frame_header_t;
 
 typedef __packed struct
 {

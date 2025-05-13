@@ -9,6 +9,9 @@
  * @retval 范围-PI~PI的角度值
  * @note 同时对角度进行归一化处理
  */
+
+#define ABS(X) ((X)>=0?(X):-(X))
+
 fp32 ecd_to_angle(int16_t ecd,int16_t max_ecd, int32_t offset_ecd , fp32 offset_angle)
 {
   int32_t relative_ecd = ecd + offset_ecd;
@@ -60,4 +63,9 @@ fp32 angle_limit(fp32 angle,fp32 max_angle,fp32 min_angle)
   if(angle<min_angle)
     return min_angle;
   return angle;
+}
+
+inline uint8_t is_angle_around(fp32 target_angle,fp32 cur_angle,fp32 delta)
+{
+  return ABS(target_angle-cur_angle)<delta;
 }

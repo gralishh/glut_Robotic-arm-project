@@ -97,9 +97,20 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 		{
       case 0x000:
         dm4310_fbdata(&DM_Motor_J2,rx_message,FDCAN_DLC_BYTES_8);
+        DetectHook(TOE_J2);
         break;
       case 0x295d:
         __AK_joint_motor_feedback_hook(&AK70_10_motor,rx_message);
+        DetectHook(TOE_J1);
+        break;
+      case 0x201:
+        DetectHook(TOE_HE_L);
+        break;
+      case 0x204:
+        DetectHook(TOE_J3);
+        break;
+      case 0x208:
+        DetectHook(TOE_HE_R);
         break;
       default:
       ;
@@ -124,6 +135,9 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 					DetectHook(TOE_3508_M1_ID + i);
 					break;
 			}
+      case 0x205:
+        DetectHook(TOE_UPLIFT);
+        break;
 			default:
 				break;
     }

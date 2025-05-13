@@ -4,32 +4,26 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "M8010_motor.h" 
+#include "referee.h"
 
 /*反馈数据大小*/
 #define FEEDBACK_DATA_SIZE 16
 
-/*记得改回static*/
-//MOTOR_recv roll_3_motor_rx ;
-//const MOTOR_recv *get_hand_roll_3_motor_rx_point(void)
-//{
-//return &roll_3_motor_rx;
-//}
-//MOTOR_recv yaw_5_motor_rx;
-//const MOTOR_recv *get_hand_yaw_5_motor_rx_point(void)
-//{
-//return &yaw_5_motor_rx;
-//}
-unsigned char Transmission_usart2[80] = {0};  //unsigned char类型长度
-unsigned char Transmission_usart3[80] = {0};  //unsigned char类型长度
-unsigned int usart2_length;
-unsigned int usart3_length;
+/**/
+static unsigned char Transmission_usart2[80] = {0};  //unsigned char类型长度
+static unsigned char Transmission_usart3[80] = {0};  //unsigned char类型长度
+static unsigned int usart2_length;
+static unsigned int usart3_length;
+
+/*referee*/
+static unsigned int frame_size;
 
 void usart2_measure_task(void const *pvParameters) 
 {
-    while(1)
-    {
-        next_usart2:
-        usart2_length = USART2_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
+  while(1)
+  {
+    next_usart2:
+    usart2_length = USART2_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
         if(usart2_length >= 10)
         {
@@ -87,6 +81,7 @@ void usart2_measure_task(void const *pvParameters)
         vTaskDelay(1);
     }
 }
+
 
 void usart3_measure_task(void const *pvParameters) 
 {
