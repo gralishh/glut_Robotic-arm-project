@@ -27,7 +27,7 @@ extern FDCAN_HandleTypeDef hfdcan3;
 // joint mapping parameter
 #define UL_MAP_K   1
 #define UL_MAP_D   0
-#define UL_MAX_ENCODE 420
+#define UL_MAX_ENCODE 438
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
@@ -135,19 +135,19 @@ void gimbal_task_init()
   __SET_MOTOR_TYPE(DJI_UL,DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_uplift,&DJI_CAN1_Bus_ctrl,M3508,0x205);
   DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,21,0,0.001,8000,1000);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0,0,1000,0);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0,0,1900,0);
   DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag=1;
   //DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
 
   __SET_JOINT_LIMIT(GIMBAL_CAMERA_YAW,260-500,700-500);
   __SET_JOINT_ANGLE(GIMBAL_CAMERA_YAW,0);
-  servo_init(PWM1,700,260,500);
+  servo_init(PWM1,532,380,500);
   servo_enable(PWM1);
 
   __SET_JOINT_LIMIT(GIMBAL_CAMERA_PITCH,350-500,540-500);
   __SET_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,0);
-  servo_init(PWM2,540, 350, 500);
+  servo_init(PWM2,532, 380, 500);
   servo_enable(PWM2);
 
   External_ecd_init_on_can(&uplift_ecd,0x3ff,OID_ECD,0x004,&hfdcan3,0x000);
@@ -201,6 +201,7 @@ void gimbal_task_get_feedback()
  */
 void gimbal_task_mode_flush()
 {
+  static uint8_t nonforce_start_flag=0;
   static uint8_t last_mode=GIMBAL_MODE_NONFORCE;
   last_mode=HANDLER_PTR->ctrl_mode;
 
@@ -214,6 +215,7 @@ void gimbal_task_mode_flush()
       __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
       break;
     case 0:
+      nonforce_start_flag=1;
     default:
       __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
@@ -296,6 +298,11 @@ void gimbal_task_mode_flush()
   if(GetMatchReady())
   {
     __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+  }
+
+  if(!nonforce_start_flag)
+  {
+    __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
 
   if(toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
@@ -383,10 +390,10 @@ void __gimbal_idle_ctrl()
 
 void __gimbal_rc_ctrl()
 {
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00024f);
+  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,RC_CTRL_PTR->rc.ch[1]*0.00048f);
   if(!remote_data.trigger)
   {
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00024f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00048f);
   }
   __pump_subctrl();
 
@@ -419,18 +426,18 @@ void __gimbal_uplift_custom_ctrl()
   __pump_subctrl();
   if(-300>RC_CTRL_PTR->rc.ch[1] || RC_CTRL_PTR->rc.ch[1]>300)
   {
-    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00024f;
+    middle_pos+=RC_CTRL_PTR->rc.ch[1]*0.00048f;
   }
 
   if(-300>GET_CH_VALUE(1) || GET_CH_VALUE(1)>300)
   {
-    middle_pos+=GET_CH_VALUE(1)*0.00024f;
+    middle_pos+=GET_CH_VALUE(1)*0.00048f;
   }
 
   if(GET_KEY(KEY_C))
-    middle_pos-=660*0.00024f;
+    middle_pos-=660*0.00048f;
   if(GET_KEY(KEY_V))
-    middle_pos+=660*0.00024f;
+    middle_pos+=660*0.00048f;
 
   if(middle_pos<UL_MIN_ENCODE)
     middle_pos=UL_MIN_ENCODE;
@@ -446,8 +453,11 @@ void __gimbal_uplift_custom_ctrl()
 void __gimbal_any_ctrl(void)
 {
 
-  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,(float)-remote_data.mouse_y/80.0);
-  servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+  if(__GET_STRUCT_MODE()!=GIMBAL_MODE_IDLE)
+  {
+    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH,(float)remote_data.mouse_y/120.0);
+    servo_set_offset(0,HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+  }
 }
 
 void __pump_subctrl()

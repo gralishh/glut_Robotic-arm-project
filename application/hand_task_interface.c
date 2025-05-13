@@ -201,7 +201,7 @@ void hand_task_init()
   DJI_Motor_init(&DJI_Motor_J3,&DJI_CAN2_Bus_ctrl,M3508,0x204);
   //DJI_Motor_set_angle_limit()
   //DJI_Motor_set_speed_limit()
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,21.5,0.000,0.5,6000.000,800);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3,PID_POSITION,22,0.000,0.05,6000.000,800);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J3,PID_POSITION,55,0.0,0.0,200,100);
   //DJI_Motor_set_sum_angle(&DJI_Motor_J3);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J3);
@@ -640,11 +640,6 @@ void __hand_move2_subctrl(fp32 J1,fp32 J2,fp32 J3,fp32 J4,fp32 J5,uint8_t EN)
 
   if(EN&J2_EN)
   {
-    if(__GET_JOINT_ANGLE(HAND_J2)*J2<0.0f)
-    {
-      if(!__IS_JOINT_AROUND(HAND_J2,0.0f))
-        J2=0.0f;
-    }
     if(ABS(J2-HANDLER_PTR->joint_angle[HAND_J2])>0.08f)
     {
       __ADD_JOINT_ANGLE(HAND_J2,
