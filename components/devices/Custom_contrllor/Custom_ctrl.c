@@ -2,7 +2,6 @@
 #include "crc.h"
 #include "bsp_usart.h"
 #include "cmsis_os.h"
-
 #include "detect_task.h"
 
 #define HEADER 0xa5

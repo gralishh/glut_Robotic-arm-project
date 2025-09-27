@@ -28,16 +28,20 @@ typedef enum{
 typedef enum{
   SM_uplift_to_pos=0,
   SM_hand_to_pos,
+  SM_hand_to_pos2,
   SM_uplift_down,
+  SM_pump1_off,
   SM_complete
 } save_mine_t;
-#define SM_STEP1_HEIGHT       125
-#define SM_STEP2_J1_ANGLE     -0.67
-#define SM_STEP2_J2_ANGLE     1.95
-#define SM_STEP2_J3_ANGLE     0.675
-#define SM_STEP2_PITCH_ANGLE  0.0
-#define SM_STEP3_HEIGHT       80
-#define SM_CPLT_HEIGHT        125
+#define SM_STEP1_HEIGHT       275
+#define SM_STEP2_J1_ANGLE     -1.3
+#define SM_STEP2_J2_ANGLE     1.642
+#define SM_STEP2_J3_ANGLE     0.283
+#define SM_STEP2_J1_ANGLE2    -0.02
+#define SM_STEP2_PITCH_ANGLE  1.87
+#define SM_STEP3_HEIGHT       228
+#define SM_STEP4_DELAY_LOOP   500
+#define SM_CPLT_HEIGHT        275
 
 typedef enum{
   BTD_hand_to_pos=0,

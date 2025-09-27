@@ -4,7 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${default}",
-                "D:/wolfsDoc/wolfsProgram/stm32Project/h7_basic_board_code/**"
+                "E:/desktop/engineering car/change/h7_basic_board_code/**"
             ],
             "defines": [
                 "_DEBUG",
