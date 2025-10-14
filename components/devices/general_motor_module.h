@@ -51,78 +51,79 @@ typedef enum{
     default: \
       break; \
   } \
-} \
+}
 
-#define GENERAL_MOTOR_SET_OUTPUT(instance_ptr,motor_type,ctrl_state,current,speed,angle) \
-{ \
-  switch(motor_type) \
-  { \
-    case DJI_MOTOR: \
-      switch(ctrl_state) \
-      { \
-        case SPEED_LOOP: \
-          DJI_Motor_set_speed(instance_ptr,speed); \
-          break; \
-        case POS_LOOP: \
-          DJI_Motor_set_angle(instance_ptr,angle); \
-          break; \
-        case GIVING_CURRENT: \
-          DJI_Motor_set_current(instance_ptr,current); \
-          break; \
-        case LOCK: \
-          DJI_Motor_lockup(instance_ptr); \
-          break; \
-        case NON_FORCE: \
-        case OFFLINE:\
-        default: \
-          DJI_Motor_set_nonforce(instance_ptr); \
-          break; \
-      } \
-      break; \
-    case M8010_MOTOR: \
-      switch(ctrl_state) \
-      { \
-        case POS_LOOP: \
-          M8010_motor_set_angle((M8010_motor_t*)instance_ptr,angle); \
-          break; \
-        case LOCK: \
-          M8010_motor_lock((M8010_motor_t*)instance_ptr); \
-          break; \
-        case NON_FORCE: \
-        case OFFLINE:\
-        default: \
-          M8010_motor_nonforce((M8010_motor_t*)instance_ptr); \
-          break; \
-      } \
-      break; \
-    case M4310_MOTOR: \
-      switch(ctrl_state) \
-      { \
-        case POS_LOOP: \
-          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,15); \
-          break; \
-        case LOCK: \
-          break; \
-        case NON_FORCE: \
-        case OFFLINE:\
-        default: \
-          pos_speed_ctrl((Joint_Motor_t*)instance_ptr,angle,0.0001); \
-          break; \
-      } \
-    break; \
-    case AK_MOTOR: \
-      switch(ctrl_state) \
-      { \
-        case POS_LOOP: \
-          AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t*)instance_ptr,angle,3500,4500); \
-          break; \
-        case LOCK: \
-          break; \
-        case NON_FORCE: \
-        case OFFLINE:\
-        default: \
-          AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t*)instance_ptr); \
-          break; \
+#define GENERAL_MOTOR_SET_OUTPUT(instance_ptr, motor_type, ctrl_state, current, speed, angle) \
+  {                                                                                           \
+    switch (motor_type)                                                                       \
+    {                                                                                         \
+    case DJI_MOTOR:                                                                           \
+      switch (ctrl_state)                                                                     \
+      {                                                                                       \
+      case SPEED_LOOP:                                                                        \
+        DJI_Motor_set_speed((DJI_Motor_Ctrl_t*)instance_ptr, speed);                                             \
+        break;                                                                                \
+      case POS_LOOP:                                                                          \
+        DJI_Motor_set_angle((DJI_Motor_Ctrl_t*)instance_ptr, angle);                                             \
+        break;                                                                                \
+      case GIVING_CURRENT:                                                                    \
+        DJI_Motor_set_current((DJI_Motor_Ctrl_t*)instance_ptr, current);                                         \
+        break;                                                                                \
+      case LOCK:                                                                              \
+        DJI_Motor_lockup((DJI_Motor_Ctrl_t*)instance_ptr);                                                       \
+        break;                                                                                \
+      case NON_FORCE:                                                                         \
+		break;\
+      default:                                                                                \
+        DJI_Motor_set_nonforce((DJI_Motor_Ctrl_t*)instance_ptr);                                                 \
+        break;                                                                                \
+      }                                                                                       \
+      break;                                                                                  \
+    case M8010_MOTOR:                                                                         \
+      switch (ctrl_state)                                                                     \
+      {                                                                                       \
+      case POS_LOOP:                                                                          \
+        M8010_motor_set_angle((M8010_motor_t *)instance_ptr, angle);                          \
+        break;                                                                                \
+      case LOCK:                                                                              \
+        M8010_motor_lock((M8010_motor_t *)instance_ptr);                                      \
+        break;                                                                                \
+      case NON_FORCE:                                                                         \
+      case OFFLINE:                                                                           \
+      default:                                                                                \
+        M8010_motor_nonforce((M8010_motor_t *)instance_ptr);                                  \
+        break;                                                                                \
+      }                                                                                       \
+      break;                                                                                  \
+    case M4310_MOTOR:                                                                         \
+      switch (ctrl_state)                                                                     \
+      {                                                                                       \
+      case POS_LOOP:                                                                          \
+        pos_speed_ctrl((Joint_Motor_t *)instance_ptr, angle, 15);                             \
+        break;                                                                                \
+      case LOCK:                                                                              \                       
+        break;                                                                                \
+      case NON_FORCE:                                                                         \
+	  break;                                   \
+      default:                                                                                \
+        pos_speed_ctrl((Joint_Motor_t *)instance_ptr, angle, 0.0001);                         \
+        break;                                                                                \
+      }                                                                                       \
+      break;                                                                                  \
+    case AK_MOTOR:                                                                            \
+      switch (ctrl_state)                                                                     \
+      {                                                                                       \
+      case POS_LOOP:                                                                          \
+        AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t *)instance_ptr, angle, 3500, 4500);   \
+        break;                                                                                \
+      case LOCK:                                                                              \
+        break;                                                                                \
+      case NON_FORCE:                                                                         \
+        AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t *)instance_ptr);                       \
+        break;                                                                                \
+      default:\
+        AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t *)instance_ptr);\
+      break;\
       } \
       break; \
     default: \

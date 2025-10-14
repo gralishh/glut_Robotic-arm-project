@@ -49,7 +49,7 @@ extern uint8_t ui_g_dirty_string[4];
 #define ui_g_camera_PUMP_V_dirty (ui_g_dirty_string[3])
 #endif
 
-void ui_init_g();
-void ui_update_g();
+void ui_init_g(void);
+void ui_update_g(void);
 
 #endif //UI_g_H

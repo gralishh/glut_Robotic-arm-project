@@ -74,7 +74,7 @@ static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
-static void __hand_pose_ctrl(void);
+//static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
 
 static void __hand_catch_ground(void);
@@ -88,6 +88,12 @@ static uint8_t __hand_pitch_pos_init(uint8_t);
 
 static void __hand_move_GGM(void);
 static void __hand_move_SM(void);
+
+void __hand_move_reset(void);
+void hand_J1_reset(void);
+void hand_J2_reset(void);
+void hand_J3_reset(void);
+void hand_pitch_reset(void);
 
 /*general handler method*/
 /**
@@ -194,9 +200,9 @@ static void __hand_move_SM(void);
     {                                                                    \
       func();                                                            \
     }                                                                    \
-  }
+  }//未理解，可酌情删除
 
-void hand_task_init()
+    void hand_task_init()
 {
   osDelay(1000);
 
@@ -353,7 +359,7 @@ void hand_task_get_feedback()
   __GET_JOINT_ANGLE(HAND_ROLL) = HANDLER_PTR->joint_angle[HAND_ROLL];
   // 已知电机角度 theta_L 和 theta_R 时，计算关节角度：
   __GET_JOINT_ANGLE(HAND_PITCH) = PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
-  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
+  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) + __GET_MOTOR_ANGLE(DJI_HE_L));
   /*
   __GET_JOINT_ANGLE(index,
     ...
@@ -481,6 +487,9 @@ void hand_task_set_output()
   case HAND_MODE_SM_CTRL:
     __hand_move_SM();
     break;
+  case HAND_MODE_RESET_CTRL:
+    __hand_move_reset();
+    break;
   case HAND_MODE_NONFORCE:
   default:
     __hand_nonforce();
@@ -558,7 +567,7 @@ void hand_task_output()
                              __GET_MOTOR_CTRL_MODE(index),
                              HANDLER_PTR->motor_current[index],
                              HANDLER_PTR->motor_speed[index],
-                             HANDLER_PTR->motor_angle[index])
+                             HANDLER_PTR->motor_angle[index]);
   }
 }
 
@@ -865,73 +874,75 @@ uint8_t __hand_J3_init(void)
   return 0;
 }
 
-void __hand_custom_map_subctrl(void)
-{
-  static int Joint_init = 0;
-  float Joint_pos1[5];
-  float Joint_pos2[5];
+// 人来移动机械臂到自己设置的角度来让电机知道自己当前的确切角度初始化（有减速比，一个关节角度（带减速箱）对应多个电机当前角度
+// 下方代码一段和这段相关->__hand_pose_ctrl
+// void __hand_custom_map_subctrl(void)
+// {
+//   static int Joint_init = 0;
+//   float Joint_pos1[5];
+//   float Joint_pos2[5];
 
-  if (Joint_init == 0)
-  {
-    __hand_move2_subctrl(0, -PI / 2, 0, 0, 0, J1_EN | J2_EN | J3_EN);
-    if (RC_CTRL_PTR->rc.ch[3] == 660)
-    {
-      __HOLD_TICKS_COUNTING();
-      if (__GET_TICKS_STACK(0) == 0)
-        __RECORD_TICKS(0);
-      else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 1000)
-      {
-        __RESET_TICKS();
-        __RESET_RECORD_TICKS(0);
-        __HALT_TICKS_COUNTING();
-        memcpy((void *)Joint_pos1, (void *)cc_joint_angle, sizeof(float) * 3);
-        Joint_init = 1;
-      }
-    }
-    else
-    {
-      __RESET_TICKS();
-      __RESET_RECORD_TICKS(0);
-      __HALT_TICKS_COUNTING();
-    }
-  }
+//   if (Joint_init == 0)
+//   {
+//     __hand_move2_subctrl(0, -PI / 2, 0, 0, 0, J1_EN | J2_EN | J3_EN);
+//     if (RC_CTRL_PTR->rc.ch[3] == 660)
+//     {
+//       __HOLD_TICKS_COUNTING();
+//       if (__GET_TICKS_STACK(0) == 0)
+//         __RECORD_TICKS(0);
+//       else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 1000)
+//       {
+//         __RESET_TICKS();
+//         __RESET_RECORD_TICKS(0);
+//         __HALT_TICKS_COUNTING();
+//         memcpy((void *)Joint_pos1, (void *)cc_joint_angle, sizeof(float) * 3);
+//         Joint_init = 1;
+//       }
+//     }
+//     else
+//     {
+//       __RESET_TICKS();
+//       __RESET_RECORD_TICKS(0);
+//       __HALT_TICKS_COUNTING();
+//     }
+//   }
 
-  if (Joint_init == 1)
-  {
-    __hand_move2_subctrl(-PI / 2, 0, PI / 2, 0, 0, J1_EN | J2_EN | J3_EN);
-    if (RC_CTRL_PTR->rc.ch[3] == 660)
-    {
-      __HOLD_TICKS_COUNTING();
-      if (__GET_TICKS_STACK(0) == 0)
-        __RECORD_TICKS(0);
-      else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 1000)
-      {
-        __RESET_TICKS();
-        __RESET_RECORD_TICKS(0);
-        __HALT_TICKS_COUNTING();
-        memcpy((void *)Joint_pos2, (void *)cc_joint_angle, sizeof(float) * 3);
-        Joint_init = 2;
-      }
-    }
-    else
-    {
-      __RESET_TICKS();
-      __RESET_RECORD_TICKS(0);
-      __HALT_TICKS_COUNTING();
-    }
-  }
+//   if (Joint_init == 1)
+//   {
+//     __hand_move2_subctrl(-PI / 2, 0, PI / 2, 0, 0, J1_EN | J2_EN | J3_EN);
+//     if (RC_CTRL_PTR->rc.ch[3] == 660)
+//     {
+//       __HOLD_TICKS_COUNTING();
+//       if (__GET_TICKS_STACK(0) == 0)
+//         __RECORD_TICKS(0);
+//       else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 1000)
+//       {
+//         __RESET_TICKS();
+//         __RESET_RECORD_TICKS(0);
+//         __HALT_TICKS_COUNTING();
+//         memcpy((void *)Joint_pos2, (void *)cc_joint_angle, sizeof(float) * 3);
+//         Joint_init = 2;
+//       }
+//     }
+//     else
+//     {
+//       __RESET_TICKS();
+//       __RESET_RECORD_TICKS(0);
+//       __HALT_TICKS_COUNTING();
+//     }
+//   }
 
-  if (Joint_init == 2)
-  {
-    custom_controller_D[0] = Joint_pos2[0];
-    custom_controller_D[1] = Joint_pos2[1];
-    custom_controller_D[2] = Joint_pos1[2];
+//   if (Joint_init == 2)
+//   {
+//     custom_controller_D[0] = Joint_pos2[0];
+//     custom_controller_D[1] = Joint_pos2[1];
+//     custom_controller_D[2] = Joint_pos1[2];
 
-    custom_controller_K[0] = (PI / 2) / ABS(Joint_pos1[0] - Joint_pos2[0]);
-    custom_controller_K[1] = (PI / 2) / ABS(Joint_pos1[1] - Joint_pos2[0]);
-    custom_controller_K[2] = (PI / 2) / ABS(Joint_pos1[2] - Joint_pos2[0]);
-  }
-}
+//     custom_controller_K[0] = (PI / 2) / ABS(Joint_pos1[0] - Joint_pos2[0]);
+//     custom_controller_K[1] = (PI / 2) / ABS(Joint_pos1[1] - Joint_pos2[0]);
+//     custom_controller_K[2] = (PI / 2) / ABS(Joint_pos1[2] - Joint_pos2[0]);
+//   }
+// }
 
 void __hand_gold_catch_ctrl(void)
 {
@@ -948,71 +959,71 @@ void __hand_catch_ground(void)
   __hand_move2_subctrl(-PI / 4, -PI * 2 / 3, 0.0f, __GET_JOINT_MAX_LIM(HAND_PITCH), 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
 }
 
-void __hand_pose_ctrl(void)
-{
-  static uint8_t pose_mode = 0;
-  if (__IS_MODE_SWITCHED())
-  {
-    __RESET_TICKS();
-    __HALT_TICKS_COUNTING();
-    pose_mode = 0;
-  }
+// void __hand_pose_ctrl(void)
+// {
+//   static uint8_t pose_mode = 0;
+//   if (__IS_MODE_SWITCHED())
+//   {
+//     __RESET_TICKS();
+//     __HALT_TICKS_COUNTING();
+//     pose_mode = 0;
+//   }
 
-  /*Pose control command*/
-  if (pose_mode == 0)
-  {
-    if (RC_CTRL_PTR->rc.ch[3] == -660)
-    {
-      __HOLD_TICKS_COUNTING();
-      if (__GET_TICKS_STACK(0) == 0)
-        __RECORD_TICKS(0);
-      else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 1000)
-        pose_mode = 1;
-    }
-    else if (RC_CTRL_PTR->rc.ch[1] == -660)
-    {
-      __HOLD_TICKS_COUNTING();
-      if (__GET_TICKS_STACK(0) == 0)
-        __RECORD_TICKS(0);
-      else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 2000)
-        pose_mode = 2;
-    }
-    else if (RC_CTRL_PTR->rc.ch[1] == 660)
-    {
-      __HOLD_TICKS_COUNTING();
-      if (__GET_TICKS_STACK(0) == 0)
-        __RECORD_TICKS(0);
-      else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 2000)
-        pose_mode = 4;
-    }
-    else if (RC_CTRL_PTR->rc.ch[3] == 660)
-    {
-      __HOLD_TICKS_COUNTING();
-      if (__GET_TICKS_STACK(0) == 0)
-        __RECORD_TICKS(0);
-      else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 2000)
-        pose_mode = 5;
-    }
-    else
-    {
-      __RESET_TICKS();
-      __RESET_RECORD_TICKS(0);
-      __HALT_TICKS_COUNTING();
-    }
-  }
+//   /*Pose control command*/
+//   if (pose_mode == 0)
+//   {
+//     if (RC_CTRL_PTR->rc.ch[3] == -660)
+//     {
+//       __HOLD_TICKS_COUNTING();
+//       if (__GET_TICKS_STACK(0) == 0)
+//         __RECORD_TICKS(0);
+//       else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 1000)
+//         pose_mode = 1;
+//     }
+//     else if (RC_CTRL_PTR->rc.ch[1] == -660)
+//     {
+//       __HOLD_TICKS_COUNTING();
+//       if (__GET_TICKS_STACK(0) == 0)
+//         __RECORD_TICKS(0);
+//       else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 2000)
+//         pose_mode = 2;
+//     }
+//     else if (RC_CTRL_PTR->rc.ch[1] == 660)
+//     {
+//       __HOLD_TICKS_COUNTING();
+//       if (__GET_TICKS_STACK(0) == 0)
+//         __RECORD_TICKS(0);
+//       else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 2000)
+//         pose_mode = 4;
+//     }
+//     else if (RC_CTRL_PTR->rc.ch[3] == 660)
+//     {
+//       __HOLD_TICKS_COUNTING();
+//       if (__GET_TICKS_STACK(0) == 0)
+//         __RECORD_TICKS(0);
+//       else if (__GET_TICKS_TIME() - __GET_TICKS_STACK(0) > 2000)
+//         pose_mode = 5;
+//     }
+//     else
+//     {
+//       __RESET_TICKS();
+//       __RESET_RECORD_TICKS(0);
+//       __HALT_TICKS_COUNTING();
+//     }
+//   }
 
-  if (pose_mode == 1)
-    __hand_move2_subctrl(-PI / 8, -2.2, 0.5, 0, 0, J1_EN | J2_EN | J3_EN);
-  else if (pose_mode == 2)
-    //__hand_custom_ctrl();
-    __hand_rc_ctrl();
-  else if (pose_mode == 3)
-    __hand_custom_map_subctrl();
-  else if (pose_mode == 4)
-    __hand_gold_catch_ctrl();
-  else
-    ;
-}
+//   if (pose_mode == 1)
+//     __hand_move2_subctrl(-PI / 8, -2.2, 0.5, 0, 0, J1_EN | J2_EN | J3_EN);
+//   else if (pose_mode == 2)
+//     //__hand_custom_ctrl();
+//     __hand_rc_ctrl();
+//   else if (pose_mode == 3)
+//     __hand_custom_map_subctrl();
+//   else if (pose_mode == 4)
+//     __hand_gold_catch_ctrl();
+//   else
+//     ;
+// }
 
 void __hand_move_GGM(void)
 {
@@ -1053,58 +1064,198 @@ void __hand_move_SM(void)
   }
 }
 
+void hand_J1_reset()
+{
+  __SET_MOTOR_INSTANCE(AK_J1, &AK70_10_motor);
+  __SET_MOTOR_TYPE(AK_J1, AK_MOTOR);
+  AK_joint_motor_init(&AK70_10_motor, 93);
+  AK_joint_motor_enable(&AK70_10_motor);
+  __SET_JOINT_LIMIT(HAND_J1, -3.10, 0);
+
+  __hand_J1_init(1);
+  do
+  {
+    hand_task_get_feedback();
+    osDelay(1);
+  } while (!__hand_J1_init(0));
+  hand_task_output();
+
+
+    __CLEAR_MOTOR_OFFLINE(AK_J1);
+    __SET_JOINT_ANGLE(AK_J1, HANDLER_PTR->feedback_joint_angle[AK_J1]);
+    __SET_MOTOR_NONFORCE(AK_J1);
+ 
+}
+void hand_J2_reset()
+{
+  __SET_MOTOR_INSTANCE(DM_J2, &DM_Motor_J2);
+  __SET_MOTOR_TYPE(DM_J2, M4310_MOTOR);
+  joint_motor_init(&DM_Motor_J2, 1, POS_MODE, 1.0, 1.0);
+  __SET_JOINT_LIMIT(HAND_J2, -3.14 / 7 * 5, 3.14 / 7 * 5);
+
+  while (!__hand_J2_init())
+    ;
+  while (!__IS_JOINT_AROUND(HAND_J2, -1.9))
+  {
+    hand_task_get_feedback();
+    __hand_move2_subctrl(0.0f, -1.9f, 0.0f, 0.0f, 0.0f, J2_EN);
+    hand_task_output();
+     osDelay(1);
+  }
+
+
+    __CLEAR_MOTOR_OFFLINE(DM_J2);
+  __SET_JOINT_ANGLE(DM_J2, HANDLER_PTR->feedback_joint_angle[DM_J2]);
+  __SET_MOTOR_NONFORCE(DM_J2);
+      
+}
+
+void hand_J3_reset()
+{
+  __SET_MOTOR_INSTANCE(DJI_J3, &DJI_Motor_J3);
+  __SET_MOTOR_TYPE(DJI_J3, DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_J3, &DJI_CAN2_Bus_ctrl, M3508, 0x204);
+  // DJI_Motor_set_angle_limit()
+  // DJI_Motor_set_speed_limit()
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J3, PID_POSITION, 22, 0.000, 0.05, 6000.000, 800);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_J3, PID_POSITION, 55, 0.0, 0.0, 200, 100);
+  // DJI_Motor_set_sum_angle(&DJI_Motor_J3);
+  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J3);
+  __SET_JOINT_LIMIT(HAND_J3, -2, 2);
+
+  DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
+  while (!__hand_J3_init())
+  {
+    hand_task_output();
+    osDelay(1);
+    hand_task_get_feedback();
+    __hand_nonforce();
+
+      __CLEAR_MOTOR_OFFLINE(DJI_J3);
+      __SET_JOINT_ANGLE(DJI_J3, HANDLER_PTR->feedback_joint_angle[DJI_J3]);
+      __SET_MOTOR_NONFORCE(DJI_J3);
+    
+  }
+}
+
+ void hand_pitch_reset() 
+{
+  // Headend_L
+  __SET_MOTOR_INSTANCE(DJI_HE_L, &DJI_Motor_headendL);
+  __SET_MOTOR_TYPE(DJI_HE_L, DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_headendL, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendL, PID_POSITION, 22, 0.001, 0, 5500, 1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendL, PID_POSITION, 75, 0, 0, 2000, 1000);
+  // DJI_Motor_set_offline_detect(&DJI_Motor_headendL,8,0);
+  // DJI_Motor_set_sum_angle(&DJI_Motor_headendL);
+  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendL);
+  // Headend_R
+  __SET_MOTOR_INSTANCE(DJI_HE_R, &DJI_Motor_headendR);
+  __SET_MOTOR_TYPE(DJI_HE_R, DJI_MOTOR);
+  DJI_Motor_init(&DJI_Motor_headendR, &DJI_CAN2_Bus_ctrl, M2006, 0x208);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_headendR, PID_POSITION, 10, 0.001, 0, 5500, 1000);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_headendR, PID_POSITION, 75, 0, 0, 2000, 0);
+  // DJI_Motor_set_offline_detect(&DJI_Motor_headendR,8,0);
+  // DJI_Motor_set_sum_angle(&DJI_Motor_headendR);
+  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_headendR);
+  __SET_JOINT_LIMIT(HAND_PITCH, 5 * PITCH_MAP_K + PITCH_MAP_D, 150.0f * PITCH_MAP_K + PITCH_MAP_D);
+  __SET_JOINT_ANGLE(HAND_PITCH, PITCH_MAP_D);
+
+  DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
+  __hand_pitch_pos_init(1);
+  for (int i = 0; i < 40; i++)
+  {
+    hand_task_get_feedback();
+    __hand_nonforce();
+    if (__hand_pitch_pos_init(0))
+    {
+      break;
+    }
+    hand_task_output();
+    osDelay(1);
+  }
+
+  __CLEAR_MOTOR_OFFLINE(DJI_HE_L);
+  __SET_JOINT_ANGLE(DJI_HE_L, HANDLER_PTR->feedback_joint_angle[DJI_HE_L]);
+  __SET_MOTOR_NONFORCE(DJI_HE_L);
+  __CLEAR_MOTOR_OFFLINE(DJI_HE_R);
+  __SET_JOINT_ANGLE(DJI_HE_R, HANDLER_PTR->feedback_joint_angle[DJI_HE_R]);
+  __SET_MOTOR_NONFORCE(DJI_HE_R);
+}
+
+__hand_move_reset()
+{
+  if(__IS_MOTOR_OFFLINE(AK_J1))
+  {
+    hand_J1_reset();
+  }
+  if (__IS_MOTOR_OFFLINE(DM_J2))
+  {
+    hand_J2_reset();
+  }
+  if (__IS_MOTOR_OFFLINE(DJI_J3))
+  {
+    hand_J3_reset();
+  }
+  if ( __IS_MOTOR_OFFLINE(DJI_HE_L) || __IS_MOTOR_OFFLINE(DJI_HE_R))
+  {
+      hand_pitch_reset();
+  }
+}
+// case OFFLINE:
+
 /*
-$$$$$$$}.........$$$$$$$$$   "00000000$$$$""""""""""""""""""""""*$$$$%000$$     ........$$.....
-...               .$"   "00000000$$$$"""""""""""""""""""""""""""""""*$$j...$.          ...$w...
-.              $$   "000000$$$$$""""""""""""""""""""""""""""""""""""""$$.....$$         ...j$..
-.....$ """   ""0$$$$$$;""""""""""""""""""""""""""""""""""""""""""""""""$jjj...$   $$   $$$$$$$$
-....$ $jjjj$$$$"-"""""""""""""""""  $$$$$$.                     """"""""$j....w$$  $$  ........
-...$"$.j$$$$""""""""    """"         :$$$.                              $.....j$$$$ ...
-../"0.$$$$-""     "    ""              ;l                              .j.....$$.......    $ $
-.j$ $$$$"""      "" ""                                                 $j....$ ..  j....    $
-$$" $$"""""     ""              B$$$;.                                .jjj.jjU...   j.....   $
-#$ $$f"""      "             $$000000000p$$$$'                       ;$j>.jjj$.....  j.....  $
-$$$$"""""   ""            .$00000000000000000000$$$.                $...jjjjjj$$...... $$$$x
-.$$:""""                .$000000$$$$$$$$$000000000000$$$$B......;$$p*$jjjjjjj$jjj$$j$$$.$$$$$
-j$0""""               .$00000$$0000$$$$$$$$$$$$$$$%000000000000000$$$$$jjjjj$j.jjjj$$$$$$
-.$"""""              $"0000$$00000$$$$$$$$$$$$0$$$$$$$$$$$$$$$$$$$$$$$$$j$$     >$
-.j"""""            ;" 0000$000$$$`/jjjjjj>..jj$$$$$$$$$$$$$$$$$$$$$$$j.$"
-..$"""           ^$ Q000$$00$$>jjjjjjjjjjjjjj>....``>//jjjjjjjjUjjj...`$
-..j$""         .$00000$$$0$$.....$jjjjjj/`..............jjjjjjj$.....$$$$$;
-..Uj$""      $$00000$$$$$$........$jj.........................$.........jjjjjjjjjjjj$$
-j.....j$$$$0  '00$$$$$$$j..........j$............j...........$  ........$jjjjjjjwjjjjj[$$
-$$jjjj.$0000""$$$$$$$$jj........j$$$jjj...........j.........$.jj.   ....$jjjj/$j$jjjjjjjjjj$$
-$$$jjjj$$$$$$$$$$$$jjj#.....`$j       j$j.........[........$. $$$$$$$$$$$$$j$j...$jjjjjjjjjjjjj
-.$$$$$j$$$$$$$$$$[jjj$......$.         .$j$...............j $..$$$$$$$$$$$$$$j....$jjjjjjjjjjjj
-..$$$/[jj.    jjjjjj$.......  ..jjjj...  ...jj..........j.  .$$$$$B;;;;;$$  $$$...[$jjjjjjjj/$j
-..$$$/jjjjjjjjjjjjj$....                   ....jw......j   $$  j$:;;;;;;;$$   $$j..jjjjjjjjjjjj
-...$$jjjjjjjjjjjj[$....                      .....$..j.  .$    $;:":;;":;$$    $$U..$$jjjjjjjjj
-....$$.jjjjjjjjjjjj...                          ..@.j.   .       "";$$""";$     $$/..$[jjjjjjjj
-.....$$..[jjjjjj/$...                           ..j.           $;""u$$"""$j    .@...jjjjjjjjjjj
-......j$.....jj$$>...       .......jj           ..             j$"""""";;$     $....$jjwjjjjjj/
-  ......$.......$...         .$$$$$j.                           $$""""""$     $....jj$jjjjjjjjj
-.......jjj$......$.    .#$$$$$$$$$$$$$$.    .$$$$$                       ..jj..... j$jjjjjjjjjj
-....jjjjjjj$$.....$  j$[$$$$$$$$.            $$$                                    jjjjjjjjjjj
-$$$$$$$jjjjjjj$j...$..j$$$$j..                                                     $jjjjjjjjjjj
-    $$jjjjjjjjj$j$$..$$j...                       $$j                             $jjjjjjjjjjjj
-    $$jjjjjjjjjj$j......                       $jjjjjjjjj$  $$                   $jjjjjjjjjjjjj
-   $$[jjjjjjjjjjj$                         $$jjjjjjjjjjjjjj$j$                  xjjjjj>>jjjjjjj
-  $$jjjjjjjjjjjjj$                        $$jjjjjjjjjjjjjjjjj$                 $jjj.....jjjjjjj
- $$.jjjjjjjjjjj$                           $jjjjjjjjjjjjjjjjjj               jj.........jjjjjjj
-$$.[jjjjjjjjj$                              $jjjjjjjjjjjjjjj$              $............[jjjjjj
-$..jjjjjjjj$                                 jjjjjjjjjjjjjj$            .j....   .......>jjjjjj
- .jjjjjjjjj[j$                                 j$jjjjjjjjj$            j................`jjjjjj
-..jjjjjjjjjjjjjjjj$                                 jj               j....           ....j[.  $
-.jjjjjjjjjjjjjjjj/$    w$$$                                         $..               .       $
-.jjjjjjjjjjjjjjjjjj$w$$$$j/jjjj$$@                                  j                        $$
-jjjjjjjjjjjjjjjjjjj$$$   $$$jjjjjjj/jj#$$                          ^                         $$
-jjjjjjjjjjjjjjjjjj$$        $$$`jjjjjjjjjj.$$                       $                         $
-jjjjjjjjjjjjjjjj$$            $$$jjjjjjjjjjjj$                       $
-jjjjjjjjjjjjjj$$$                $$jj$$$$$$$$$$                       "$                  $'
-jjjjjjjjjjjj$$$               $$$$jj/jjjjj$$$$.                         $$                 $$$$
+  $$$$$$$}.........$$$$$$$$$   "00000000$$$$""""""""""""""""""""""*$$$$%000$$     ........$$.....
+  ...               .$"   "00000000$$$$"""""""""""""""""""""""""""""""*$$j...$.          ...$w...
+  .              $$   "000000$$$$$""""""""""""""""""""""""""""""""""""""$$.....$$         ...j$..
+  .....$ """   ""0$$$$$$;""""""""""""""""""""""""""""""""""""""""""""""""$jjj...$   $$   $$$$$$$$
+  ....$ $jjjj$$$$"-"""""""""""""""""  $$$$$$.                     """"""""$j....w$$  $$  ........
+  ...$"$.j$$$$""""""""    """"         :$$$.                              $.....j$$$$ ...
+  ../"0.$$$$-""     "    ""              ;l                              .j.....$$.......    $ $
+  .j$ $$$$"""      "" ""                                                 $j....$ ..  j....    $
+  $$" $$"""""     ""              B$$$;.                                .jjj.jjU...   j.....   $
+  #$ $$f"""      "             $$000000000p$$$$'                       ;$j>.jjj$.....  j.....  $
+  $$$$"""""   ""            .$00000000000000000000$$$.                $...jjjjjj$$...... $$$$x
+  .$$:""""                .$000000$$$$$$$$$000000000000$$$$B......;$$p*$jjjjjjj$jjj$$j$$$.$$$$$
+  j$0""""               .$00000$$0000$$$$$$$$$$$$$$$%000000000000000$$$$$jjjjj$j.jjjj$$$$$$
+  .$"""""              $"0000$$00000$$$$$$$$$$$$0$$$$$$$$$$$$$$$$$$$$$$$$$j$$     >$
+  .j"""""            ;" 0000$000$$$`/jjjjjj>..jj$$$$$$$$$$$$$$$$$$$$$$$j.$"
+  ..$"""           ^$ Q000$$00$$>jjjjjjjjjjjjjj>....``>//jjjjjjjjUjjj...`$
+  ..j$""         .$00000$$$0$$.....$jjjjjj/`..............jjjjjjj$.....$$$$$;
+  ..Uj$""      $$00000$$$$$$........$jj.........................$.........jjjjjjjjjjjj$$
+  j.....j$$$$0  '00$$$$$$$j..........j$............j...........$  ........$jjjjjjjwjjjjj[$$
+  $$jjjj.$0000""$$$$$$$$jj........j$$$jjj...........j.........$.jj.   ....$jjjj/$j$jjjjjjjjjj$$
+  $$$jjjj$$$$$$$$$$$$jjj#.....`$j       j$j.........[........$. $$$$$$$$$$$$$j$j...$jjjjjjjjjjjjj
+  .$$$$$j$$$$$$$$$$[jjj$......$.         .$j$...............j $..$$$$$$$$$$$$$$j....$jjjjjjjjjjjj
+  ..$$$/[jj.    jjjjjj$.......  ..jjjj...  ...jj..........j.  .$$$$$B;;;;;$$  $$$...[$jjjjjjjj/$j
+  ..$$$/jjjjjjjjjjjjj$....                   ....jw......j   $$  j$:;;;;;;;$$   $$j..jjjjjjjjjjjj
+  ...$$jjjjjjjjjjjj[$....                      .....$..j.  .$    $;:":;;":;$$    $$U..$$jjjjjjjjj
+  ....$$.jjjjjjjjjjjj...                          ..@.j.   .       "";$$""";$     $$/..$[jjjjjjjj
+  .....$$..[jjjjjj/$...                           ..j.           $;""u$$"""$j    .@...jjjjjjjjjjj
+  ......j$.....jj$$>...       .......jj           ..             j$"""""";;$     $....$jjwjjjjjj/
+    ......$.......$...         .$$$$$j.                           $$""""""$     $....jj$jjjjjjjjj
+  .......jjj$......$.    .#$$$$$$$$$$$$$$.    .$$$$$                       ..jj..... j$jjjjjjjjjj
+  ....jjjjjjj$$.....$  j$[$$$$$$$$.            $$$                                    jjjjjjjjjjj
+  $$$$$$$jjjjjjj$j...$..j$$$$j..                                                     $jjjjjjjjjjj
+      $$jjjjjjjjj$j$$..$$j...                       $$j                             $jjjjjjjjjjjj
+      $$jjjjjjjjjj$j......                       $jjjjjjjjj$  $$                   $jjjjjjjjjjjjj
+     $$[jjjjjjjjjjj$                         $$jjjjjjjjjjjjjj$j$                  xjjjjj>>jjjjjjj
+    $$jjjjjjjjjjjjj$                        $$jjjjjjjjjjjjjjjjj$                 $jjj.....jjjjjjj
+   $$.jjjjjjjjjjj$                           $jjjjjjjjjjjjjjjjjj               jj.........jjjjjjj
+  $$.[jjjjjjjjj$                              $jjjjjjjjjjjjjjj$              $............[jjjjjj
+  $..jjjjjjjj$                                 jjjjjjjjjjjjjj$            .j....   .......>jjjjjj
+   .jjjjjjjjj[j$                                 j$jjjjjjjjj$            j................`jjjjjj
+  ..jjjjjjjjjjjjjjjj$                                 jj               j....           ....j[.  $
+  .jjjjjjjjjjjjjjjj/$    w$$$                                         $..               .       $
+  .jjjjjjjjjjjjjjjjjj$w$$$$j/jjjj$$@                                  j                        $$
+  jjjjjjjjjjjjjjjjjjj$$$   $$$jjjjjjj/jj#$$                          ^                         $$
+  jjjjjjjjjjjjjjjjjj$$        $$$`jjjjjjjjjj.$$                       $                         $
+  jjjjjjjjjjjjjjjj$$            $$$jjjjjjjjjjjj$                       $
+  jjjjjjjjjjjjjj$$$                $$jj$$$$$$$$$$                       "$                  $'
+  jjjjjjjjjjjj$$$               $$$$jj/jjjjj$$$$.                         $$                 $$$$
 
 
-*/
+  */
 
 #undef HANDLER
 #undef HANDLER_PTR

@@ -1198,5 +1198,5 @@ void Draw_grahic_char_2(uint16_t cmd_id, uint16_t data_id, uint16_t tx_id, uint1
     
 
 }
- 
 
+// 串口接收 → 长度检查 → 类型验证 → 完整帧检查 → CRC校验 → 数据解析 → 存储到对应结构体

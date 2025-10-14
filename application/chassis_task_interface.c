@@ -47,6 +47,7 @@ static void __chassis_idle_ctrl(void);
 static void __chassis_rc_ctrl(void);
 static void __chassis_rc_slow_ctrl(void);
 static void __chassis_union_rc_ctrl(void);
+// void chassis_reset(void);
 
 /*general handler method*/
 /**
@@ -63,6 +64,9 @@ static void __chassis_union_rc_ctrl(void);
 #define __SET_MOTOR_TYPE(index, type) (HANDLER_PTR->motor_type[index] = (type))
 #define __GET_MOTOR_CTRL_MODE(index) (HANDLER_PTR->motor_ctrl_mode[index])
 
+#define __SET_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 1)
+#define __CLEAR_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 0)
+#define __IS_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index])
 /*获取电机反馈*/
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
 #define __GET_MOTOR_SPEED(index) (HANDLER_PTR->feedback_motor_speed[index])
@@ -154,6 +158,19 @@ void chassis_task_init()
 
   __chassis_idle_ctrl();
   DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
+
+  // while (
+  //     toe_is_error(TOE_3508_M1_ID) ||
+  //     toe_is_error(TOE_3508_M2_ID) ||
+  //     toe_is_error(TOE_3508_M3_ID) ||
+  //     toe_is_error(TOE_3508_M4_ID) ||
+  //       )
+  //   ;
+  // __CLEAR_MOTOR_OFFLINE(TOE_3508_M1_ID);
+  // __CLEAR_MOTOR_OFFLINE(TOE_3508_M2_ID);
+  // __CLEAR_MOTOR_OFFLINE(TOE_3508_M3_ID);
+  // __CLEAR_MOTOR_OFFLINE(TOE_3508_M4_ID);
+  // osDelay(20);
 }
 
 /**
@@ -335,6 +352,28 @@ void chassis_task_output()
                              HANDLER_PTR->motor_speed[index],
                              HANDLER_PTR->motor_angle[index])
   }
+
+  // /*掉电检测*/
+  // if (toe_is_error(TOE_3508_M1_ID) || __IS_MOTOR_OFFLINE(TOE_3508_M1_ID))
+  // {
+  //   __SET_MOTOR_CTRL_MODE(TOE_3508_M1_ID, OFFLINE);
+  //   __SET_MOTOR_OFFLINE(TOE_3508_M1_ID);
+  // }
+  // if (toe_is_error(TOE_3508_M2_ID) || __IS_MOTOR_OFFLINE(TOE_3508_M2_ID))
+  // {
+  //   __SET_MOTOR_CTRL_MODE(TOE_3508_M2_ID, OFFLINE);
+  //   __SET_MOTOR_OFFLINE(TOE_3508_M2_ID);
+  // }
+  // if (toe_is_error(TOE_3508_M3_ID) || __IS_MOTOR_OFFLINE(TOE_3508_M3_ID))
+  // {
+  //   __SET_MOTOR_CTRL_MODE(TOE_3508_M3_ID, OFFLINE);
+  //   __SET_MOTOR_OFFLINE(TOE_3508_M3_ID);
+  // }
+  // if (toe_is_error(TOE_3508_M4_ID) || __IS_MOTOR_OFFLINE(TOE_3508_M4_ID))
+  // {
+  //   __SET_MOTOR_CTRL_MODE(TOE_3508_M4_ID, OFFLINE);
+  //   __SET_MOTOR_OFFLINE(TOE_3508_M4_ID);
+  // }
 }
 
 void __chassis_nonforce()
@@ -479,5 +518,14 @@ void __chassis_union_rc_ctrl()
   __SET_MOTOR_SPEED(DJI_LB, -HANDLER_PTR->vx * 0.5f + HANDLER_PTR->vy * 0.5f + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
 }
 
+// void chassis_reset()
+// {
+//   uint16_t index;
+//   void chassis_task_init();
+//   for (index = 0; index < CHASSIS_MOTOR_COUNT; index++)
+//   {
+//     __CLEAR_MOTOR_OFFLINE();
+//   }
+// }
 #undef HANDLER
 #undef HANDLER_PTR

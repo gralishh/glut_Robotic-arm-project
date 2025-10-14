@@ -7,7 +7,7 @@ void set_movement(uint8_t movement_type)
   movement.movement_type=movement_type;
   movement.movement_step=0;
 }
-
+        
 uint8_t get_movement(void)
 {
   return movement.movement_type;
