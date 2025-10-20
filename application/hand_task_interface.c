@@ -74,7 +74,7 @@ static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
-//static void __hand_pose_ctrl(void);
+// static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
 
 static void __hand_catch_ground(void);
@@ -200,9 +200,9 @@ void hand_pitch_reset(void);
     {                                                                    \
       func();                                                            \
     }                                                                    \
-  }//未理解，可酌情删除
+  } // 未理解，可酌情删除
 
-    void hand_task_init()
+void hand_task_init()
 {
   osDelay(1000);
 
@@ -399,12 +399,12 @@ void hand_task_mode_flush()
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
       //__SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
-      __SET_STRUCT_MODE(HAND_MODE_POSE_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
     if (switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_GOLE_CATCH_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
@@ -413,7 +413,7 @@ void hand_task_mode_flush()
     __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
 
-  static uint8_t mode_var = 0;
+  static uint8_t mode_var = 0;//没用
   if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
   {
     //__BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
@@ -475,9 +475,9 @@ void hand_task_set_output()
   case HAND_MODE_RC_CTRL:
     __hand_rc_ctrl();
     break;
-  case HAND_MODE_POSE_CTRL:
-    __hand_pose_ctrl();
-    break;
+  // case HAND_MODE_POSE_CTRL:
+  //   __hand_pose_ctrl();
+  //   break;
   case HAND_MODE_CUSTOM_CTRL:
     __hand_custom_ctrl();
     break;
@@ -521,6 +521,8 @@ void hand_task_set_output()
     __SET_MOTOR_CTRL_MODE(DJI_J3, OFFLINE);
     __SET_MOTOR_OFFLINE(DM_J2);
   }
+//加个按键
+  __hand_move_reset();
 
   if (toe_is_error(TOE_HE_L) &&
       toe_is_error(TOE_HE_R) &&
@@ -1080,11 +1082,9 @@ void hand_J1_reset()
   } while (!__hand_J1_init(0));
   hand_task_output();
 
-
-    __CLEAR_MOTOR_OFFLINE(AK_J1);
-    __SET_JOINT_ANGLE(AK_J1, HANDLER_PTR->feedback_joint_angle[AK_J1]);
-    __SET_MOTOR_NONFORCE(AK_J1);
- 
+  __CLEAR_MOTOR_OFFLINE(AK_J1);
+  __SET_JOINT_ANGLE(AK_J1, HANDLER_PTR->feedback_joint_angle[AK_J1]);
+  __SET_MOTOR_NONFORCE(AK_J1);
 }
 void hand_J2_reset()
 {
@@ -1100,14 +1100,12 @@ void hand_J2_reset()
     hand_task_get_feedback();
     __hand_move2_subctrl(0.0f, -1.9f, 0.0f, 0.0f, 0.0f, J2_EN);
     hand_task_output();
-     osDelay(1);
+    osDelay(1);
   }
 
-
-    __CLEAR_MOTOR_OFFLINE(DM_J2);
+  __CLEAR_MOTOR_OFFLINE(DM_J2);
   __SET_JOINT_ANGLE(DM_J2, HANDLER_PTR->feedback_joint_angle[DM_J2]);
   __SET_MOTOR_NONFORCE(DM_J2);
-      
 }
 
 void hand_J3_reset()
@@ -1131,14 +1129,13 @@ void hand_J3_reset()
     hand_task_get_feedback();
     __hand_nonforce();
 
-      __CLEAR_MOTOR_OFFLINE(DJI_J3);
-      __SET_JOINT_ANGLE(DJI_J3, HANDLER_PTR->feedback_joint_angle[DJI_J3]);
-      __SET_MOTOR_NONFORCE(DJI_J3);
-    
+    __CLEAR_MOTOR_OFFLINE(DJI_J3);
+    __SET_JOINT_ANGLE(DJI_J3, HANDLER_PTR->feedback_joint_angle[DJI_J3]);
+    __SET_MOTOR_NONFORCE(DJI_J3);
   }
 }
 
- void hand_pitch_reset() 
+void hand_pitch_reset()
 {
   // Headend_L
   __SET_MOTOR_INSTANCE(DJI_HE_L, &DJI_Motor_headendL);
@@ -1183,9 +1180,9 @@ void hand_J3_reset()
   __SET_MOTOR_NONFORCE(DJI_HE_R);
 }
 
-__hand_move_reset()
+void __hand_move_reset(void)
 {
-  if(__IS_MOTOR_OFFLINE(AK_J1))
+  if (__IS_MOTOR_OFFLINE(AK_J1))
   {
     hand_J1_reset();
   }
@@ -1197,9 +1194,9 @@ __hand_move_reset()
   {
     hand_J3_reset();
   }
-  if ( __IS_MOTOR_OFFLINE(DJI_HE_L) || __IS_MOTOR_OFFLINE(DJI_HE_R))
+  if (__IS_MOTOR_OFFLINE(DJI_HE_L) || __IS_MOTOR_OFFLINE(DJI_HE_R))
   {
-      hand_pitch_reset();
+    hand_pitch_reset();
   }
 }
 // case OFFLINE:

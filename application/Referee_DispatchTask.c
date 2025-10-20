@@ -30,174 +30,175 @@ int16_t crc_fail_cnt = 0;
 unsigned int Len = 0,frame_len;
 int16_t iii = 0;
 
+//该任务无法使用，功能被referee_uart_task代替
 
-void DispchRefereeTask(void const *parmas)
-{
+// void DispchRefereeTask(void const *parmas)
+// {
 
 	
-	for(;;)
-	{
-		next:	Len = USART1_GetDataCount();  //得出数据的长度，帧头减去帧尾，这个长度（包括帧头，帧尾，ID，和有用的数据）
+// 	for(;;)
+// 	{
+// 		next:	Len = USART1_GetDataCount();  //得出数据的长度，帧头减去帧尾，这个长度（包括帧头，帧尾，ID，和有用的数据）
 		
-		if(Len >= 10)
-		{
-			if(	USART1_At(5)  == 0x02   && 	USART1_At(6)  == 0x03 )  //只接收自定义控制器数据
-			{
-				frame_len =  USART1_At(2) << 8 | USART1_At(1);   //得出传输数据的字??
-				if(Len >= 15) //
-				{
-					 USART1_Recv(Transmission_BufferOfUsart6,frame_len + 9);  //把数据出栈并存储在Transmission_BufferOfUsart6，，数据处理，数据的接收在中断里
-					 USART1_Drop(4096);
+// 		if(Len >= 10)
+// 		{
+// 			if(	USART1_At(5)  == 0x02   && 	USART1_At(6)  == 0x03 )  //只接收自定义控制器数据
+// 			{
+// 				frame_len =  USART1_At(2) << 8 | USART1_At(1);   //得出传输数据的字??
+// 				if(Len >= 15) //
+// 				{
+// 					 USART1_Recv(Transmission_BufferOfUsart6,frame_len + 9);  //把数据出栈并存储在Transmission_BufferOfUsart6，，数据处理，数据的接收在中断里
+// 					 USART1_Drop(4096);
 
-				}
-				else 
-				{
+// 				}
+// 				else 
+// 				{
 					
-				    vTaskDelay(2);
-					goto next;
-				}
+// 				    vTaskDelay(2);
+// 					goto next;
+// 				}
 					 
 				
-				if(Verify_CRC8_Check_Sum(Transmission_BufferOfUsart6,5) &&  Verify_CRC16_Check_Sum(Transmission_BufferOfUsart6,frame_len + 9) == true) 
-				{
-					memcpy(&Referee_date1.frame_header,Transmission_BufferOfUsart6,sizeof(Referee_date1.frame_header));
-					Referee_date1.CmdID  =  Transmission_BufferOfUsart6[6] << 8 | Transmission_BufferOfUsart6[5];  //帧头??5个字节，ID占两个字节，所以第5和第6个字节表示ID
-					switch(Referee_date1.CmdID)
-					{   //??7个字节到??50个字节中存储着用户所需的数据，同一数据Transmission_BufferOfUsart6中只存储着一种数??
-					 case Competition_Satus_e:
-						 memcpy(&Referee_date1.game_state,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						 break;
+// 				if(Verify_CRC8_Check_Sum(Transmission_BufferOfUsart6,5) &&  Verify_CRC16_Check_Sum(Transmission_BufferOfUsart6,frame_len + 9) == true) 
+// 				{
+// 					memcpy(&Referee_date1.frame_header,Transmission_BufferOfUsart6,sizeof(Referee_date1.frame_header));
+// 					Referee_date1.CmdID  =  Transmission_BufferOfUsart6[6] << 8 | Transmission_BufferOfUsart6[5];  //帧头??5个字节，ID占两个字节，所以第5和第6个字节表示ID
+// 					switch(Referee_date1.CmdID)
+// 					{   //??7个字节到??50个字节中存储着用户所需的数据，同一数据Transmission_BufferOfUsart6中只存储着一种数??
+// 					 case Competition_Satus_e:
+// 						 memcpy(&Referee_date1.game_state,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						 break;
 					 
-					 case Competition_Result_e:
-						 memcpy(&Referee_date1.game_result,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						 break;
+// 					 case Competition_Result_e:
+// 						 memcpy(&Referee_date1.game_result,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						 break;
 					 
-					  case Robot_Survive_Data_e:
-						 memcpy(&Referee_date1.game_robot_survivors,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						 break;	
-					  case Rart_launch_Satus_e:
-						 memcpy(&Referee_date1.dart_status,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						 break;	
-					  case Site_Event_Data_e:
-						 memcpy(&Referee_date1.event_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						 break;		
+// 					  case Robot_Survive_Data_e:
+// 						 memcpy(&Referee_date1.game_robot_survivors,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						 break;	
+// 					  case Rart_launch_Satus_e:
+// 						 memcpy(&Referee_date1.dart_status,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						 break;	
+// 					  case Site_Event_Data_e:
+// 						 memcpy(&Referee_date1.event_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						 break;		
 					  
-					  case Supply_Station_Data_e:
-						 memcpy(&Referee_date1.supply_projectile_action,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						 break;
+// 					  case Supply_Station_Data_e:
+// 						 memcpy(&Referee_date1.supply_projectile_action,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						 break;
 					  
-					  case Request_Bullet_Data_e:  //裁判系统没有
-						 memcpy(&Referee_date1.supply_projectile_booking,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 					  case Request_Bullet_Data_e:  //裁判系统没有
+// 						 memcpy(&Referee_date1.supply_projectile_booking,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 					  
-						case Referee_Warning_Message_t:  //裁判警告信息
-						 memcpy(&Referee_date1.referee_warning_message,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 						case Referee_Warning_Message_t:  //裁判警告信息
+// 						 memcpy(&Referee_date1.referee_warning_message,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 						
-				  	case Rart_Remaining_Time_t:  //飞镖发射口倒计??
-						 memcpy(&Referee_date1.dart_remaining_time,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 				  	case Rart_Remaining_Time_t:  //飞镖发射口倒计??
+// 						 memcpy(&Referee_date1.dart_remaining_time,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 						
-					  case Bullet_Remaining_t:  //子弹剩余发射??
-						 memcpy(&Referee_date1.bullet_remaining,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 					  case Bullet_Remaining_t:  //子弹剩余发射??
+// 						 memcpy(&Referee_date1.bullet_remaining,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 						
-					 	case Robot_Rfid_Status_t:  //机器?? RFID 状??
-						 memcpy(&Referee_date1.rfid_status,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 					 	case Robot_Rfid_Status_t:  //机器?? RFID 状??
+// 						 memcpy(&Referee_date1.rfid_status,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 					 
-					 	case Dart_Client_Cmd_t:  //飞镖机器人客户端指令数据
-						 memcpy(&Referee_date1.dart_client_cmd,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;						
+// 					 	case Dart_Client_Cmd_t:  //飞镖机器人客户端指令数据
+// 						 memcpy(&Referee_date1.dart_client_cmd,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;						
 						
 						
-					  case Robot_Status_Data_e:  //这里数据缺失 机器人状态数??
-						 memcpy(&Referee_date1.game_robot_state,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 					  case Robot_Status_Data_e:  //这里数据缺失 机器人状态数??
+// 						 memcpy(&Referee_date1.game_robot_state,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 					  
-					  case Power_Heat_Data_e:  //这里数据缺失
-						 memcpy(&Referee_date1.power_heat_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;		
+// 					  case Power_Heat_Data_e:  //这里数据缺失
+// 						 memcpy(&Referee_date1.power_heat_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;		
 
-					  case Robot_Position:
-						 memcpy(&Referee_date1.game_robot_pos,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;
+// 					  case Robot_Position:
+// 						 memcpy(&Referee_date1.game_robot_pos,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;
 
-					  case Robot_Gain_Data_e:
-						 memcpy(&Referee_date1.buff_musk,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break;	
+// 					  case Robot_Gain_Data_e:
+// 						 memcpy(&Referee_date1.buff_musk,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break;	
 					  
-					  case Air_Robot_Power_Data_e:
-						 memcpy(&Referee_date1.aerial_robot_energy,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break; 
+// 					  case Air_Robot_Power_Data_e:
+// 						 memcpy(&Referee_date1.aerial_robot_energy,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break; 
 					  
-					  case Hurt_data_e:
-						 memcpy(&Referee_date1.robot_hurt,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break; 							  
+// 					  case Hurt_data_e:
+// 						 memcpy(&Referee_date1.robot_hurt,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break; 							  
 					  
-					  case Shoot_Data_e: //全了
-						 memcpy(&Referee_date1.shoot_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break; 
+// 					  case Shoot_Data_e: //全了
+// 						 memcpy(&Referee_date1.shoot_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break; 
 					  
-					  case Robot_Interaction:
-					  	if(Transmission_BufferOfUsart6[21]==0x01)
-						{
-					    	if (Verify_CRC16_Check_Sum(Transmission_BufferOfUsart6,sizeof(Transmission_BufferOfUsart6)))
-					  		{
-								memcpy(&Referee_date1.student_interactive_header_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-							}
-						}
-						break; 
+// 					  case Robot_Interaction:
+// 					  	if(Transmission_BufferOfUsart6[21]==0x01)
+// 						{
+// 					    	if (Verify_CRC16_Check_Sum(Transmission_BufferOfUsart6,sizeof(Transmission_BufferOfUsart6)))
+// 					  		{
+// 								memcpy(&Referee_date1.student_interactive_header_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 							}
+// 						}
+// 						break; 
 					  
-					  case 0x0302:
-						memcpy(&Referee_date1.self_control,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						memcpy(&self_control_date,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-					  break; 
-					  case Custom_Client_Data_e:
-						 memcpy(&custom_client_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
-						break; 
-					  default:
-						break;								  		  
-					}					
-				}
-				else 
-				{
-				  crc_fail_cnt++;
-				}
-			}	
-			else 
-			{
-				USART1_Drop(1);//丢掉
-				for(;;)
-				{
-					if(USART1_GetDataCount() > 0)
-					{
-						if(	USART1_At(0)  == 0xA5 )// Frame head
-						{
-							break;
-						}
-						else
-						{
-							USART1_Drop(1);
-							vTaskDelay(1);
-						}
-						Len =  USART1_GetDataCount();
-						if(Len > 3000)
-						{
-							USART1_Drop(4096);
-							break;
-						}
-					}
-					else
-					{
-						break;
-					}
-				}
-			}			
-		}
-	   vTaskDelay(2);	
-   }
-}
+// 					  case 0x0302:
+// 						memcpy(&Referee_date1.self_control,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						memcpy(&self_control_date,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 					  break; 
+// 					  case Custom_Client_Data_e:
+// 						 memcpy(&custom_client_data,&Transmission_BufferOfUsart6[7],Referee_date1.frame_header.data_length);
+// 						break; 
+// 					  default:
+// 						break;								  		  
+// 					}					
+// 				}
+// 				else 
+// 				{
+// 				  crc_fail_cnt++;
+// 				}
+// 			}	
+// 			else 
+// 			{
+// 				USART1_Drop(1);//丢掉
+// 				for(;;)
+// 				{
+// 					if(USART1_GetDataCount() > 0)
+// 					{
+// 						if(	USART1_At(0)  == 0xA5 )// Frame head
+// 						{
+// 							break;
+// 						}
+// 						else
+// 						{
+// 							USART1_Drop(1);
+// 							vTaskDelay(1);
+// 						}
+// 						Len =  USART1_GetDataCount();
+// 						if(Len > 3000)
+// 						{
+// 							USART1_Drop(4096);
+// 							break;
+// 						}
+// 					}
+// 					else
+// 					{
+// 						break;
+// 					}
+// 				}
+// 			}			
+// 		}
+// 	   vTaskDelay(2);	
+//    }
+// }
       
 //extern Referee_Date Referee_date1;
 //	/*********************self_control**********************/

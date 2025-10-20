@@ -4,7 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${default}",
-                "E:/desktop/engineering car/change/h7_basic_board_code/**"
+                "E:/desktop/engineering car/change(diaodian)/h7_basic_board_code/**"
             ],
             "defines": [
                 "_DEBUG",

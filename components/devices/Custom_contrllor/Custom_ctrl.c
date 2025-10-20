@@ -62,7 +62,8 @@ void Custom_Ctrl_Task(void* para)
   {
     usart1_length = USART1_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
-    if(IS_HEADER(USART1_At(0)) )  
+    if(IS_HEADER(
+      (0)) )  
     {
       if(usart1_length >= PACK_LENGTH)
         Custom_Ctrl_unpack();

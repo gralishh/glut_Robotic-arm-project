@@ -303,7 +303,7 @@
         <Ww>
           <count>28</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rc_ctrl</ItemText>
+          <ItemText>rc_ctrl,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>29</count>
@@ -458,7 +458,7 @@
         <Ww>
           <count>59</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gimbal_task_handler</ItemText>
+          <ItemText>gimbal_task_handler,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -1399,7 +1399,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>68</FileNumber>
       <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\components\devices\DJI_motor_module\DJI_motor_canbus.c</PathWithFileName>
@@ -1411,7 +1411,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>69</FileNumber>
       <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\components\devices\Ex_encoder\Ex_encoder.c</PathWithFileName>
@@ -1459,7 +1459,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>73</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\components\devices\Custom_contrllor\Custom_ctrl.c</PathWithFileName>
