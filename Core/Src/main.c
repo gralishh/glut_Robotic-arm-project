@@ -1491,6 +1491,7 @@ void __vofa_uart_task(void *argument)
   /* Infinite loop */
   for(;;)
   {
+	  vofa_uart_task(argument);
     osDelay(1);
   }
   /* USER CODE END __vofa_uart_task */
