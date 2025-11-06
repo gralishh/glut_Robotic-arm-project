@@ -522,7 +522,7 @@ void hand_task_set_output()
     __SET_MOTOR_OFFLINE(DM_J2);
   }
 //加个按键
-  __hand_move_reset();
+ // __hand_move_reset();
 
   if (toe_is_error(TOE_HE_L) &&
       toe_is_error(TOE_HE_R) &&
