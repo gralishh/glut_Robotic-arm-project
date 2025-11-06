@@ -42,7 +42,7 @@
 #include "Custom_ctrl.h"
 #include "Vofa.h"
 #include "ui.h"
-
+#include "vofa_uart_task.h"
 #include "AK_series.h"
 /* USER CODE END Includes */
 
@@ -131,7 +131,7 @@ const osThreadAttr_t HandTask_attributes = {
 osThreadId_t USART3_measureHandle;
 const osThreadAttr_t USART3_measure_attributes = {
   .name = "USART3_measure",
-  .stack_size = 512 * 4,
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CustomCtrlTask */
@@ -154,6 +154,13 @@ const osThreadAttr_t referee_task_attributes = {
   .name = "referee_task",
   .stack_size = 518 * 4,
   .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for VofaTask */
+osThreadId_t VofaTaskHandle;
+const osThreadAttr_t VofaTask_attributes = {
+  .name = "VofaTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for motor_timer_ctrl */
 osTimerId_t motor_timer_ctrlHandle;
@@ -199,6 +206,7 @@ void __usart3_measure_task(void *argument);
 void __Custom_Ctrl_Task(void *argument);
 void __catcher_task(void *argument);
 void __referee_task(void *argument);
+void __vofa_uart_task(void *argument);
 void __motor_timr_ctrl_callback(void *argument);
 void __RM_UI_Timer(void *argument);
 
@@ -274,7 +282,7 @@ int main(void)
   ui_init_g();
   WS2812_Ctrl(0,0,0);
 
-  Vofa_Init(&vofa_handler,VOFA_MODE_SKIP);
+  //Vofa_Init(&vofa_handler,VOFA_MODE_SKIP);
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   HAL_Delay(3000);/*delay for initalization of motor*/
   /* USER CODE END 2 */
@@ -321,7 +329,7 @@ int main(void)
   GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
-  //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
   USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
@@ -334,6 +342,9 @@ int main(void)
 
   /* creation of referee_task */
   referee_taskHandle = osThreadNew(__referee_task, NULL, &referee_task_attributes);
+
+  /* creation of VofaTask */
+  VofaTaskHandle = osThreadNew(__vofa_uart_task, NULL, &VofaTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -1465,6 +1476,24 @@ void __referee_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __referee_task */
+}
+
+/* USER CODE BEGIN Header___vofa_uart_task */
+/**
+* @brief Function implementing the VofaTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___vofa_uart_task */
+void __vofa_uart_task(void *argument)
+{
+  /* USER CODE BEGIN __vofa_uart_task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __vofa_uart_task */
 }
 
 /* __motor_timr_ctrl_callback function */

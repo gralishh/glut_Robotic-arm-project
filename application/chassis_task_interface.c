@@ -7,12 +7,12 @@
 #include "cmsis_os2.h"
 #include "detect_task.h"
 #include "Custom_ctrl.h"
-
 #include "gimbal_task.h"
-
 #include "cmsis_armcc.h"
-
 #include "referee.h"
+
+#include "main.h"
+#include "Vofa.h"
 
 #define HANDLER chassis_task_handler
 #define HANDLER_PTR chassis_task_handler_ptr

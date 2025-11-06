@@ -18,6 +18,9 @@
 #include "bsp_buzzer.h"
 #include "general_movement.h"
 
+#include "main.h"
+#include "Vofa.h"
+
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
