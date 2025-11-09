@@ -6,12 +6,21 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-// typedef enum
-// {
-//     hand,
-//     gimbal,
-//     cahssis,
-// } APPLICATION_TYPE_T;
+typedef enum
+{
+    MOTOR_START = 0x001 << 0,
+    MOTOR_OFF = 0x001 << 1,
+    MOTOR_SPEED_LOOP_EN = 0x001 << 2,
+    MOTOR_SPEED_LOOP_DISEN = 0x001 << 3,
+    MOTOR_POS_LOOP_EN = 0x001 << 4,
+    MOTOR_POS_LOOP_DISEN = 0x001 << 5,
+    MOTOR_GET_SPEED = 0x001 << 6,
+    MOTOR_GET_POS = 0x001 << 7,
+    MOTOR_GET_SPEED_Kp = 0x001 << 8,
+    MOTOR_GET_SPEED_Ki = 0x001 << 9,
+    MOTOR_GET_POS_Kp = 0x001 << 10,
+    MOTOR_GET_SPEED_Kd = 0x001 << 11,
+} Vofa_motor_Ctrl_state_e;
 
 // 显示的数据
 typedef enum
@@ -46,28 +55,28 @@ typedef struct
     float speed_Ki;
     float pos_Kp;
     float pos_Kd;
+
+    Vofa_motor_Ctrl_state_e vofa_motor_en;
+
 } VOFA_TASK_HANDKER_TYPE;
 
-typedef union
+typedef __packed struct
 {
+    uint8_t char_check[2];
+    uint8_t char_type;
     float float_data;
-    uint8_t char_table[4];
 } Resolve_Typedef;
 
-// extern float speed_ref;
-// extern float pos_ref;
-// extern float speed_Kp;
-// extern float speed_Ki;
-// extern float pos_Kp;
-// extern float pos_Kd;
+typedef Resolve_Typedef RX_pack;
 
 extern fp32 vofa_send_data_pack[VOFA_FEEDBACK_COUNT];
-extern Resolve_Typedef Rece_aray[2];
+extern RX_pack Rece_aray;
+extern RX_pack *Rece_aray_ptr;
 extern VOFA_TASK_HANDKER_TYPE vofa_para;
 extern VOFA_TASK_HANDKER_TYPE *vofa_para_ptr;
 // 发送数据包
 
-void vofa_rece_unpack(VOFA_TASK_HANDKER_TYPE *handler, uint8_t motor);
+void vofa_rece_unpack_HOOK(VOFA_TASK_HANDKER_TYPE *handler, uint8_t motor);
 
 // 将想要显示的数据填入发送包中
 void vofa_data_into_pack(fp32 *vofa_send_data_pack);

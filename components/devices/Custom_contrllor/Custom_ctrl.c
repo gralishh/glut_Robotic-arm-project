@@ -62,8 +62,7 @@ void Custom_Ctrl_Task(void* para)
   {
     uart7_length = UART7_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
-    if(IS_HEADER(
-      (0)) )  
+    if (IS_HEADER(UART7_At(0)))
     {
       if(uart7_length >= PACK_LENGTH)
         Custom_Ctrl_unpack();

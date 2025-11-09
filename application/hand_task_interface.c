@@ -401,8 +401,8 @@ void hand_task_mode_flush()
     else if (switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
-      //__SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      //__SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
