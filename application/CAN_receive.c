@@ -87,7 +87,7 @@ const motor_measure_t *get_Chassis_Motor_Measure_Point(uint8_t i)
  */
 void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uint8_t* rx_message) 
 {
-  __External_ecd_can_feedback_hook(CANx,rx_header->Identifier,rx_message);
+  
 
 
 	if(CANx == &hfdcan2)
@@ -144,6 +144,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 	}
 	else//CAN3
 	{
+	__External_ecd_can_feedback_hook(CANx,rx_header->Identifier,rx_message);
     __DJI_CANBus_feedback_update(&DJI_CAN3_Bus_ctrl,rx_message,rx_header->Identifier);
 		switch (rx_header->Identifier)
 		{	

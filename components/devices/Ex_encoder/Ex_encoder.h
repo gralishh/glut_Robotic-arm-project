@@ -57,6 +57,7 @@ fp32 External_ecd_get_angle(External_ecd_handler_t* ecd);
 fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd);
 
 void External_ecd_oid_set_id(FDCAN_HandleTypeDef* CANx,uint16_t oid_id,uint16_t new_id);
+void External_ecd_oid_set_mode(FDCAN_HandleTypeDef *CANx, uint16_t oid_id, uint16_t commmand, uint16_t set_data, uint16_t set_other_ata);
 
 void __External_ecd_usart_feedback_hook(void);
 void __External_ecd_can_feedback_hook(FDCAN_HandleTypeDef* CANX,uint16_t id,uint8_t* msg);

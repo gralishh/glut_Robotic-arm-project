@@ -364,8 +364,12 @@ void gimbal_task_output()
   if(__GET_MOTOR_CTRL_MODE(DJI_UL)==POS_LOOP)
     __SET_MOTOR_ANGLE(DJI_UL,(HANDLER_PTR->joint_angle[DJI_UL]-UL_MAP_D)/UL_MAP_K);
 
+  //测试抽绳编码器时的代码
+  //External_ecd_init_on_can(&External_ecd_handler, 819, OID_ECD, 0x01, &hfdcan3, 0x01);
+  //External_ecd_oid_set_mode(&hfdcan3, 0x01, 0x06, 0x00, 0x00); // 抽绳编码器设置发送指令（暂时测试使用，之后请分层）
+
   /*motor output*/
-  for(index=0;index<GIMBAL_MOTOR_COUNT;index++)
+  for (index = 0; index < GIMBAL_MOTOR_COUNT; index++)
   {
     GENERAL_MOTOR_SET_OUTPUT(__GET_MOTOR_INSTANCE(index),
     __GET_MOTOR_TYPE(index),

@@ -18,34 +18,32 @@ VOFA_TASK_HANDKER_TYPE *vofa_para_ptr = &vofa_para;
 
 void vofa_rx_unpack(void)
 {
-    //UART7_Recv((void *)&Rece_pack, 2 * sizeof(uint8_t));
-    //if (Rece_pack.char_check[0] == 0xAA && Rece_pack.char_check[1] == 0xEE)
-       // UART7_Recv((void *)&((&Rece_pack)->char_type), sizeof(uint8_t) + sizeof(float));
-	
+    // UART7_Recv((void *)&Rece_pack, 2 * sizeof(uint8_t));
+    // if (Rece_pack.char_check[0] == 0xAA && Rece_pack.char_check[1] == 0xEE)
+    //  UART7_Recv((void *)&((&Rece_pack)->char_type), sizeof(uint8_t) + sizeof(float));
+
     static uint32_t uart7_length = 0;
-    
+
     uart7_length = UART7_GetDataCount();
- 
-       // UART7_Recv((void *)&Rece_pack, 2 * sizeof(uint8_t));// 先接收前2字节检查帧头
 
-		if (UART7_At(0) == 0xAA && UART7_At(1) == 0xEE)
-		{
-			if (uart7_length >= (3*sizeof(uint8_t) + sizeof(float)))
-			{
-				UART7_Recv((void *)&Rece_pack,3 * sizeof(uint8_t) + sizeof(float));// 接收剩余的数据
-			}
-		}	
-		else if(uart7_length > 100)
-		{
-		  UART7_Drop(uart7_length);
-		}	
-		else 
-			{
-				UART7_Drop(1);
-			}	
-       
+    // UART7_Recv((void *)&Rece_pack, 2 * sizeof(uint8_t));// 先接收前2字节检查帧头
+
+    if (UART7_At(0) == 0xAA && UART7_At(1) == 0xEE)
+    {
+        if (uart7_length >= (3 * sizeof(uint8_t) + sizeof(float)))
+        {
+            UART7_Recv((void *)&Rece_pack, 3 * sizeof(uint8_t) + sizeof(float)); // 接收剩余的数据
+        }
+    }
+    else if (uart7_length > 100)
+    {
+        UART7_Drop(uart7_length);
+    }
+    else
+    {
+        UART7_Drop(1);
+    }
 }
-
 
 //  关于接收
 void vofa_rece_set_type(VOFA_TASK_HANDKER_TYPE *handler, RX_pack *Rece_pack_ptr)
@@ -100,6 +98,8 @@ void vofa_rece_set_type(VOFA_TASK_HANDKER_TYPE *handler, RX_pack *Rece_pack_ptr)
         break;
     }
 }
+
+// 加点保护
 void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, Joint_Motor_t *motor_handler, uint8_t motor)
 {
     if (handler->vofa_motor_en & MOTOR_START)
@@ -171,8 +171,8 @@ void vofa_uart_task(void *argument)
         vofa_rece_set_type(vofa_para_ptr, &Rece_pack);
         vofa_type_set_motor_HOOK(vofa_para_ptr, &DM_Motor_J2, DM_J2);
         // vofa发送调用
-        //vofa_data_into_pack(vofa_send_data_pack);
-        //Vofa_JustFloat(&vofa_handler, vofa_send_data_pack, VOFA_FEEDBACK_COUNT);
+        vofa_data_into_pack(vofa_send_data_pack);
+        Vofa_JustFloat(&vofa_handler, vofa_send_data_pack, VOFA_FEEDBACK_COUNT);
         osDelay(1);
     }
 }

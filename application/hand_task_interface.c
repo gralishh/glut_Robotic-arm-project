@@ -1182,7 +1182,7 @@ void hand_pitch_reset()
   __SET_JOINT_ANGLE(DJI_HE_R, HANDLER_PTR->feedback_joint_angle[DJI_HE_R]);
   __SET_MOTOR_NONFORCE(DJI_HE_R);
 }
-
+//当检测到掉电时通过general_motor_module在电机内部重新初始化，然后标志位在hand中读取到在单独甩该电机大臂
 void __hand_move_reset(void)
 {
   if (__IS_MOTOR_OFFLINE(AK_J1))
