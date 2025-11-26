@@ -144,7 +144,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef* CANx, FDCAN_RxHeaderTypeDef* rx_header,uin
 	}
 	else//CAN3
 	{
-	__External_ecd_can_feedback_hook(CANx,rx_header->Identifier,rx_message);
+	__External_ecd_can_feedback_hook(rx_header->Identifier,rx_message);
     __DJI_CANBus_feedback_update(&DJI_CAN3_Bus_ctrl,rx_message,rx_header->Identifier);
 		switch (rx_header->Identifier)
 		{	

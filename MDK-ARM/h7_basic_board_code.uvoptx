@@ -383,17 +383,12 @@
         <Ww>
           <count>44</count>
           <WinNumber>1</WinNumber>
-          <ItemText>External_ecd_handler</ItemText>
+          <ItemText>display</ItemText>
         </Ww>
         <Ww>
           <count>45</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Ex_ecd_bus</ItemText>
-        </Ww>
-        <Ww>
-          <count>46</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>oid_ecd_feedback</ItemText>
+          <ItemText>uplift_ecd</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

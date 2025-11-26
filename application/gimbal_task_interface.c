@@ -150,9 +150,9 @@ void gimbal_task_init()
   servo_init(PWM2,532, 380, 500);
   servo_enable(PWM2);
 
-  External_ecd_init_on_can(&uplift_ecd,0x3ff,OID_ECD,0x004,&hfdcan3,0x000);
-
-  __SET_JOINT_LIMIT(GIMBAL_UPLIFT,UL_MIN_ENCODE,UL_MAX_ENCODE);
+ //External_ecd_init_on_can(&uplift_ecd,0x3ff,OID_ECD,0x04,&hfdcan3,0x000);
+  External_can_ecd_init(&uplift_ecd, 0x14A0, 0x0904, OID_ECD, ECD_CAN_COMMUNICATION, 0x04, 0x04);
+  __SET_JOINT_LIMIT(GIMBAL_UPLIFT, UL_MIN_ENCODE, UL_MAX_ENCODE);
 
   while(toe_is_error(TOE_UPLIFT));
 
@@ -365,7 +365,6 @@ void gimbal_task_output()
     __SET_MOTOR_ANGLE(DJI_UL,(HANDLER_PTR->joint_angle[DJI_UL]-UL_MAP_D)/UL_MAP_K);
 
   //测试抽绳编码器时的代码
-  //External_ecd_init_on_can(&External_ecd_handler, 819, OID_ECD, 0x01, &hfdcan3, 0x01);
   //External_ecd_oid_set_mode(&hfdcan3, 0x01, 0x06, 0x00, 0x00); // 抽绳编码器设置发送指令（暂时测试使用，之后请分层）
 
   /*motor output*/
