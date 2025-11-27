@@ -7,6 +7,8 @@
 #include "task.h"
 
 #include "dm4310_drv.h"
+
+#define PI 3.14159f
 typedef enum
 {
     MOTOR_START = 0x001 << 0,
@@ -37,16 +39,22 @@ typedef enum
     //  VOFA_DJI_HE_L_FB,
     //   VOFA_DJI_HE_R_FB,
 
-    VOFA_DJI_LF,
-    // VOFA_DJI_RF,
-    // VOFA_DJI_LB,
-    // DJI_RB,
-    VOFA_DJI_LF_FB,
-    // VOFA_DJI_RF_FB,
-    // VOFA_DJI_LB_FB,
-    // DJI_RB_FB,
+    // VOFA_DJI_LF,
+    //  VOFA_DJI_RF,
+    //  VOFA_DJI_LB,
+    //  DJI_RB,
+    // VOFA_DJI_LF_FB,
+    //  VOFA_DJI_RF_FB,
+    //  VOFA_DJI_LB_FB,
+    //  DJI_RB_FB,
+
+    vofa_up_s,
+    vofa_up_s_f,
+    vofa_up_p,
+    vofa_up_p_f,
     VOFA_FEEDBACK_COUNT,
-} VOFA_FEEDBACK_INDEX;
+}
+VOFA_FEEDBACK_INDEX;
 
 typedef struct
 {

@@ -402,7 +402,7 @@ void hand_task_mode_flush()
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
-      //__SET_STRUCT_MODE(HAND_MODE_IDLE);
+    //__SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
@@ -416,7 +416,7 @@ void hand_task_mode_flush()
     __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
 
-  static uint8_t mode_var = 0;//没用
+  static uint8_t mode_var = 0; // 没用
   if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
   {
     //__BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
@@ -524,8 +524,8 @@ void hand_task_set_output()
     __SET_MOTOR_CTRL_MODE(DJI_J3, OFFLINE);
     __SET_MOTOR_OFFLINE(DM_J2);
   }
-//加个按键
- // __hand_move_reset();
+  // 加个按键
+  //  __hand_move_reset();
 
   if (toe_is_error(TOE_HE_L) &&
       toe_is_error(TOE_HE_R) &&
@@ -1182,7 +1182,7 @@ void hand_pitch_reset()
   __SET_JOINT_ANGLE(DJI_HE_R, HANDLER_PTR->feedback_joint_angle[DJI_HE_R]);
   __SET_MOTOR_NONFORCE(DJI_HE_R);
 }
-//当检测到掉电时通过general_motor_module在电机内部重新初始化，然后标志位在hand中读取到在单独甩该电机大臂
+// 当检测到掉电时通过general_motor_module在电机内部重新初始化，然后标志位在hand中读取到在单独甩该电机大臂
 void __hand_move_reset(void)
 {
   if (__IS_MOTOR_OFFLINE(AK_J1))

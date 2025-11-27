@@ -10,6 +10,8 @@
 #include "hand_task_interface.h"
 #include "chassis_task.h"
 
+extern DJI_Motor_Ctrl_t DJI_Motor_uplift;
+extern fp32 vofa_output_speed;
 fp32 vofa_send_data_pack[VOFA_FEEDBACK_COUNT];
 RX_pack Rece_pack;
 
@@ -157,8 +159,13 @@ void vofa_data_into_pack(fp32 *vofa_send_data_pack)
     //        vofa_send_data_pack[i + HAND_MOTOR_COUNT-1] = hand_task_handler.feedback_motor_angle[i];
     //    }
 
-    vofa_send_data_pack[0] = chassis_task_handler.motor_speed[0];
-    vofa_send_data_pack[1] = chassis_task_handler.feedback_motor_speed[0];
+    // vofa_send_data_pack[0] = chassis_task_handler.motor_speed[0];
+    // vofa_send_data_pack[1] = chassis_task_handler.feedback_motor_speed[0];
+    //显示抬升数据
+    vofa_send_data_pack[0] = vofa_output_speed;
+    vofa_send_data_pack[1] = (DJI_Motor_uplift.recv_pack).speed_rpm;
+    vofa_send_data_pack[2] = DJI_Motor_uplift.set_angle;
+    vofa_send_data_pack[3] = (DJI_Motor_uplift.circle_count) * PI * 2 + (DJI_Motor_uplift.ecd_angle);
 }
 
 void vofa_uart_task(void *argument)
@@ -167,12 +174,12 @@ void vofa_uart_task(void *argument)
     while (1)
     {
         // vofa接收调用
-        vofa_rx_unpack();
-        vofa_rece_set_type(vofa_para_ptr, &Rece_pack);
-        vofa_type_set_motor_HOOK(vofa_para_ptr, &DM_Motor_J2, DM_J2);
+        // vofa_rx_unpack();
+        // vofa_rece_set_type(vofa_para_ptr, &Rece_pack);
+        // vofa_type_set_motor_HOOK(vofa_para_ptr, &DM_Motor_J2, DM_J2);
         // vofa发送调用
-        vofa_data_into_pack(vofa_send_data_pack);
-        Vofa_JustFloat(&vofa_handler, vofa_send_data_pack, VOFA_FEEDBACK_COUNT);
+        // vofa_data_into_pack(vofa_send_data_pack);
+        // Vofa_JustFloat(&vofa_handler, vofa_send_data_pack, VOFA_FEEDBACK_COUNT);
         osDelay(1);
     }
 }

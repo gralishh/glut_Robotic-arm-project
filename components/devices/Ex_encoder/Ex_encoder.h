@@ -4,6 +4,8 @@
 #include "main.h"
 #include "struct_typedef.h"
 
+#define ABS(X) ((X) > 0 ? (X) : -(X))
+
 typedef struct __External_ecd_handler_t External_ecd_handler_t;
 typedef struct __External_ecd_bus_handler_t External_ecd_bus_handler_t;
 
@@ -33,6 +35,8 @@ struct __External_ecd_handler_t{
   uint32_t current_ecd;
   uint32_t offset_ecd;
   uint32_t max_ecd;
+  uint32_t process_ecd;
+  uint32_t target_ecd;
 
   /*CAN总线专用*/
   uint16_t bus_id;
@@ -53,7 +57,6 @@ struct __External_ecd_bus_handler_t{
 /*只能有一个*/
 extern External_ecd_bus_handler_t Ex_ecd_bus;//总的句柄
 
-//void External_ecd_init(External_ecd_handler_t* ecd,uint32_t max_ecd,ecd_type_e type,uint16_t device_id,FDCAN_HandleTypeDef* can,uint16_t bus_id);
 void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32_t offset_ecd, ecd_type_e type, ecd_protocol_type_e protocol_type, uint16_t device_id, uint16_t bus_id);
 void External_uart_ecd_init(void);
 
@@ -61,7 +64,7 @@ uint32_t External_ecd_get_value(External_ecd_handler_t *ecd);
 fp32 External_ecd_get_angle(External_ecd_handler_t* ecd);
 fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd);
 
-//void External_ecd_oid_set_id(FDCAN_HandleTypeDef* CANx,uint16_t oid_id,uint16_t new_id);
+void External_ecd_oid_set_id(FDCAN_HandleTypeDef* CANx,uint16_t oid_id,uint16_t new_id);
 void External_ecd_oid_set_mode(FDCAN_HandleTypeDef *CANx, uint16_t oid_id, uint16_t commmand, uint16_t set_data, uint16_t set_other_ata);
 
 //void __External_ecd_usart_feedback_hook(void);

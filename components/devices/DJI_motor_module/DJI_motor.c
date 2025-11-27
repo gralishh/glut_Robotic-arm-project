@@ -4,6 +4,9 @@
 #include <string.h>
 #include "bsp_buzzer.h"
 
+//vofa测试
+//fp32 vofa_output_speed = 0.0f;
+
 // ABS
 #define ABS(X) ((X) > 0 ? (X) : (-X))
 
@@ -87,13 +90,13 @@ if(__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_STALL_DETECT_INIT)) \
     }                                                                        \
   }
 
-/**
- * @brief 电机初始化
- * @param[out] motor 电机控制句柄
- * @param[in] bus 电机搭载can总线句柄
- * @param[in] id 电机can总线id(0x201~0x208)
- */
-void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Type_e motor_type, uint16_t id)
+    /**
+     * @brief 电机初始化
+     * @param[out] motor 电机控制句柄
+     * @param[in] bus 电机搭载can总线句柄
+     * @param[in] id 电机can总线id(0x201~0x208)
+     */
+    void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Type_e motor_type, uint16_t id)
 {
   memset((void *)motor, 0x0, sizeof(DJI_Motor_Ctrl_t));
   motor->type = motor_type;
@@ -478,6 +481,9 @@ static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t *motor)
   }
 
   __DJI_Motor_Ctrl_stall_detect(motor);
+
+  //vofa测试
+  //vofa_output_speed = output_speed;
 
   return PID_Calc(&(motor->pid_speed_loop),
                   __DJI_Motor_Ctrl_get_speed(motor),
