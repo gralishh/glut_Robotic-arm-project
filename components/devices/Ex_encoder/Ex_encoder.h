@@ -2,6 +2,8 @@
 #define __EX_ECD__
 
 #include "main.h"
+#include "DJI_motor.h"
+#include "pid.h"
 #include "struct_typedef.h"
 
 #define ABS(X) ((X) > 0 ? (X) : -(X))
@@ -36,12 +38,14 @@ struct __External_ecd_handler_t{
   uint32_t offset_ecd;
   uint32_t max_ecd;
   uint32_t process_ecd;
-  uint32_t target_ecd;
+  //uint32_t target_ecd;
+
+  PidTypeDef pid_oid_loop;
 
   /*CAN总线专用*/
   uint16_t bus_id;
   uint16_t device_id;//can回调传回来的数据中含有的id
-  uint16_t display_id;//测试使用
+  //uint16_t display_id;//测试使用
 
   /*usart专用*/
   // 可以指向有相同类型的输入出的函数，可以根据条件选择不同指向函数来实现
@@ -61,13 +65,19 @@ void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32
 void External_uart_ecd_init(void);
 
 uint32_t External_ecd_get_value(External_ecd_handler_t *ecd);
-fp32 External_ecd_get_angle(External_ecd_handler_t* ecd);
-fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd);
+//fp32 External_ecd_get_angle(External_ecd_handler_t* ecd);
+//fp32* External_ecd_get_angle_pointer(External_ecd_handler_t* ecd);
+void __External_ecd_get_process_value(External_ecd_handler_t *ecd);
 
 void External_ecd_oid_set_id(FDCAN_HandleTypeDef* CANx,uint16_t oid_id,uint16_t new_id);
 void External_ecd_oid_set_mode(FDCAN_HandleTypeDef *CANx, uint16_t oid_id, uint16_t commmand, uint16_t set_data, uint16_t set_other_ata);
 
-//void __External_ecd_usart_feedback_hook(void);
-void __External_ecd_can_feedback_hook(uint16_t id,uint8_t* msg);
+void DJI_Motor_Oid_PID_init(External_ecd_handler_t *ecd, enum PID_MODE pid_mode,
+                            fp32 Kp, fp32 Ki, fp32 Kd,
+                            fp32 max_out, fp32 max_iout);
+fp32 __ADD_OID_LENGTH_OUTPUT(uint32_t value, External_ecd_handler_t *ecd);
+
+// void __External_ecd_usart_feedback_hook(void);
+void __External_ecd_can_feedback_hook(uint16_t id, uint8_t *msg);
 
 #endif

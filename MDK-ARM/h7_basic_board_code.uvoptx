@@ -313,92 +313,67 @@
         <Ww>
           <count>30</count>
           <WinNumber>1</WinNumber>
-          <ItemText>\\h7_basic_board_code\../components/devices/M4310_module/dm4310_drv.c\DM_Motor_J2.Kp</ItemText>
+          <ItemText>DJI_CAN2_Bus_ctrl</ItemText>
         </Ww>
         <Ww>
           <count>31</count>
           <WinNumber>1</WinNumber>
-          <ItemText>chassis_task_handler_ptr,0x0A</ItemText>
+          <ItemText>DM_Motor_J2</ItemText>
         </Ww>
         <Ww>
           <count>32</count>
           <WinNumber>1</WinNumber>
-          <ItemText>chassis_task_handler,0x0A</ItemText>
+          <ItemText>gimbal_task_handler,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>33</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler,0x0A</ItemText>
+          <ItemText>DJI_Motor_headendL</ItemText>
         </Ww>
         <Ww>
           <count>34</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler_ptr</ItemText>
+          <ItemText>DJI_Motor_headendR</ItemText>
         </Ww>
         <Ww>
           <count>35</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_CAN2_Bus_ctrl</ItemText>
+          <ItemText>CC_handler,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>36</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2</ItemText>
+          <ItemText>Rece_pack,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>37</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gimbal_task_handler,0x0A</ItemText>
+          <ItemText>vofa_para,0x10</ItemText>
         </Ww>
         <Ww>
           <count>38</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendL</ItemText>
+          <ItemText>DM_Motor_J2</ItemText>
         </Ww>
         <Ww>
           <count>39</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendR</ItemText>
+          <ItemText>display</ItemText>
         </Ww>
         <Ww>
           <count>40</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CC_handler,0x0A</ItemText>
+          <ItemText>uplift_ecd,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>41</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Rece_pack,0x0A</ItemText>
+          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>42</count>
           <WinNumber>1</WinNumber>
-          <ItemText>vofa_para,0x10</ItemText>
-        </Ww>
-        <Ww>
-          <count>43</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2</ItemText>
-        </Ww>
-        <Ww>
-          <count>44</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>display</ItemText>
-        </Ww>
-        <Ww>
-          <count>45</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>uplift_ecd,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>46</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>47</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>vofa_send_data_pack</ItemText>
+          <ItemText>gimbal_task_handler_ptr</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

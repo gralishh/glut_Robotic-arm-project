@@ -35,6 +35,8 @@ extern FDCAN_HandleTypeDef hfdcan3;
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
+External_ecd_handler_t *uplift_ecd_ptr = &uplift_ecd;
+
 static uint8_t pump1 = 0;
 static uint8_t pump2 = 0;
 
@@ -52,6 +54,8 @@ static void __pump_nonctrl(void);
 
 static void __gimbal_move_GGM(void);
 static void __gimbal_move_SM(void);
+void __gimbal_oid_rc_ctrl(void);
+
 
 /*general handler method*/
 /**
@@ -119,12 +123,13 @@ static void __gimbal_move_SM(void);
     (HANDLER_PTR->motor_ctrl_mode[index] = POS_LOOP);                                                    \
   }
 
-
-// #define __ADD_ROPE_LENGTH(index, value)                                                                 \
-//   {                                                                                                     \
-//     (uplift_ecd-> = __JOINT_LIMIT(index, HANDLER_PTR->joint_angle[index] + (value))); \
-//     (HANDLER_PTR->motor_ctrl_mode[index] = POS_LOOP);                                                   \
-//   }
+//oid_set
+#define __OID_LIMIT(oid_ptr, value) angle_limit(value, oid_ptr->max_ecd - oid_ptr->offset_ecd, 0)
+#define __ADD_ROPE_LENGTH(oid_ptr, value)                                                             \
+  {                                                                                                   \
+    (HANDLER_PTR->oid_length = __OID_LIMIT(oid_ptr, HANDLER_PTR->oid_length + (value)));              \
+    (HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] = SPEED_LOOP);                                       \
+  }
 
 /*时间控制*/
 #define __RESET_TICKS() (HANDLER_PTR->tick = 0)
@@ -167,9 +172,11 @@ void gimbal_task_init()
   __SET_MOTOR_INSTANCE(DJI_UL, &DJI_Motor_uplift);
   __SET_MOTOR_TYPE(DJI_UL, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_uplift, &DJI_CAN1_Bus_ctrl, M3508, 0x205);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift, PID_POSITION, 21, 0, 0.001, 6000, 500);
+	//多圈计算sp的pid
+  //DJI_Motor_Speed_PID_init(&DJI_Motor_uplift, PID_POSITION, 21, 0, 0.001, 6000, 500);
+	DJI_Motor_Speed_PID_init(&DJI_Motor_uplift, PID_POSITION, 30, 0.01, 0.001, 6000, 500);
   DJI_Motor_Pos_PID_init(&DJI_Motor_uplift, PID_POSITION, 80, 0.01, 0, 1900, 800);
-
+  DJI_Motor_Oid_PID_init(&uplift_ecd, PID_POSITION, 9, 0, 0.02, 5000, 400);
 
   DJI_Motor_set_reverse(&DJI_Motor_uplift);
   DJI_Motor_uplift.circle_count_flag = 1;
@@ -260,8 +267,9 @@ void gimbal_task_mode_flush()
     if (switch_is_down(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
     else if (switch_is_mid(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
-    else if (switch_is_up(get_remote_control_point()->rc.s[0]))
+     // __SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);
+      __SET_STRUCT_MODE(GIMBAL_OID_RC_CTRL);
+        else if (switch_is_up(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(GIMBAL_MODE_UPLIFT_RC_CTRL);
   }
   else if (switch_is_up(get_remote_control_point()->rc.s[1]))
@@ -381,6 +389,9 @@ void gimbal_task_set_output()
   case GIMBAL_MODE_SM_CTRL:
     __gimbal_move_SM();
     break;
+  case GIMBAL_OID_RC_CTRL:
+    __gimbal_oid_rc_ctrl();
+    break;
   case GIMBAL_MODE_NONFORCE:
   default:
     __gimbal_nonforce();
@@ -445,10 +456,13 @@ void __gimbal_rc_ctrl()
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
 }
 
-// void __gimbal_oid_rc_ctrl()
-// {
-//   = External_ecd_get_process_value(&uplift_ecd);
-// }
+void __gimbal_oid_rc_ctrl()
+{
+  // __ADD_ROPE_LENGTH(&uplift_ecd, (uint32_t)(RC_CTRL_PTR->rc.ch[1] * 0.0024f));
+  __ADD_ROPE_LENGTH(uplift_ecd_ptr, (RC_CTRL_PTR->rc.ch[1] * 0.0024f));
+  //uplift_ecd.target_ecd = uplift_ecd.process_ecd + (int32_t)(RC_CTRL_PTR->rc.ch[1] * 0.20f);
+  HANDLER_PTR->motor_speed[GIMBAL_UPLIFT] = __ADD_OID_LENGTH_OUTPUT(HANDLER_PTR->oid_length, &uplift_ecd);
+}
 
 void __gimbal_uplift_rc_ctrl()
 {

@@ -105,11 +105,11 @@ int32_t ecd_sum;
 fp32 angle_sum;
 
 /*¶Â×ª¼ì²â*/
-  uint16_t stall_loop_count;
-  uint16_t stall_loop_count_compare;
-  fp32 stall_delta_angle;
-  uint8_t stall_current;
-  uint8_t stall_flag;
+uint16_t stall_loop_count;
+uint16_t stall_loop_count_compare;
+fp32 stall_delta_angle;
+uint8_t stall_current;
+uint8_t stall_flag;
 
 /*µôµç¼ì²â*/
   uint16_t non_feedback_loop_count;

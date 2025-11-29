@@ -19,15 +19,17 @@ typedef enum{
   GIMBAL_MOTOR_COUNT,
 }GIMBAL_MOTOR_INDEX;
 
-typedef enum{
-  GIMBAL_MODE_NONFORCE=0x00,
+typedef enum
+{
+  GIMBAL_MODE_NONFORCE = 0x00,
   GIMBAL_MODE_IDLE,
   GIMBAL_MODE_RC_CTRL,
   GIMBAL_MODE_UPLIFT_RC_CTRL,
   GIMBAL_MODE_CUSTOM_CTRL,
   GIMBAL_MODE_SM_CTRL,
+  GIMBAL_OID_RC_CTRL,
   GIMBAL_MODE_COUNT,
-}GIMBAL_CTRL_MODE;
+} GIMBAL_CTRL_MODE;
 
 typedef struct{
   /*instance array*/
@@ -55,6 +57,8 @@ typedef struct{
   fp32 max_joint_angle[GIMBAL_JOINT_COUNT];
   fp32 min_joint_angle[GIMBAL_JOINT_COUNT];
 
+  /*oid*/
+  uint32_t oid_length;
   uint8_t tick_count_halt;
   int64_t tick;
   int64_t tick_stack[5];// 具体使用取决于任务

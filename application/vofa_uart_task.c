@@ -5,11 +5,12 @@
 #include "vofa_uart_task.h"
 #include "general_motor_module.h"
 #include "cmsis_os2.h"
-
+#include "gimbal_task.h"
 #include "hand_task.h"
-#include "hand_task_interface.h"
+#include "Ex_encoder.h"
 #include "chassis_task.h"
 
+extern External_ecd_handler_t uplift_ecd;
 extern DJI_Motor_Ctrl_t DJI_Motor_uplift;
 extern fp32 vofa_output_speed;
 fp32 vofa_send_data_pack[VOFA_FEEDBACK_COUNT];
@@ -162,10 +163,12 @@ void vofa_data_into_pack(fp32 *vofa_send_data_pack)
     // vofa_send_data_pack[0] = chassis_task_handler.motor_speed[0];
     // vofa_send_data_pack[1] = chassis_task_handler.feedback_motor_speed[0];
     //显示抬升数据
-    vofa_send_data_pack[0] = vofa_output_speed;
-    vofa_send_data_pack[1] = (DJI_Motor_uplift.recv_pack).speed_rpm;
-    vofa_send_data_pack[2] = DJI_Motor_uplift.set_angle;
-    vofa_send_data_pack[3] = (DJI_Motor_uplift.circle_count) * PI * 2 + (DJI_Motor_uplift.ecd_angle);
+   vofa_send_data_pack[0] = vofa_output_speed;
+   vofa_send_data_pack[1] = (DJI_Motor_uplift.recv_pack).speed_rpm;
+//    vofa_send_data_pack[2] = DJI_Motor_uplift.set_angle;
+//    vofa_send_data_pack[3] = (DJI_Motor_uplift.circle_count) * PI * 2 + (DJI_Motor_uplift.ecd_angle);
+   vofa_send_data_pack[2] = uplift_ecd.process_ecd;
+   vofa_send_data_pack[3] = gimbal_task_handler.oid_length;
 }
 
 void vofa_uart_task(void *argument)
@@ -178,8 +181,8 @@ void vofa_uart_task(void *argument)
         // vofa_rece_set_type(vofa_para_ptr, &Rece_pack);
         // vofa_type_set_motor_HOOK(vofa_para_ptr, &DM_Motor_J2, DM_J2);
         // vofa发送调用
-        // vofa_data_into_pack(vofa_send_data_pack);
-        // Vofa_JustFloat(&vofa_handler, vofa_send_data_pack, VOFA_FEEDBACK_COUNT);
+        vofa_data_into_pack(vofa_send_data_pack);
+        Vofa_JustFloat(&vofa_handler, vofa_send_data_pack, VOFA_FEEDBACK_COUNT);
         osDelay(1);
     }
 }
