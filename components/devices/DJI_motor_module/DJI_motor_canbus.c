@@ -66,7 +66,8 @@ void __DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus)
     DJI_Motor_Ctrl_t* motor = __DJI_CANBus_get_motor_instance(bus,index);
     __DJI_Motor_ctrl_loop(motor);
   }
-
+  chassis_power_control_with_supercap();
+  
   if(bus->enable)
   {
     CanSendMess(bus->can,0x200,bus->output_current200H);

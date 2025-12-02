@@ -96,7 +96,7 @@ if(__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_STALL_DETECT_INIT)) \
      * @param[in] bus 电机搭载can总线句柄
      * @param[in] id 电机can总线id(0x201~0x208)
      */
-    void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Type_e motor_type, uint16_t id)
+void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Type_e motor_type, uint16_t id)
 {
   memset((void *)motor, 0x0, sizeof(DJI_Motor_Ctrl_t));
   motor->type = motor_type;

@@ -16,6 +16,7 @@ void chassis_task(void *argument)
     chassis_task_mode_flush();
     chassis_task_set_output();
     chassis_task_output();
+
     if(!(chassis_task_handler_ptr->tick_count_halt))
       chassis_task_handler_ptr->tick++;
     osDelay(1);

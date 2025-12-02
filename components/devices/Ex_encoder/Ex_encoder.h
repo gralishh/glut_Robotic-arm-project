@@ -35,7 +35,7 @@ struct __External_ecd_handler_t{
   ecd_type_e type;//编码器数量类型
   
   uint32_t current_ecd;
-  uint32_t offset_ecd;
+  uint32_t min_ecd;
   uint32_t max_ecd;
   uint32_t process_ecd;
   //uint32_t target_ecd;
@@ -61,7 +61,7 @@ struct __External_ecd_bus_handler_t{
 /*只能有一个*/
 extern External_ecd_bus_handler_t Ex_ecd_bus;//总的句柄
 
-void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32_t offset_ecd, ecd_type_e type, ecd_protocol_type_e protocol_type, uint16_t device_id, uint16_t bus_id);
+void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32_t min_ecd, ecd_type_e type, ecd_protocol_type_e protocol_type, uint16_t device_id, uint16_t bus_id);
 void External_uart_ecd_init(void);
 
 uint32_t External_ecd_get_value(External_ecd_handler_t *ecd);

@@ -12,7 +12,7 @@
 // oid编码器在总线上有一个id，数据域中也有一个id
 External_ecd_bus_handler_t Ex_ecd_bus = {};
 
-void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32_t offset_ecd, ecd_type_e type_count, ecd_protocol_type_e protocol_type, uint16_t device_id, uint16_t bus_id)
+void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32_t min_ecd, ecd_type_e type_count, ecd_protocol_type_e protocol_type, uint16_t device_id, uint16_t bus_id)
 {
 
   Ex_ecd_bus.can_communication_ecd[type_count] = ecd;
@@ -24,7 +24,7 @@ void External_can_ecd_init(External_ecd_handler_t *ecd, uint32_t max_ecd, uint32
   ecd->device_id = device_id;
 
   ecd->max_ecd = max_ecd;
-  ecd->offset_ecd = offset_ecd;
+  ecd->min_ecd = min_ecd;
 }
 
 // 处理函数
@@ -40,11 +40,11 @@ void __External_ecd_get_process_value(External_ecd_handler_t *ecd)
   // 设定范围
   if (ecd->current_ecd > ecd->max_ecd)
     ecd->current_ecd = ecd->max_ecd;
-  else if (ecd->current_ecd < ecd->offset_ecd)
-    ecd->current_ecd = ecd->offset_ecd;
+  else if (ecd->current_ecd < ecd->min_ecd)
+    ecd->current_ecd = ecd->min_ecd;
 
   // 调节零点
-  ecd->process_ecd = ecd->current_ecd - ecd->offset_ecd;
+  ecd->process_ecd = ecd->current_ecd - ecd->min_ecd;
 
   // 设置死区
   if (ecd->process_ecd <= last_ecd + 2 && ecd->process_ecd >= last_ecd - 2)

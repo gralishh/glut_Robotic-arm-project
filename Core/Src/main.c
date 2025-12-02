@@ -320,7 +320,7 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of USART2_measure */
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
@@ -329,7 +329,7 @@ int main(void)
   GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
-  //HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+  HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
 
   /* creation of USART3_measure */
   USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);

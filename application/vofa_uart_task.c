@@ -10,6 +10,7 @@
 #include "Ex_encoder.h"
 #include "chassis_task.h"
 
+extern vofa_power_limit;
 extern External_ecd_handler_t uplift_ecd;
 extern DJI_Motor_Ctrl_t DJI_Motor_uplift;
 extern fp32 vofa_output_speed;
@@ -167,8 +168,9 @@ void vofa_data_into_pack(fp32 *vofa_send_data_pack)
    vofa_send_data_pack[1] = (DJI_Motor_uplift.recv_pack).speed_rpm;
 //    vofa_send_data_pack[2] = DJI_Motor_uplift.set_angle;
 //    vofa_send_data_pack[3] = (DJI_Motor_uplift.circle_count) * PI * 2 + (DJI_Motor_uplift.ecd_angle);
-   vofa_send_data_pack[2] = uplift_ecd.process_ecd;
-   vofa_send_data_pack[3] = gimbal_task_handler.oid_length;
+   vofa_send_data_pack[2] = gimbal_task_handler.oid_length;
+   vofa_send_data_pack[3] = uplift_ecd.process_ecd;
+	vofa_send_data_pack[4] = vofa_power_limit;
 }
 
 void vofa_uart_task(void *argument)

@@ -14,6 +14,9 @@
 #include "main.h"
 #include "Vofa.h"
 
+fp32 vofa_power_limit = 0;      // vofac查看输出功率
+//int16_t motor_current[4] = {0}; // 测试使用
+
 #define HANDLER chassis_task_handler
 #define HANDLER_PTR chassis_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
@@ -47,6 +50,7 @@ static void __chassis_idle_ctrl(void);
 static void __chassis_rc_ctrl(void);
 static void __chassis_rc_slow_ctrl(void);
 static void __chassis_union_rc_ctrl(void);
+get_botton_dji_motor_current();
 // void chassis_reset(void);
 
 /*general handler method*/
@@ -67,6 +71,11 @@ static void __chassis_union_rc_ctrl(void);
 #define __SET_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 1)
 #define __CLEAR_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 0)
 #define __IS_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index])
+
+/*获取电机设定目标值*/
+#define __GET_SET_MOTOR_ANGLE(index) (HANDLER_PTR->motor_angle[index])
+#define __GET_SET_MOTOR_SPEED(index) (HANDLER_PTR->motor_speed[index])
+#define __GET_SET_MOTOR_CURRENT(index) (HANDLER_PTR->motor_current[index])
 /*获取电机反馈*/
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
 #define __GET_MOTOR_SPEED(index) (HANDLER_PTR->feedback_motor_speed[index])
@@ -181,7 +190,6 @@ void chassis_task_init()
 void chassis_task_get_feedback()
 {
   uint16_t index;
-
   /*motor feedback*/
   for (index = 0; index < CHASSIS_MOTOR_COUNT; index++)
   {
@@ -527,5 +535,95 @@ void __chassis_union_rc_ctrl()
 //     __CLEAR_MOTOR_OFFLINE();
 //   }
 // }
+
+// 回来改，不行并不是实际的电流更改没有
+// void get_botton_dji_motor_current(void)
+// {
+//   motor_current[0] = DJI_CAN1_Bus_ctrl.output_current200H[0];
+//   motor_current[1] = DJI_CAN1_Bus_ctrl.output_current200H[1];
+//   motor_current[2] = DJI_CAN1_Bus_ctrl.output_current200H[3];
+//   motor_current[3] = DJI_CAN1_Bus_ctrl.output_current200H[2];
+// }
+(HANDLER_PTR->(DJI_Motor_Ctrl_t *)motor_instance[i])
+    ->speed_rpm;
+// 移植步兵功率控制
+void chassis_power_control_with_supercap(void)
+{
+
+  uint16_t RefereePowerLimit = 20;
+  float ChassisMaxPower = 0;
+
+  float InitialGivePower[4]; // initial power from PID calculation
+  float InitialTotalPower = 0;
+  float ScaledGivePower[4];
+
+  float chassis_energy_buffer = 0.0f;
+
+  float toque_coefficient = 1.99688994e-6f; // (20/16384)*(0.3)*(187/3591)/9.55
+  float k1 = 1.23e-07;                      // k1
+  float k2 = 1.453e-07;                     // k2
+  float constant = 4.081f;
+
+  float power_scale = 0;
+  float eneygy_scale = 0;
+  uint8_t PowerOffset = 0;
+
+  ChassisMaxPower = RefereePowerLimit;
+
+  for (uint8_t i = 0; i < 4; i++) // first get all the initial motor power and total motor power
+  {
+    DJI_Motor_Ctrl_t *motor = (DJI_Motor_Ctrl_t *)(chassis_task_handler_ptr->motor_instance[i]);
+
+    InitialGivePower[i] = DJI_CAN1_Bus_ctrl.output_current200H[i] * toque_coefficient * motor->speed_rpm +
+                          k2 * motor->speed_rpm * motor->speed_rpm +
+                          k1 * DJI_CAN1_Bus_ctrl.output_current200H[i] * DJI_CAN1_Bus_ctrl.output_current200H[i] + constant;
+
+    if (InitialGivePower < 0) // negative power not included (transitory)
+      continue;
+    InitialTotalPower += InitialGivePower[i];
+  }
+
+  if (InitialTotalPower > ChassisMaxPower) // determine if larger than max power
+  {
+    float power_scale = ChassisMaxPower / InitialTotalPower;
+    for (uint8_t i = 0; i < 4; i++)
+    {
+      ScaledGivePower[i] = InitialGivePower[i] * power_scale; // get scaled power
+      if (ScaledGivePower[i] < 0)
+      {
+        continue;
+      }
+
+      float b = toque_coefficient * motor->speed_rpm;
+      float c = k2 * motor->speed_rpm * motor->speed_rpm - ScaledGivePower[i] + constant;
+      float inside = b * b - 4 * k1 * c;
+
+      if (inside < 0)
+      {
+        continue;
+      }
+      else if (DJI_CAN1_Bus_ctrl.output_current200H[i] > 0) // Selection of the calculation formula according to the direction of the original moment
+      {
+        float temp = (-b + sqrt(inside)) / (2 * k1);
+        if (temp > 8000)
+        {
+          DJI_CAN1_Bus_ctrl.output_current200H[i] = 8000;
+        }
+        else
+          DJI_CAN1_Bus_ctrl.output_current200H[i] = temp;
+      }
+      else
+      {
+        float temp = (-b - sqrt(inside)) / (2 * k1);
+        if (temp < -8000)
+        {
+          DJI_CAN1_Bus_ctrl.output_current200H[i] = -8000;
+        }
+        else
+          DJI_CAN1_Bus_ctrl.output_current200H[i] = temp;
+      }
+    }
+  }
+}
 #undef HANDLER
 #undef HANDLER_PTR
