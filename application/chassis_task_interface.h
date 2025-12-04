@@ -7,7 +7,6 @@ void chassis_task_mode_flush(void);
 void chassis_task_set_output(void);
 void chassis_task_output(void);
 
-void chassis_power_control_with_supercap(void);
 
 /*根据每个模式定义*/
 //void __first_mode_ctrl_func(void);

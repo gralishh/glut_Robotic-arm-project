@@ -10,7 +10,9 @@
 #include "Ex_encoder.h"
 #include "chassis_task.h"
 
-extern vofa_power_limit;
+extern fp32 vofa_display_power[4];
+extern float total_power;
+//extern float total_power1;
 extern External_ecd_handler_t uplift_ecd;
 extern DJI_Motor_Ctrl_t DJI_Motor_uplift;
 extern fp32 vofa_output_speed;
@@ -153,24 +155,29 @@ void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, Joint_Motor_t *mo
 // 关于发送
 void vofa_data_into_pack(fp32 *vofa_send_data_pack)
 {
-    //    uint8_t i;
-    //
-    //    for (i = 0; i < HAND_MOTOR_COUNT - 1; i++)
-    //    {
-    //        vofa_send_data_pack[i] = hand_task_handler.motor_angle[i];
-    //        vofa_send_data_pack[i + HAND_MOTOR_COUNT-1] = hand_task_handler.feedback_motor_angle[i];
-    //    }
-
+     vofa_send_data_pack[0] = total_power;
+	// vofa_send_data_pack[1] = total_power1;
     // vofa_send_data_pack[0] = chassis_task_handler.motor_speed[0];
     // vofa_send_data_pack[1] = chassis_task_handler.feedback_motor_speed[0];
     //显示抬升数据
-   vofa_send_data_pack[0] = vofa_output_speed;
-   vofa_send_data_pack[1] = (DJI_Motor_uplift.recv_pack).speed_rpm;
-//    vofa_send_data_pack[2] = DJI_Motor_uplift.set_angle;
+
+    //    vofa_send_data_pack[2] = DJI_Motor_uplift.set_angle;
 //    vofa_send_data_pack[3] = (DJI_Motor_uplift.circle_count) * PI * 2 + (DJI_Motor_uplift.ecd_angle);
-   vofa_send_data_pack[2] = gimbal_task_handler.oid_length;
-   vofa_send_data_pack[3] = uplift_ecd.process_ecd;
-	vofa_send_data_pack[4] = vofa_power_limit;
+
+//    vofa_send_data_pack[0] = vofa_output_speed;
+//    vofa_send_data_pack[1] = (DJI_Motor_uplift.recv_pack).speed_rpm;
+//    vofa_send_data_pack[2] = gimbal_task_handler.oid_length;
+//    vofa_send_data_pack[3] = uplift_ecd.process_ecd;
+// 	vofa_send_data_pack[4] = vofa_power_limit;
+
+    //  vofa_send_data_pack[0] = vofa_display_power[0];
+    //  vofa_send_data_pack[1] = vofa_display_power[1];
+    //  vofa_send_data_pack[2] = vofa_display_power[2];
+    //  vofa_send_data_pack[3] = vofa_display_power[3];
+    // vofa_send_data_pack[0] = DJI_CAN1_Bus_ctrl.output_current200H[0];
+    // vofa_send_data_pack[1] = DJI_CAN1_Bus_ctrl.output_current200H[1];
+    // vofa_send_data_pack[2] = DJI_CAN1_Bus_ctrl.output_current200H[2];
+    // vofa_send_data_pack[3] = DJI_CAN1_Bus_ctrl.output_current200H[3];
 }
 
 void vofa_uart_task(void *argument)

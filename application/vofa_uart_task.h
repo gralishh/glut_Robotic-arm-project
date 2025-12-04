@@ -52,7 +52,6 @@ typedef enum
     vofa_up_s_f,
     vofa_up_p,
     vofa_up_p_f,
-	power_limit,
     VOFA_FEEDBACK_COUNT,
 }
 VOFA_FEEDBACK_INDEX;

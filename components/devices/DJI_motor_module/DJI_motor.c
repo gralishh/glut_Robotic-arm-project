@@ -5,7 +5,7 @@
 #include "bsp_buzzer.h"
 
 //vofa²âÊÔ
-fp32 vofa_output_speed = 0.0f;
+//fp32 vofa_output_speed = 0.0f;
 
 // ABS
 #define ABS(X) ((X) > 0 ? (X) : (-X))
@@ -459,7 +459,7 @@ void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t *motor, uint8_t *rx_msg)
 static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t *motor)
 {
 	//vofa²âÊÔ
-	vofa_output_speed = motor->set_speed;
+	//vofa_output_speed = motor->set_speed;
     return PID_Calc(&(motor->pid_speed_loop), __DJI_Motor_Ctrl_get_speed(motor), motor->set_speed);
 }
 
@@ -492,7 +492,6 @@ static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t *motor)
                   output_speed);
 }
 
-static void __DJI_Motor_warning(void)
-{
-  // buzzer_on(0,0);
+static void __DJI_Motor_warning(void){
+    // buzzer_on(0,0);
 }

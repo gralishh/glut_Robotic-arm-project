@@ -14,8 +14,8 @@ typedef enum{
 typedef enum{
   DJI_LF=0x00,
   DJI_RF,
-  DJI_LB,
   DJI_RB,
+  DJI_LB,
   CHASSIS_MOTOR_COUNT,
 }CHASSIS_MOTOR_INDEX;
 
@@ -40,13 +40,17 @@ typedef struct{
 
   /*feedback value*/
   fp32 feedback_motor_angle[CHASSIS_MOTOR_COUNT];
-  int32_t feedback_motor_speed[CHASSIS_MOTOR_COUNT];
-  int32_t feedback_motor_current[CHASSIS_MOTOR_COUNT];
+  // int32_t feedback_motor_speed[CHASSIS_MOTOR_COUNT];
+  // int32_t feedback_motor_current[CHASSIS_MOTOR_COUNT];
+  fp32 feedback_motor_speed[CHASSIS_MOTOR_COUNT];
+  fp32 feedback_motor_current[CHASSIS_MOTOR_COUNT];
 
   /*output value*/
   fp32 motor_angle[CHASSIS_MOTOR_COUNT];
-  int32_t motor_speed[CHASSIS_MOTOR_COUNT];
-  int32_t motor_current[CHASSIS_MOTOR_COUNT];
+  // int32_t motor_speed[CHASSIS_MOTOR_COUNT];
+  // int32_t motor_current[CHASSIS_MOTOR_COUNT];
+  fp32 motor_speed[CHASSIS_MOTOR_COUNT];
+  fp32 motor_current[CHASSIS_MOTOR_COUNT];
 
   /*for arm ctrl*/
   fp32 feedback_joint_angle[CHASSIS_JOINT_COUNT];
