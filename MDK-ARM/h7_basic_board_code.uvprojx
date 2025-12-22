@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;../components/devices;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/;../components/devices/DJI_motor_module/;../components/devices/Ex_encoder;../components/devices/M4310_module;../components/devices/M8010_motor_module;../components/devices/Custom_contrllor;../components/devices/cubemars;../components/devices/RM_UI</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;..\components\modules;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/;..\components\modules\DJI_motor_module;..\components\modules\CAN_receive;..\components\modules\cubemars;..\components\modules\Custom_contrllor;..\components\modules\Ex_encoder;..\components\modules\M4310_module;..\components\modules\M8010_motor_module;..\components\modules\remote_control;..\components\modules\RM_UI;..\components\modules\servo;..\components\modules\ws2812;..\application\chassis;..\application\catcher;..\application\gimbal;..\application\hand;..\application\detect_task;..\application\referee;..\application\usart_measure_task;..\application\vofa_uart_task</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -1025,6 +1025,91 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>Application</GroupName>
+          <Files>
+            <File>
+              <FileName>catcher_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\catcher\catcher_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>catcher_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\catcher\catcher_task_interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\chassis\chassis_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>chassis_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\chassis\chassis_task_interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>gimbal_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\gimbal\gimbal_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>gimbal_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\gimbal\gimbal_task_interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>hand_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\hand\hand_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>hand_task_interface.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\hand\hand_task_interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>detect_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\detect_task\detect_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee\referee.c</FilePath>
+            </File>
+            <File>
+              <FileName>Referee_DispatchTask.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee\Referee_DispatchTask.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee_usart_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee\referee_usart_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>general_movement.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\general_movement.c</FilePath>
+            </File>
+            <File>
+              <FileName>motor_timer_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\motor_timer_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart_measure_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\usart_measure_task\usart_measure_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>vofa_uart_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\vofa_uart_task\vofa_uart_task.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>bsp</GroupName>
           <Files>
             <File>
@@ -1065,162 +1150,77 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>Application</GroupName>
+          <GroupName>modules</GroupName>
           <Files>
-            <File>
-              <FileName>detect_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\detect_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>remote_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\remote_control.c</FilePath>
-            </File>
             <File>
               <FileName>CAN_receive.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\application\CAN_receive.c</FilePath>
-            </File>
-            <File>
-              <FileName>chassis_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\chassis_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>usart_measure_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\usart_measure_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>gimbal_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\gimbal_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>hand_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\hand_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_timer_ctrl.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\motor_timer_ctrl.c</FilePath>
-            </File>
-            <File>
-              <FileName>hand_task_interface.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\hand_task_interface.c</FilePath>
-            </File>
-            <File>
-              <FileName>gimbal_task_interface.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\gimbal_task_interface.c</FilePath>
-            </File>
-            <File>
-              <FileName>chassis_task_interface.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\chassis_task_interface.c</FilePath>
-            </File>
-            <File>
-              <FileName>catcher_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\catcher_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>catcher_task_interface.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\catcher_task_interface.c</FilePath>
-            </File>
-            <File>
-              <FileName>referee.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\referee.c</FilePath>
-            </File>
-            <File>
-              <FileName>referee_usart_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\referee_usart_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>general_movement.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\general_movement.c</FilePath>
-            </File>
-            <File>
-              <FileName>vofa_uart_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\vofa_uart_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>vofa_uart_task.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\application\vofa_uart_task.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>devices</GroupName>
-          <Files>
-            <File>
-              <FileName>ws2812.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\ws2812.c</FilePath>
-            </File>
-            <File>
-              <FileName>DJI_motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\DJI_motor_module\DJI_motor.c</FilePath>
-            </File>
-            <File>
-              <FileName>DJI_motor_canbus.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\DJI_motor_module\DJI_motor_canbus.c</FilePath>
-            </File>
-            <File>
-              <FileName>Ex_encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\Ex_encoder\Ex_encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>dm4310_drv.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\M4310_module\dm4310_drv.c</FilePath>
-            </File>
-            <File>
-              <FileName>M8010_motor.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\M8010_motor_module\M8010_motor.c</FilePath>
-            </File>
-            <File>
-              <FileName>crc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\Custom_contrllor\crc.c</FilePath>
-            </File>
-            <File>
-              <FileName>Custom_ctrl.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\components\devices\Custom_contrllor\Custom_ctrl.c</FilePath>
+              <FilePath>..\components\modules\CAN_receive\CAN_receive.c</FilePath>
             </File>
             <File>
               <FileName>AK_series.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\components\devices\cubemars\AK_series.c</FilePath>
+              <FilePath>..\components\modules\cubemars\AK_series.c</FilePath>
             </File>
             <File>
-              <FileName>servo.c</FileName>
+              <FileName>crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\components\devices\servo.c</FilePath>
+              <FilePath>..\components\modules\Custom_contrllor\crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>Custom_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\Custom_contrllor\Custom_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>DJI_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\DJI_motor_module\DJI_motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>DJI_motor_canbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\DJI_motor_module\DJI_motor_canbus.c</FilePath>
+            </File>
+            <File>
+              <FileName>Ex_encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\Ex_encoder\Ex_encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>dm4310_drv.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\M4310_module\dm4310_drv.c</FilePath>
+            </File>
+            <File>
+              <FileName>M8010_motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\M8010_motor_module\M8010_motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\remote_control\remote_control.c</FilePath>
             </File>
             <File>
               <FileName>ui_g.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\components\devices\RM_UI\ui_g.c</FilePath>
+              <FilePath>..\components\modules\RM_UI\ui_g.c</FilePath>
             </File>
             <File>
               <FileName>ui_interface.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\components\devices\RM_UI\ui_interface.c</FilePath>
+              <FilePath>..\components\modules\RM_UI\ui_interface.c</FilePath>
+            </File>
+            <File>
+              <FileName>servo.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\servo\servo.c</FilePath>
+            </File>
+            <File>
+              <FileName>ws2812.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\ws2812\ws2812.c</FilePath>
             </File>
           </Files>
         </Group>

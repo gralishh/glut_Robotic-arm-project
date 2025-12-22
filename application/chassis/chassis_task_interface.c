@@ -57,6 +57,7 @@
  static void __chassis_union_rc_ctrl(void);
  void chassis_power_control_limit(void);
  void chassis_power_control(void);
+ //void getrealpower(void);
 
  // void chassis_reset(void);
 
@@ -141,7 +142,7 @@
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
 
-void chassis_task_init()
+     void chassis_task_init()
 {
   /*基础初始化*/
   __HALT_TICKS_COUNTING();
@@ -151,27 +152,27 @@ void chassis_task_init()
   __SET_MOTOR_INSTANCE(DJI_LF, &DJI_Motor_LeftFront);
   __SET_MOTOR_TYPE(DJI_LF, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_LeftFront, &DJI_CAN1_Bus_ctrl, M3508, 0x201);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftFront, PID_POSITION, 18, 0.000, 0.05, 12000, 1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftFront, PID_POSITION, 18, 0.000, 0.05, 16000, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_LeftFront, PID_POSITION, 15, 0, 0, 1000, 0);
 
   __SET_MOTOR_INSTANCE(DJI_RF, &DJI_Motor_RightFront);
   __SET_MOTOR_TYPE(DJI_RF, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightFront, &DJI_CAN1_Bus_ctrl, M3508, 0x202);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront, PID_POSITION, 18, 0.000, 0.05, 12000, 1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront, PID_POSITION, 18, 0.000, 0.05, 16000, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightFront, PID_POSITION, 15, 0, 0, 1000, 0);
 
 
   __SET_MOTOR_INSTANCE(DJI_RB, &DJI_Motor_RightBack);
   __SET_MOTOR_TYPE(DJI_RB, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightBack, &DJI_CAN1_Bus_ctrl, M3508, 0x203);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack, PID_POSITION, 18, 0.000, 0.05, 12000, 1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack, PID_POSITION, 18, 0.000, 0.05, 16000, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightBack, PID_POSITION, 15, 0, 0, 1000, 0);
 
 
   __SET_MOTOR_INSTANCE(DJI_LB, &DJI_Motor_LeftBack);
   __SET_MOTOR_TYPE(DJI_LB, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_LeftBack, &DJI_CAN1_Bus_ctrl, M3508, 0x204);
-  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftBack, PID_POSITION, 22, 0.000, 0.05, 12000, 1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_LeftBack, PID_POSITION, 22, 0.000, 0.05, 16000, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_LeftBack, PID_POSITION, 15, 0, 0, 1000, 0);
 
   __chassis_idle_ctrl();
@@ -208,7 +209,7 @@ void chassis_task_get_feedback()
                                &__GET_MOTOR_SPEED(index),
                                &__GET_MOTOR_ANGLE(index))
   }
-
+  //getrealpower();
   /*joint angle map*/
   /*
   __GET_JOINT_ANGLE(index,
@@ -371,7 +372,6 @@ void chassis_task_output()
                              HANDLER_PTR->motor_speed[index],
                              HANDLER_PTR->motor_angle[index])
   }
-
   // /*掉电检测*/
   // if (toe_is_error(TOE_3508_M1_ID) || __IS_MOTOR_OFFLINE(TOE_3508_M1_ID))
   // {
@@ -547,6 +547,45 @@ void __chassis_union_rc_ctrl()
 //   }
 // }
 
+//void getrealpower(void)
+//{
+//	  float InitialGivePower[4]; // initial power from PID calculation
+
+//  float toque_coefficient = 1.99688994e-6f; // (20/16384)*(0.3)*(187/3591)/9.55
+//  float k1 = 1.23e-07;                      // k1
+//  float k2 = 1.453e-07;                     // k2
+//  float constant = 4.081f;
+//  // vofa展示
+//  float vofa_InitialGivePower[4] = 0;
+//  float vofa_InitialTotalPower = 0;
+
+//  // 检测限制后的功率
+//  for (uint8_t i = 0; i < 4; i++) // first get all the initial motor power and total motor power
+//  {
+//    // vofa_display_power[i] = (int16_t)__GET_MOTOR_SPEED(i);//
+//    // vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);//
+//    //__GET_MOTOR_SPEED(i) = 3000;//
+//    vofa_InitialGivePower[i] = __GET_SET_MOTOR_CURRENT(i) * toque_coefficient * (int16_t)__GET_MOTOR_SPEED(i) +
+//                               k2 * (int16_t)__GET_MOTOR_SPEED(i) * (int16_t)__GET_MOTOR_SPEED(i) +
+//                               k1 * __GET_SET_MOTOR_CURRENT(i) * __GET_SET_MOTOR_CURRENT(i) + constant;
+
+//    // 输入功率=机械功率+铜损+磁损+控制器静态功耗
+//    // 机械功率=力矩电流控制值*（20/16384）*0.3*（187/3591）*转速/9.55
+//    // 铜损和磁损分别为k2*转速^2和k1*力矩电流控制值^2
+//    // 化为以下的关于out的二次方程
+//    // k1 * out^2 + (toque_coefficient * speed_rpm) * out + (k2 * speed_rpm^2 + constant - ScaledGivePower[i]) = 0
+//    // 通过对其的逆解算，解出pid的输出值从而对其进行限幅
+
+//    // vofa_display_power[i] = InitialGivePower[i];
+
+//    if (InitialGivePower < 0) // negative power not included (transitory)
+//      continue;
+//    vofa_InitialTotalPower += vofa_InitialGivePower[i];
+//    total_power = vofa_InitialTotalPower; //
+//  }
+//}
+
+
 void chassis_power_control_limit(void)
 {
   for (int8_t index = 0; index < CHASSIS_MOTOR_COUNT; index++)
@@ -559,7 +598,7 @@ void chassis_power_control_limit(void)
 void chassis_power_control(void)
 {
 
-  uint16_t RefereePowerLimit = 120;
+  uint16_t RefereePowerLimit = 115;
   float ChassisMaxPower = 0;
 
   float InitialGivePower[4]; // initial power from PID calculation
@@ -571,18 +610,15 @@ void chassis_power_control(void)
   float toque_coefficient = 1.99688994e-6f; // (20/16384)*(0.3)*(187/3591)/9.55
   float k1 = 1.23e-07;                      // k1
   float k2 = 1.453e-07;                     // k2
-  float constant = 4.081f;
-
-  // float power_scale = 0;
-  // float eneygy_scale = 0;
-  // uint8_t PowerOffset = 0;
+//  float constant = 4.081f;
+	float constant = 10.081f;
 
   ChassisMaxPower = (float)RefereePowerLimit;
 
   for (uint8_t i = 0; i < 4; i++) // first get all the initial motor power and total motor power
   {
-    // vofa_display_power[i] = (int16_t)__GET_MOTOR_SPEED(i);
-    vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);
+    // vofa_display_power[i] = (int16_t)__GET_MOTOR_SPEED(i);//
+    //vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);//
     //__GET_MOTOR_SPEED(i) = 3000;//
     InitialGivePower[i] = __GET_SET_MOTOR_CURRENT(i) * toque_coefficient * (int16_t)__GET_MOTOR_SPEED(i) +
                           k2 * (int16_t)__GET_MOTOR_SPEED(i) * (int16_t)__GET_MOTOR_SPEED(i) +
@@ -600,7 +636,7 @@ void chassis_power_control(void)
     if (InitialGivePower < 0) // negative power not included (transitory)
       continue;
     InitialTotalPower += InitialGivePower[i];
-    //total_power = InitialTotalPower;//
+   // total_power = InitialTotalPower; //
   }
 
   if (InitialTotalPower > ChassisMaxPower) // determine if larger than max power
@@ -611,17 +647,6 @@ void chassis_power_control(void)
     {
 
             ScaledGivePower[i] = InitialGivePower[i] * power_scale; // get scaled power
-      //      if (chassis_move.chassis_RC->key.v & KEY_PRESSED_OFFSET_W && capstart)
-      //      {
-      //        if (i == 2)
-      //        {
-      //          ScaledGivePower[i] *= 1 + ChassisMaxPower / 750.0;
-      //        }
-      //      }
-      //      if (ScaledGivePower[i] < 0)
-      //      {
-      //        continue;
-      //      }
 
       float b = toque_coefficient * (int16_t)__GET_MOTOR_SPEED(i);
       float c = k2 * (int16_t)__GET_MOTOR_SPEED(i) * (int16_t)__GET_MOTOR_SPEED(i) - ScaledGivePower[i] + constant;

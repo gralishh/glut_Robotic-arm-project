@@ -13,6 +13,8 @@ extern FDCAN_HandleTypeDef hcan1;
 extern FDCAN_HandleTypeDef hcan2;
 extern FDCAN_HandleTypeDef hcan3;
 
+CAN_SuperCapTXDataTypeDef super_tx;
+
 /**
  * @brief 预定义的CANBus初始化
  */
@@ -71,6 +73,13 @@ void __DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus)
     CanSendMess(bus->can,0x200,bus->output_current200H);
     CanSendMess(bus->can,0x1ff,bus->output_current1FFH);
   }
+    /********************超电通信***********************/
+    if (bus->can == &hcan3)
+    {
+      Set_CAN_cmd_SuperCap(&super_tx);
+      CAN_cmd_SuperCap(&super_tx);
+    }
+  
 }
 
 /**

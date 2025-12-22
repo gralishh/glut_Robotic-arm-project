@@ -253,15 +253,15 @@ int16_t Get_shooter_42mm_speed_limit()
 bool_t capstart=0;
 float GetRealPower() //得到底盘实时功率
 {
-	//if(capstart)
-	//{
-	//	power_heat_data_t.chassis_power=cap.Power;
-	//}
-	//else
-	//{
-	//	power_heat_data_t.chassis_power=60;
-	//}
-	//	return power_heat_data_t.chassis_power;
+//	if(capstart)
+//	{
+//		power_heat_data_t.chassis_power=cap.Power;
+//	}
+//	else
+//	{
+//		power_heat_data_t.chassis_power=60;
+//	}
+//		return power_heat_data_t.chassis_power;
 }
 float GetPowerBuffer()  //得到底盘实时缓存功率
 {

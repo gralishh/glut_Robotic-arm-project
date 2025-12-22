@@ -9,6 +9,10 @@
 #include "hand_task.h"
 #include "Ex_encoder.h"
 #include "chassis_task.h"
+#include "referee.h"
+
+
+extern ext_power_heat_data_t power_heat_data_t;
 
 extern fp32 vofa_display_power[4];
 extern float total_power;
@@ -155,8 +159,9 @@ void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, Joint_Motor_t *mo
 // 关于发送
 void vofa_data_into_pack(fp32 *vofa_send_data_pack)
 {
-     vofa_send_data_pack[0] = total_power;
-	// vofa_send_data_pack[1] = total_power1;
+    vofa_send_data_pack[0] = power_heat_data_t.chassis_power_buffer;
+    // vofa_send_data_pack[0] = total_power;
+    // vofa_send_data_pack[1] = total_power1;
     // vofa_send_data_pack[0] = chassis_task_handler.motor_speed[0];
     // vofa_send_data_pack[1] = chassis_task_handler.feedback_motor_speed[0];
     //显示抬升数据

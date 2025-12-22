@@ -417,7 +417,9 @@ void hand_task_mode_flush()
   }
 
   static uint8_t mode_var = 0; // 没用
-  if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
+  // if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
+  if (__GET_STRUCT_MODE() == HAND_MODE_IDLE)
+
   {
     //__BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
     //__BUTTON_PRESS_SWITCH_WRAP
@@ -444,10 +446,10 @@ void hand_task_mode_flush()
     mode_var = 0;
   }
 
-  if (GetMatchReady())
-  {
-    __SET_STRUCT_MODE(HAND_MODE_IDLE);
-  }
+  // if (GetMatchReady())
+  // {
+  //   __SET_STRUCT_MODE(HAND_MODE_IDLE);
+  // }
 
   if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
   {
