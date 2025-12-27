@@ -276,23 +276,26 @@ static void DetectInit(uint32_t time)
 {
     //设置离线时间，上线稳定工作时间，优先级 offlineTime onlinetime priority
     uint16_t setItem[errorListLength][3] =
-        {			//errorListLength为枚举类型，它在枚举中的值为9，说明有8组3为数组
-            {30, 40, 15}, //SBUS
-            {90, 80, 14}, //CAMERA
-            {20, 20, 13},
-            {20, 20, 12},
-            {20, 20, 11},
-            {20, 20, 10},
-            {30, 40, 9},
-            {30, 40, 8},
-            {30, 40, 7},
-            {20, 20, 6},
-            {20, 20, 5},
-            {20, 20, 4},
-            {20, 20, 3},
+        {
+            // errorListLength为枚举类型，它在枚举中的值为9，说明有8组3为数组
+            {30, 40, 15}, // SBUS
+            {90, 80, 14}, // CAMERA
+            {20, 20, 13}, //  TOE_3508_M1_ID,
+
+            {20, 20, 12}, // TOE_3508_M2_ID,
+            {20, 20, 11}, // TOE_3508_M3_ID,
+            {20, 20, 10}, // TOE_3508_M4_ID,
+            {30, 40, 9},  // TOE_J1,
+            {30, 40, 8},  // TOE_J2,
+            {30, 40, 7},  // TOE_J3,
+            //{20, 20, 6},//  //TOE_HE_L,
+            //{20, 20, 5},// TOE_HE_R
+            {20, 20, 4}, // TOE_UPLIFT,
+            {20, 20, 3}, // TOE_UPLIFT_ECD,
+
         };
 
-  for (uint8_t i = 0; i < errorListLength; i++)
+    for (uint8_t i = 0; i < errorListLength; i++)
     {
 			//errorList为用结构体error_t定义的结构体数组   //                Y  P
         errorList[i].setOfflineTime = setItem[i][0]; //掉线判断时间30，2，2，10，10，10，10，10，100 

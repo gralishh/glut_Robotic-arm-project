@@ -7,27 +7,32 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-typedef enum{
-  HAND_J1=0x00,
+typedef enum
+{
+  HAND_J1 = 0x00,
   HAND_J2,
   HAND_J3,
-  HAND_PITCH,
-  HAND_ROLL,
+  HAND_G,
+  // HAND_PITCH,
+  // HAND_ROLL,
   HAND_JOINT_COUNT,
-}HAND_JOINT_INDEX;
+} HAND_JOINT_INDEX;
 
-typedef enum{
-//  M8010_J1,
+typedef enum
+{
+  //  M8010_J1,
   AK_J1,
   DM_J2,
   DJI_J3,
-  DJI_HE_L,
-  DJI_HE_R,
+  dm_gripper,
+  // DJI_HE_L,
+  // DJI_HE_R,
   HAND_MOTOR_COUNT,
-}HAND_MOTOR_INDEX;
+} HAND_MOTOR_INDEX;
 
-typedef enum{
-  HAND_MODE_NONFORCE=0x00,
+typedef enum
+{
+  HAND_MODE_NONFORCE = 0x00,
   HAND_MODE_IDLE,
   HAND_MODE_RC_CTRL,
   HAND_MODE_POSE_CTRL,
@@ -36,15 +41,16 @@ typedef enum{
   HAND_MODE_SM_CTRL,
   HAND_MODE_RESET_CTRL,
   HAND_MODE_COUNT,
-}HAND_CTRL_MODE;
+} HAND_CTRL_MODE;
 
-typedef struct{
+typedef struct
+{
   /*instance array*/
-  void* motor_instance[HAND_MOTOR_COUNT];
+  void *motor_instance[HAND_MOTOR_COUNT];
 
   /*state value*/
   uint8_t ctrl_mode;
-  uint8_t mode_switch; //模式切换时置1
+  uint8_t mode_switch; // 模式切换时置1
   Motor_Type_e motor_type[HAND_MOTOR_COUNT];
   Motor_Ctrl_mode_e motor_ctrl_mode[HAND_MOTOR_COUNT];
   uint8_t motor_offline_flag[HAND_MOTOR_COUNT];
@@ -67,10 +73,10 @@ typedef struct{
 
   uint8_t tick_count_halt;
   int64_t tick;
-  int64_t tick_stack[5];// 具体使用取决于任务
-} HAND_TASK_HANDLER_TYPE; 
-extern HAND_TASK_HANDLER_TYPE hand_task_handler;/*unique structure*/
-extern HAND_TASK_HANDLER_TYPE* hand_task_handler_ptr;
+  int64_t tick_stack[5]; // 具体使用取决于任务
+} HAND_TASK_HANDLER_TYPE;
+extern HAND_TASK_HANDLER_TYPE hand_task_handler; /*unique structure*/
+extern HAND_TASK_HANDLER_TYPE *hand_task_handler_ptr;
 
 void hand_task(void *argument);
 

@@ -2,7 +2,7 @@
 #include "arm_math.h"
 
 //快速开方
-static fp32 invSqrt(fp32 num)
+fp32 invSqrt(fp32 num)
 {
     fp32 halfnum = 0.5f * num;
     fp32 y = num;

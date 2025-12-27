@@ -52,9 +52,8 @@ typedef struct
 typedef FDCAN_HandleTypeDef hcan_t;
 /*preset_motor_handler*/
 extern Joint_Motor_t DM_Motor_J2;
-
-extern void dm4310_fbdata(Joint_Motor_t *motor, uint8_t *rx_data,uint32_t data_len);
-
+extern Joint_Motor_t DM_Motor_gripper;
+extern void dm4310_fbdata(Joint_Motor_t *motor, uint8_t *rx_data, uint32_t data_len);
 
 extern void enable_motor_mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id);
 extern void disable_motor_mode(hcan_t* hcan, uint16_t motor_id, uint16_t mode_id);
@@ -77,6 +76,7 @@ extern uint32_t FloatTohex(float HEX);//浮点数到十六进制转换
 
 extern float uint_to_float(int x_int, float x_min, float x_max, int bits);
 extern int float_to_uint(float x_float, float x_min, float x_max, int bits);
+void dm_set_pos(Joint_Motor_t *motor_ptr, float angle);
 
 #endif /* __DM4310_DRV_H__ */
 

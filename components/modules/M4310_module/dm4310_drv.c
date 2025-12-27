@@ -3,6 +3,7 @@
 #include "arm_math.h"
 
 Joint_Motor_t DM_Motor_J2={0};
+Joint_Motor_t DM_Motor_gripper = {0};
 
 float Hex_To_Float(uint32_t *Byte,int num)//十六进制到浮点数
 {
@@ -252,5 +253,11 @@ void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr)
 	fdcanx_send_data(hcan, id, motor_ptr->output, 8);
 }
 
+void dm_set_pos(Joint_Motor_t *motor_ptr, float angle)
+{
+	if(motor_ptr->para.id == 0x01)
+		pos_speed_ctrl(motor_ptr, angle, 15);
+	else if (motor_ptr->para.id == 0x02)
+		pos_speed_ctrl(motor_ptr, angle, 0.4);
 
-
+}

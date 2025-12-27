@@ -102,15 +102,18 @@ void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, ui
       __AK_joint_motor_feedback_hook(&AK70_10_motor, rx_message);
       DetectHook(TOE_J1);
       break;
-    case 0x201:
-      DetectHook(TOE_HE_L);
+    case 0x22:
+      dm4310_fbdata(&DM_Motor_gripper, rx_message, FDCAN_DLC_BYTES_8);
       break;
+      //    case 0x201:
+      //      DetectHook(TOE_HE_L);
+      //break;
     case 0x204:
       DetectHook(TOE_J3);
       break;
-    case 0x208:
-      DetectHook(TOE_HE_R);
-      break;
+//    case 0x208:
+//      DetectHook(TOE_HE_R);
+      //break;
     default:
       break; /*do nothing*/
     }

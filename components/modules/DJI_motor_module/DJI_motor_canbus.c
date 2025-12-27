@@ -74,12 +74,12 @@ void __DJI_CANBus_ctrl_loop(DJI_Motor_Bus_t* bus)
     CanSendMess(bus->can,0x1ff,bus->output_current1FFH);
   }
     /********************超电通信***********************/
-    if (bus->can == &hcan3)
-    {
-      Set_CAN_cmd_SuperCap(&super_tx);
-      CAN_cmd_SuperCap(&super_tx);
-    }
-  
+    // if (bus->can == &hcan3)
+    // {
+    //   Set_CAN_cmd_SuperCap(&super_tx);
+    //   CAN_cmd_SuperCap(&super_tx);
+    // }
+    /********************超电通信***********************/
 }
 
 /**

@@ -173,9 +173,11 @@ void gimbal_task_init()
   __SET_MOTOR_TYPE(DJI_UL, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_uplift, &DJI_CAN1_Bus_ctrl, M3508, 0x205);
 	//多圈计算sp的pid
-  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift, PID_POSITION, 21, 0, 0.001, 6000, 500);
-	DJI_Motor_Speed_PID_init(&DJI_Motor_uplift, PID_POSITION, 30, 0.01, 0.001, 6000, 500);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_uplift,PID_POSITION,21,0,0.001,6000,500);
+  DJI_Motor_Pos_PID_init(&DJI_Motor_uplift,PID_POSITION,80,0.01,0,1900,800);	
 	
+	//oid的pid
+	//DJI_Motor_Speed_PID_init(&DJI_Motor_uplift, PID_POSITION, 30, 0.01, 0.001, 6000, 500);
   // DJI_Motor_Pos_PID_init(&DJI_Motor_uplift, PID_POSITION, 17.4, 0.06, 0, 1900, 800);
   // DJI_Motor_Oid_PID_init(&uplift_ecd, PID_POSITION, 5.1, 0, 0.002, 5000, 400);
 
