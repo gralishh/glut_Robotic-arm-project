@@ -121,6 +121,7 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Typ
  * 或min_angle ~ min_angle+braking_angle
  * 的范围时，设置为最值的位置环控制
  */
+//暂未使用
 void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t *motor, fp32 max_angle, fp32 min_angle, fp32 braking_angle)
 {
   if (motor == NULL)

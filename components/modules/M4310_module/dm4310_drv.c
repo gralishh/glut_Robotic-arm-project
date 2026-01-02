@@ -3,6 +3,8 @@
 #include "arm_math.h"
 
 Joint_Motor_t DM_Motor_J2={0};
+Joint_Motor_t DM_Motor_J3 = {0};
+Joint_Motor_t DM_Motor_J5 = {0};
 Joint_Motor_t DM_Motor_gripper = {0};
 
 float Hex_To_Float(uint32_t *Byte,int num)//十六进制到浮点数
@@ -259,5 +261,8 @@ void dm_set_pos(Joint_Motor_t *motor_ptr, float angle)
 		pos_speed_ctrl(motor_ptr, angle, 15);
 	else if (motor_ptr->para.id == 0x02)
 		pos_speed_ctrl(motor_ptr, angle, 0.4);
-
+	else if (motor_ptr->para.id == 0x03)
+		pos_speed_ctrl(motor_ptr, angle, 0.2);
+	else if (motor_ptr->para.id == 0x04)
+		pos_speed_ctrl(motor_ptr, angle, 0.2);
 }

@@ -52,6 +52,8 @@ typedef struct
 typedef FDCAN_HandleTypeDef hcan_t;
 /*preset_motor_handler*/
 extern Joint_Motor_t DM_Motor_J2;
+extern Joint_Motor_t DM_Motor_J3;
+extern Joint_Motor_t DM_Motor_J5;
 extern Joint_Motor_t DM_Motor_gripper;
 extern void dm4310_fbdata(Joint_Motor_t *motor, uint8_t *rx_data, uint32_t data_len);
 

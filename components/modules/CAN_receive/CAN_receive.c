@@ -105,6 +105,12 @@ void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, ui
     case 0x22:
       dm4310_fbdata(&DM_Motor_gripper, rx_message, FDCAN_DLC_BYTES_8);
       break;
+    case 0x33:
+      dm4310_fbdata(&DM_Motor_J3, rx_message, FDCAN_DLC_BYTES_8);
+      break;
+    case 0x44:
+      dm4310_fbdata(&DM_Motor_J5, rx_message, FDCAN_DLC_BYTES_8);
+      break;
       //    case 0x201:
       //      DetectHook(TOE_HE_L);
       //break;
