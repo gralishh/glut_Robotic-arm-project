@@ -21,7 +21,6 @@
 #include "main.h"
 #include "Vofa.h"
 
-
 #define HANDLER hand_task_handler
 #define HANDLER_PTR hand_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
@@ -43,7 +42,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define GR_MAP_D 0
 // #define J3_MAP_K (-3.14f / 42.4f) /*old value(-1.0f/19.2f)*/
 // #define J3_MAP_D (-1.668)
-#define J3_MAP_K (4.0f/27.98f)
+#define J3_MAP_K (4.0f / 27.98f)
 #define J3_MAP_D (1.6452)
 #define dm_g_max -2.7f
 #define dm_g_min -3.15f
@@ -72,9 +71,9 @@ DJI_Motor_Ctrl_t DJI_Motor_J4;
 extern Joint_Motor_t DM_Motor_J5;
 extern Joint_Motor_t DM_Motor_gripper;
 
-//extern M8010_motor_t joint1_motor;
-//DJI_Motor_Ctrl_t DJI_Motor_headendL;
-//DJI_Motor_Ctrl_t DJI_Motor_headendR;
+// extern M8010_motor_t joint1_motor;
+// DJI_Motor_Ctrl_t DJI_Motor_headendL;
+// DJI_Motor_Ctrl_t DJI_Motor_headendR;
 
 /*global variable*/
 static fp32 J1_D = 0;
@@ -118,7 +117,7 @@ static void __hand_move_reset(void);
 static void hand_J1_reset(void);
 static void hand_J2_reset(void);
 static void hand_J3_reset(void);
-//static void hand_pitch_reset(void);
+// static void hand_pitch_reset(void);
 
 /*general handler method*/
 /**
@@ -144,7 +143,6 @@ static void hand_J3_reset(void);
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
 #define __GET_MOTOR_SPEED(index) (HANDLER_PTR->feedback_motor_speed[index])
 #define __GET_MOTOR_CURRENT(index) (HANDLER_PTR->feedback_motor_current[index])
-
 
 /*电机输出控制*/
 #define __SET_MOTOR_ANGLE(index, value)               \
@@ -207,52 +205,32 @@ static void hand_J3_reset(void);
 #define __RESET_RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index] = 0)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
 
-#define __BUTTON_PRESS_SWITCH_WRAP(button, mode_var, id, loop_cnt, func) \
-  {                                                                      \
-    static uint8_t press_loop_cnt = 0;                                   \
-    if (button && press_loop_cnt < loop_cnt)                             \
-    {                                                                    \
-      press_loop_cnt++;                                                  \
-    }                                                                    \
-    else if (press_loop_cnt == loop_cnt)                                 \
-    {                                                                    \
-      mode_var = mode_var == id ? 0 : id;                                \
-    }                                                                    \
-    if (button == 0)                                                     \
-    {                                                                    \
-      press_loop_cnt = 0;                                                \
-    }                                                                    \
-    if (mode_var == id)                                                  \
-    {                                                                    \
-      func();                                                            \
-    }                                                                    \
-  } // 未理解，可酌情删除
-
 void hand_task_init()
 {
   osDelay(1000);
 
-  //基础初始化
+  // 基础初始化
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
+  // init_hand_handle_struct();//检出是否会影响
   basic_motor_init();
-  osDelay(20);
+  osDelay(2);
 
   __J1_init();
-  osDelay(20);
+  osDelay(2);
 
   __J2_init();
-  osDelay(20);
+  osDelay(2);
 
   __J3_init();
-  osDelay(20);
+  osDelay(2);
 
   __J4_init();
-  osDelay(20);
+  osDelay(2);
 
   __J5_init();
-  osDelay(20);
+  osDelay(2);
 
   __gripper_init();
 }
@@ -329,7 +307,8 @@ void hand_task_mode_flush()
     else if (switch_is_mid(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_RC2_CTRL);
+    // __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
     //__SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
@@ -357,8 +336,8 @@ void hand_task_mode_flush()
       set_movement(SM);
     if (GET_KEY(KEY_G))
       //__hand_pitch_pos_init(1);
-    if (remote_data.trigger)
-      __hand_rc_ctrl();
+      if (remote_data.trigger)
+        __hand_rc_ctrl();
 
     if (get_movement() == SM)
     {
@@ -407,6 +386,9 @@ void hand_task_set_output()
     break;
   case HAND_MODE_RC_CTRL:
     __hand_rc_ctrl();
+    break;
+  case HAND_MODE_RC2_CTRL:
+    __hand_rc2_ctrl();
     break;
   // case HAND_MODE_POSE_CTRL:
   //   __hand_pose_ctrl();
@@ -458,8 +440,8 @@ void hand_task_set_output()
   //  __hand_move_reset();
 
   if (
-    //toe_is_error(TOE_HE_L) &&
-    //toe_is_error(TOE_HE_R) &&
+      // toe_is_error(TOE_HE_L) &&
+      // toe_is_error(TOE_HE_R) &&
       toe_is_error(TOE_J1) &&
       toe_is_error(TOE_J2) &&
       toe_is_error(TOE_J3))
@@ -534,6 +516,8 @@ void __hand_idle_ctrl()
   __ADD_JOINT_ANGLE(HAND_J1, 0);
   __ADD_JOINT_ANGLE(HAND_J2, 0);
   __ADD_JOINT_ANGLE(HAND_J3, 0);
+  __ADD_JOINT_ANGLE(HAND_J4, 0);
+  __ADD_JOINT_ANGLE(HAND_J5, 0);
   __ADD_JOINT_ANGLE(HAND_G, 0);
 
   // __hand_pitch_pos_init(0);
@@ -541,18 +525,23 @@ void __hand_idle_ctrl()
 
 void __hand_rc_ctrl()
 {
-//__ADD_JOINT_ANGLE(HAND_PITCH, RC_CTRL_PTR->rc.ch[1] * 0.0001f * PITCH_MAP_K);
-//__ADD_JOINT_ANGLE(HAND_ROLL, RC_CTRL_PTR->rc.ch[3] * 0.0001f * ROLL_MAP_K);
-  __ADD_JOINT_ANGLE(HAND_J1, -RC_CTRL_PTR->rc.ch[2] * 0.0000007f);
-  __ADD_JOINT_ANGLE(HAND_J2, -RC_CTRL_PTR->rc.ch[0] * 0.0000015f);
-  __ADD_JOINT_ANGLE(HAND_J3, -RC_CTRL_PTR->rc.ch[1] * 0.000025f * J3_MAP_K);
-  __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[3] * 0.0000002f);
+  //__ADD_JOINT_ANGLE(HAND_PITCH, RC_CTRL_PTR->rc.ch[1] * 0.0001f * PITCH_MAP_K);
+  //__ADD_JOINT_ANGLE(HAND_ROLL, RC_CTRL_PTR->rc.ch[3] * 0.0001f * ROLL_MAP_K);
+  __ADD_JOINT_ANGLE(HAND_J1, -RC_CTRL_PTR->rc.ch[0] * 0.0000007f);
+  __ADD_JOINT_ANGLE(HAND_J2, -RC_CTRL_PTR->rc.ch[1] * 0.0000015f);
+  __ADD_JOINT_ANGLE(HAND_J3, -RC_CTRL_PTR->rc.ch[2] * 0.0000007f);
+  __ADD_JOINT_ANGLE(HAND_J4, -RC_CTRL_PTR->rc.ch[3] * 0.000025f * J3_MAP_K);
 
   //  __ADD_JOINT_ANGLE(HAND_PITCH, GET_CH_VALUE(1)*0.0001f*PITCH_MAP_K);
   //  __ADD_JOINT_ANGLE(HAND_ROLL , GET_CH_VALUE(2)*0.0001f*ROLL_MAP_K);
   //  __ADD_JOINT_ANGLE(HAND_J1   ,-GET_CH_VALUE(3)*0.0000007f);
   //  __ADD_JOINT_ANGLE(HAND_J2   ,-GET_CH_VALUE(0)*0.0000015f);
   //  __ADD_JOINT_ANGLE(HAND_J3   ,GET_WHEEL_VALUE()*0.000025f*J3_MAP_K);
+}
+void __hand_rc2_ctrl()
+{
+  __ADD_JOINT_ANGLE(HAND_J5, -RC_CTRL_PTR->rc.ch[0] * 0.0000015f);
+  __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[1] * 0.0000002f);
 }
 
 void __hand_custom_ctrl(void)
@@ -567,27 +556,27 @@ void __hand_custom_ctrl(void)
 /**/
 void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, uint8_t EN)
 {
- if (EN & J5_EN)
- {
-//   if (ABS(J5 - HANDLER_PTR->joint_angle[HAND_ROLL]) > 0.020f)
-//   {
-//     __ADD_JOINT_ANGLE(HAND_ROLL,
-//                       J5 > HANDLER_PTR->joint_angle[HAND_ROLL] ? 0.001f : -0.001f);
-//   }
-//   else
-//   {
-//     __SET_JOINT_ANGLE(HAND_ROLL, J5);
-//   }
- }
+  if (EN & J5_EN)
+  {
+    //   if (ABS(J5 - HANDLER_PTR->joint_angle[HAND_ROLL]) > 0.020f)
+    //   {
+    //     __ADD_JOINT_ANGLE(HAND_ROLL,
+    //                       J5 > HANDLER_PTR->joint_angle[HAND_ROLL] ? 0.001f : -0.001f);
+    //   }
+    //   else
+    //   {
+    //     __SET_JOINT_ANGLE(HAND_ROLL, J5);
+    //   }
+  }
 
- if (EN & J4_EN)
- {
-//   if (ABS(J4 - HANDLER_PTR->joint_angle[HAND_PITCH]) > 0.020f)
-//   {
-//     __ADD_JOINT_ANGLE(HAND_PITCH,
-//                       J4 > HANDLER_PTR->joint_angle[HAND_PITCH] ? 0.008f : -0.008);
-//   }
- }
+  if (EN & J4_EN)
+  {
+    //   if (ABS(J4 - HANDLER_PTR->joint_angle[HAND_PITCH]) > 0.020f)
+    //   {
+    //     __ADD_JOINT_ANGLE(HAND_PITCH,
+    //                       J4 > HANDLER_PTR->joint_angle[HAND_PITCH] ? 0.008f : -0.008);
+    //   }
+  }
 
   if (EN & J1_EN)
   {
@@ -692,6 +681,15 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, uint8_t E
 //   }
 //   return 0;
 // }
+void init_hand_handle_struct(void)
+{
+  memset(&AK70_10_motor, 0, sizeof(AK_Joint_Motor_t));
+  memset(&DM_Motor_J2, 0, sizeof(Joint_Motor_t));
+  memset(&DM_Motor_J3, 0, sizeof(Joint_Motor_t));
+  memset(&DJI_Motor_J4, 0, sizeof(DJI_Motor_Ctrl_t));
+  memset(&DM_Motor_J5, 0, sizeof(Joint_Motor_t));
+  memset(&DM_Motor_gripper, 0, sizeof(Joint_Motor_t));
+}
 void basic_motor_init(void)
 {
   // 电机初始化
@@ -866,7 +864,7 @@ void __J4_init(void)
   hand_task_get_feedback();
   //   __hand_nonforce();
   //   hand_task_output();
-} 
+}
 
 void __J5_init(void)
 {
@@ -882,9 +880,6 @@ void __gripper_init(void)
   //__hand_nonforce();
   // hand_task_output();
 }
-
-
-
 
 uint8_t __hand_J1_init(uint8_t reset)
 {
@@ -1012,10 +1007,9 @@ uint8_t __hand_J4_init(void)
       __SET_MOTOR_CURRENT(DJI_2006_J4, 0);
       DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_2006_J4));
       hand_task_get_feedback();
-      // J3_D=-__GET_MOTOR_ANGLE(DJI_2006_J4); 
+      // J3_D=-__GET_MOTOR_ANGLE(DJI_2006_J4);
 
       return 1;
-
     }
   }
   return 0;
@@ -1033,7 +1027,7 @@ uint8_t __hand_J5_init(void)
   }
   return 1;
 }
-    uint8_t __hand_gripper_init(void)
+uint8_t __hand_gripper_init(void)
 {
   if (DM_Motor_gripper.para.state == 0x00)
   {
@@ -1119,10 +1113,10 @@ void __hand_gold_catch_ctrl(void)
 {
   __ADD_JOINT_ANGLE(HAND_J1, -RC_CTRL_PTR->rc.ch[2] * 0.0000007f * 2);
   __ADD_JOINT_ANGLE(HAND_J3, -RC_CTRL_PTR->rc.ch[4] * 0.000025f * J3_MAP_K);
-// __ADD_JOINT_ANGLE(HAND_PITCH, -RC_CTRL_PTR->rc.ch[3] * 0.0001f * PITCH_MAP_K);
-// if (__GET_JOINT_ANGLE(HAND_PITCH) > 0)
-//   __SET_JOINT_ANGLE(HAND_PITCH, 0);
-// __hand_move2_subctrl(0, -0.950, 0, 0, 0, J2_EN);
+  // __ADD_JOINT_ANGLE(HAND_PITCH, -RC_CTRL_PTR->rc.ch[3] * 0.0001f * PITCH_MAP_K);
+  // if (__GET_JOINT_ANGLE(HAND_PITCH) > 0)
+  //   __SET_JOINT_ANGLE(HAND_PITCH, 0);
+  // __hand_move2_subctrl(0, -0.950, 0, 0, 0, J2_EN);
 }
 
 void __hand_catch_ground(void)
@@ -1196,34 +1190,34 @@ void __hand_catch_ground(void)
 //     ;
 // }
 
-//void __hand_move_GGM(void)
+// void __hand_move_GGM(void)
 //{
-//  if (get_step() == GGM_hand_to_pos)
-//  {
-//    if (
-//        is_angle_around(GGM_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.1f) &&
-//        is_angle_around(GGM_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
-//        is_angle_around(GGM_STEP2_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.1f) &&
-//        is_angle_around(GGM_STEP2_PITCH_ANGLE, __GET_JOINT_ANGLE(HAND_PITCH), 0.1f))
-//      next_step();
-//    else
-//      __hand_move2_subctrl(GGM_STEP2_J1_ANGLE, GGM_STEP2_J2_ANGLE, GGM_STEP2_J3_ANGLE, GGM_STEP2_PITCH_ANGLE, 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
-//  }
-//}
+//   if (get_step() == GGM_hand_to_pos)
+//   {
+//     if (
+//         is_angle_around(GGM_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.1f) &&
+//         is_angle_around(GGM_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+//         is_angle_around(GGM_STEP2_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.1f) &&
+//         is_angle_around(GGM_STEP2_PITCH_ANGLE, __GET_JOINT_ANGLE(HAND_PITCH), 0.1f))
+//       next_step();
+//     else
+//       __hand_move2_subctrl(GGM_STEP2_J1_ANGLE, GGM_STEP2_J2_ANGLE, GGM_STEP2_J3_ANGLE, GGM_STEP2_PITCH_ANGLE, 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
+//   }
+// }
 
 void __hand_move_SM(void)
 {
-//  if (get_step() == SM_hand_to_pos)
-//  {
-//    if (
-//        is_angle_around(SM_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.1f) &&
-//        is_angle_around(SM_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
-//        is_angle_around(SM_STEP2_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.1f) &&
-//        is_angle_around(SM_STEP2_PITCH_ANGLE, __GET_JOINT_ANGLE(HAND_PITCH), 0.1f))
-//        next_step();
-//    else
-      __hand_move2_subctrl(SM_STEP2_J1_ANGLE, SM_STEP2_J2_ANGLE, SM_STEP2_J3_ANGLE, SM_STEP2_PITCH_ANGLE, 0.0f, J1_EN | J2_EN | J3_EN | J4_EN); 
-//  }
+  //  if (get_step() == SM_hand_to_pos)
+  //  {
+  //    if (
+  //        is_angle_around(SM_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.1f) &&
+  //        is_angle_around(SM_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+  //        is_angle_around(SM_STEP2_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.1f) &&
+  //        is_angle_around(SM_STEP2_PITCH_ANGLE, __GET_JOINT_ANGLE(HAND_PITCH), 0.1f))
+  //        next_step();
+  //    else
+  __hand_move2_subctrl(SM_STEP2_J1_ANGLE, SM_STEP2_J2_ANGLE, SM_STEP2_J3_ANGLE, SM_STEP2_PITCH_ANGLE, 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
+  //  }
 
   if (get_step() == SM_hand_to_pos2)
   {
@@ -1364,9 +1358,7 @@ void __hand_move_reset(void)
   {
     hand_J3_reset();
   }
-
 }
-
 
 /*
   $$$$$$$}.........$$$$$$$$$   "00000000$$$$""""""""""""""""""""""*$$$$%000$$     ........$$.....

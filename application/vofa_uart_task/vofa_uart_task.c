@@ -56,6 +56,7 @@ void vofa_rx_unpack(void)
 }
 
 //  关于接收
+//修改一下使得他更符合代码调试（未完成）
 void vofa_rece_set_type(VOFA_TASK_HANDKER_TYPE *handler, RX_pack *Rece_pack_ptr)
 {
     switch (Rece_pack_ptr->char_type)
