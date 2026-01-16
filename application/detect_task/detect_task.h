@@ -69,7 +69,7 @@ enum errorList
   TOE_3508_M4_ID,
   TOE_J1,
   TOE_J2,
-  TOE_J3,
+//   TOE_J3,
   //TOE_HE_L,
   //TOE_HE_R,
   TOE_UPLIFT,

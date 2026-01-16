@@ -46,8 +46,9 @@ void AK_joint_motor_pos_speed_ctrl(AK_Joint_Motor_t *motor,float pos,float spd,f
 void AK_joint_motor_nonforce_ctrl(AK_Joint_Motor_t *motor);
 
 void AK_joint_motor_set_zero_pos(AK_Joint_Motor_t *motor);
+void AK_joint_motor_set_forever_zero_pos(AK_Joint_Motor_t *motor);
 
-void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor,AK_hcan_t *can);
+void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor, AK_hcan_t *can);
 void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor,uint8_t *rx_message);
 
 /*test code*/

@@ -34,7 +34,7 @@ void AK_joint_motor_disable(AK_Joint_Motor_t *motor)
   motor->enable=0;
 }
 
-void AK_joint_motor_current_ctrl(AK_Joint_Motor_t *motor,float current)
+void  AK_joint_motor_current_ctrl(AK_Joint_Motor_t *motor,float current)
 {
   motor->mode=CAN_PACKET_SET_CURRENT;
   int32_t send_index = 0;
@@ -87,14 +87,20 @@ void AK_joint_motor_set_zero_pos(AK_Joint_Motor_t *motor)
   motor->tx_buffer[0]=0x00;
   //comm_can_transmit_eid(controller_id |((uint32_t) CAN_PACKET_SET_ORIGIN_HERE << 8), &buffer, send_index);
 }
-
-void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor,AK_hcan_t *can)
+void AK_joint_motor_set_forever_zero_pos(AK_Joint_Motor_t *motor)
 {
-  static uint32_t data_len;
-  if(motor->enable)
-  {
-    switch(motor->mode)
+
+  motor->mode = CAN_PACKET_SET_ORIGIN_HERE;
+  motor->tx_buffer[0] = 0x01;
+}
+
+void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t * motor, AK_hcan_t * can)
+{
+    static uint32_t data_len;
+    if (motor->enable)
     {
+      switch (motor->mode)
+      {
       case CAN_PACKET_SET_ORIGIN_HERE:
         data_len=CAN_DATA_SIZE_1_BYTES;
         break;
@@ -112,5 +118,5 @@ void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor,AK_hcan_t *can)
     fdcanx_send_data_ex_mode(can
       ,(motor->id)|((uint32_t)(motor->mode) << 8)
       ,motor->tx_buffer,data_len);
-  }
+    }
 }

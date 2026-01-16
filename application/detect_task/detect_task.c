@@ -287,7 +287,7 @@ static void DetectInit(uint32_t time)
             {20, 20, 10}, // TOE_3508_M4_ID,
             {30, 40, 9},  // TOE_J1,
             {30, 40, 8},  // TOE_J2,
-            {30, 40, 7},  // TOE_J3,
+            // {30, 40, 7},  // TOE_J3,
             //{20, 20, 6},//  //TOE_HE_L,
             //{20, 20, 5},// TOE_HE_R
             {20, 20, 4}, // TOE_UPLIFT,

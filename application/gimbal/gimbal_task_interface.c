@@ -198,8 +198,8 @@ void gimbal_task_init()
   External_can_ecd_init(&uplift_ecd, 0x14A0, 0x0904, OID_ECD, ECD_CAN_COMMUNICATION, 0x04, 0x04);
   __SET_JOINT_LIMIT(GIMBAL_UPLIFT, UL_MIN_ENCODE, UL_MAX_ENCODE);
 
-  while (toe_is_error(TOE_UPLIFT))
-    ;
+//  while (toe_is_error(TOE_UPLIFT))
+//    ;
 
   for (int i = 0; i < 40; i++)
   {
