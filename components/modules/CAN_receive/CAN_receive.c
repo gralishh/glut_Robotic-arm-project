@@ -95,31 +95,31 @@ void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, ui
   if (CANx == &hfdcan2)
   {
     // j4
-    //__DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl, rx_message, rx_header->Identifier);
+     __DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl, rx_message, rx_header->Identifier);
     switch (rx_header->Identifier)
     {
       //j1
-    // case 0x295d:
-    //   __AK_joint_motor_feedback_hook(&AK70_10_motor, rx_message);
-    //   //DetectHook(TOE_J1);
+    case 0x295d:
+      __AK_joint_motor_feedback_hook(&AK70_10_motor, rx_message);
+      DetectHook(TOE_J1);
       break;
       //j2
-//    case 0x22:
-//      dm4310_fbdata(&DM_Motor_J2, rx_message, FDCAN_DLC_BYTES_8);
-      //DetectHook(TOE_J2);
+   case 0x22:
+     dm4310_fbdata(&DM_Motor_J2, rx_message, FDCAN_DLC_BYTES_8);
+      DetectHook(TOE_J2);
       break;
       //j3
 		case 0x233:
 		dm4310_fbdata(&DM_Motor_J3, rx_message, FDCAN_DLC_BYTES_8);
 		break;
-//    //gripper
-//      case 0x44:
-//      dm4310_fbdata(&DM_Motor_gripper, rx_message, FDCAN_DLC_BYTES_8);
-//      break;
-//      //j5
-//    case 0x33:
-//      dm4310_fbdata(&DM_Motor_J5, rx_message, FDCAN_DLC_BYTES_8);
-//      break;
+   //gripper
+     case 0x444:
+     dm4310_fbdata(&DM_Motor_gripper, rx_message, FDCAN_DLC_BYTES_8);
+    break;
+     //j5
+    case 0x33:
+     dm4310_fbdata(&DM_Motor_J5, rx_message, FDCAN_DLC_BYTES_8);
+     break;
 
 
       //    case 0x201:

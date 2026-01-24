@@ -173,312 +173,232 @@
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>errorList,0x0A</ItemText>
+          <ItemText>rc_ctrl,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>USART10_TxCBuf,0x0A</ItemText>
+          <ItemText>remote_data,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>4</count>
           <WinNumber>1</WinNumber>
-          <ItemText>USART10_RxCBuf</ItemText>
+          <ItemText>CC_handler</ItemText>
         </Ww>
         <Ww>
           <count>5</count>
           <WinNumber>1</WinNumber>
-          <ItemText>USART10_TxCBuf_Arr</ItemText>
+          <ItemText>hand_task_handler,0x10</ItemText>
         </Ww>
         <Ww>
           <count>6</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rc_ctrl,0x0A</ItemText>
+          <ItemText>mode_var</ItemText>
         </Ww>
         <Ww>
           <count>7</count>
           <WinNumber>1</WinNumber>
-          <ItemText>remote_data,0x0A</ItemText>
+          <ItemText>game_state</ItemText>
         </Ww>
         <Ww>
           <count>8</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CC_handler</ItemText>
+          <ItemText>game_robot_HP_t</ItemText>
         </Ww>
         <Ww>
           <count>9</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler,0x10</ItemText>
+          <ItemText>robot_state,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>10</count>
           <WinNumber>1</WinNumber>
-          <ItemText>mode_var</ItemText>
+          <ItemText>hand_task_handler</ItemText>
         </Ww>
         <Ww>
           <count>11</count>
           <WinNumber>1</WinNumber>
-          <ItemText>game_state</ItemText>
+          <ItemText>errorList</ItemText>
         </Ww>
         <Ww>
           <count>12</count>
           <WinNumber>1</WinNumber>
-          <ItemText>data_seq_length</ItemText>
+          <ItemText>DM_Motor_J2</ItemText>
         </Ww>
         <Ww>
           <count>13</count>
           <WinNumber>1</WinNumber>
-          <ItemText>game_robot_HP_t</ItemText>
+          <ItemText>movement</ItemText>
         </Ww>
         <Ww>
           <count>14</count>
           <WinNumber>1</WinNumber>
-          <ItemText>robot_state,0x0A</ItemText>
+          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>15</count>
           <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler</ItemText>
+          <ItemText>uplift_ecd</ItemText>
         </Ww>
         <Ww>
           <count>16</count>
           <WinNumber>1</WinNumber>
-          <ItemText>errorList</ItemText>
+          <ItemText>servo_list,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>17</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2</ItemText>
+          <ItemText>DJI_CAN2_Bus_ctrl</ItemText>
         </Ww>
         <Ww>
           <count>18</count>
           <WinNumber>1</WinNumber>
-          <ItemText>movement</ItemText>
+          <ItemText>DM_Motor_J2</ItemText>
         </Ww>
         <Ww>
           <count>19</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
+          <ItemText>gimbal_task_handler,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>20</count>
           <WinNumber>1</WinNumber>
-          <ItemText>uplift_ecd</ItemText>
+          <ItemText>CC_handler,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>21</count>
           <WinNumber>1</WinNumber>
-          <ItemText>pump1</ItemText>
+          <ItemText>Rece_pack,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>22</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendR</ItemText>
+          <ItemText>vofa_para,0x10</ItemText>
         </Ww>
         <Ww>
           <count>23</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendL</ItemText>
+          <ItemText>DM_Motor_J2</ItemText>
         </Ww>
         <Ww>
           <count>24</count>
           <WinNumber>1</WinNumber>
-          <ItemText>servo_list,0x0A</ItemText>
+          <ItemText>display</ItemText>
         </Ww>
         <Ww>
           <count>25</count>
           <WinNumber>1</WinNumber>
-          <ItemText>count</ItemText>
+          <ItemText>uplift_ecd,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>26</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_CAN2_Bus_ctrl</ItemText>
+          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>27</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2</ItemText>
+          <ItemText>gimbal_task_handler_ptr</ItemText>
         </Ww>
         <Ww>
           <count>28</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gimbal_task_handler,0x0A</ItemText>
+          <ItemText>rc_ctrl</ItemText>
         </Ww>
         <Ww>
           <count>29</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendL</ItemText>
+          <ItemText>chassis_task_handler_ptr,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>30</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_headendR</ItemText>
+          <ItemText>DJI_CAN1_Bus_ctrl,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>31</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CC_handler,0x0A</ItemText>
+          <ItemText>speed_rpm,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>32</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Rece_pack,0x0A</ItemText>
+          <ItemText>vofa_display_power,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>33</count>
           <WinNumber>1</WinNumber>
-          <ItemText>vofa_para,0x10</ItemText>
+          <ItemText>total_power</ItemText>
         </Ww>
         <Ww>
           <count>34</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2</ItemText>
+          <ItemText>vofa_display_power1</ItemText>
         </Ww>
         <Ww>
           <count>35</count>
           <WinNumber>1</WinNumber>
-          <ItemText>display</ItemText>
+          <ItemText>vofa_display_power</ItemText>
         </Ww>
         <Ww>
           <count>36</count>
           <WinNumber>1</WinNumber>
-          <ItemText>uplift_ecd,0x0A</ItemText>
+          <ItemText>total_power1</ItemText>
         </Ww>
         <Ww>
           <count>37</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_uplift,0x0A</ItemText>
+          <ItemText>DJI_CAN3_Bus_ctrl</ItemText>
         </Ww>
         <Ww>
           <count>38</count>
           <WinNumber>1</WinNumber>
-          <ItemText>gimbal_task_handler_ptr</ItemText>
+          <ItemText>power_heat_data_t</ItemText>
         </Ww>
         <Ww>
           <count>39</count>
           <WinNumber>1</WinNumber>
-          <ItemText>rc_ctrl</ItemText>
+          <ItemText>display_data</ItemText>
         </Ww>
         <Ww>
           <count>40</count>
           <WinNumber>1</WinNumber>
-          <ItemText>chassis_task_handler_ptr,0x0A</ItemText>
+          <ItemText>DM_Motor_gripper</ItemText>
         </Ww>
         <Ww>
           <count>41</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DJI_CAN1_Bus_ctrl,0x0A</ItemText>
+          <ItemText>DM_Motor_J2</ItemText>
         </Ww>
         <Ww>
           <count>42</count>
           <WinNumber>1</WinNumber>
-          <ItemText>speed_rpm,0x0A</ItemText>
+          <ItemText>DM_Motor_J3</ItemText>
         </Ww>
         <Ww>
           <count>43</count>
           <WinNumber>1</WinNumber>
-          <ItemText>vofa_display_power,0x0A</ItemText>
+          <ItemText>DM_Motor_J5</ItemText>
         </Ww>
         <Ww>
           <count>44</count>
           <WinNumber>1</WinNumber>
-          <ItemText>total_power</ItemText>
+          <ItemText>AK70_10_motor</ItemText>
         </Ww>
         <Ww>
           <count>45</count>
           <WinNumber>1</WinNumber>
-          <ItemText>vofa_display_power1</ItemText>
+          <ItemText>DJI_Motor_J4</ItemText>
         </Ww>
         <Ww>
           <count>46</count>
           <WinNumber>1</WinNumber>
-          <ItemText>vofa_display_power</ItemText>
+          <ItemText>hand_task_handler</ItemText>
         </Ww>
         <Ww>
           <count>47</count>
           <WinNumber>1</WinNumber>
-          <ItemText>limit_flag,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>48</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>total_power1</ItemText>
-        </Ww>
-        <Ww>
-          <count>49</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>power_scale</ItemText>
-        </Ww>
-        <Ww>
-          <count>50</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>data,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>51</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_CAN3_Bus_ctrl</ItemText>
-        </Ww>
-        <Ww>
-          <count>52</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>power_heat_data_t</ItemText>
-        </Ww>
-        <Ww>
-          <count>53</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>display_data</ItemText>
-        </Ww>
-        <Ww>
-          <count>54</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>hand_task_handler,0x10</ItemText>
-        </Ww>
-        <Ww>
-          <count>55</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_J3</ItemText>
-        </Ww>
-        <Ww>
-          <count>56</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_gripper</ItemText>
-        </Ww>
-        <Ww>
-          <count>57</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J2</ItemText>
-        </Ww>
-        <Ww>
-          <count>58</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J3</ItemText>
-        </Ww>
-        <Ww>
-          <count>59</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J5</ItemText>
-        </Ww>
-        <Ww>
-          <count>60</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>AK70_10_motor</ItemText>
-        </Ww>
-        <Ww>
-          <count>61</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>chassis_task_handler</ItemText>
-        </Ww>
-        <Ww>
-          <count>62</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>DJI_Motor_J4</ItemText>
-        </Ww>
-        <Ww>
-          <count>63</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>rx_header-&gt;Identifier</ItemText>
+          <ItemText>DJI_Motor_uplift</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -1283,7 +1203,7 @@
 
   <Group>
     <GroupName>bsp</GroupName>
-    <tvExp>1</tvExp>
+    <tvExp>0</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
