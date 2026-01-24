@@ -117,14 +117,14 @@ const osThreadAttr_t USART2_measure_attributes = {
 osThreadId_t GimbalTaskHandle;
 const osThreadAttr_t GimbalTask_attributes = {
   .name = "GimbalTask",
-  .stack_size = 512 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for HandTask */
 osThreadId_t HandTaskHandle;
 const osThreadAttr_t HandTask_attributes = {
   .name = "HandTask",
-  .stack_size = 512 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for USART3_measure */
@@ -224,7 +224,7 @@ void __RM_UI_Timer(void *argument);
   * @retval int
   */
 int main(void)
- {
+{
   /* USER CODE BEGIN 1 */
   for(int aaaa = 1000000 ; aaaa > 0 ; aaaa--)
 	{

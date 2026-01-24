@@ -258,7 +258,7 @@ void __dm4310_mit_output_ctrl(hcan_t* hcan,Joint_Motor_t* motor_ptr)
 void dm_set_pos(Joint_Motor_t *motor_ptr, float angle)
 {
 	if(motor_ptr->para.id == 0x01)
-		pos_speed_ctrl(motor_ptr, angle, 15);
+		pos_speed_ctrl(motor_ptr, angle, 1);
 	else if (motor_ptr->para.id == 0x02)
 		pos_speed_ctrl(motor_ptr, angle, 0.4);
 	else if (motor_ptr->para.id == 0x03)

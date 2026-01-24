@@ -55,11 +55,11 @@ void motor_timer_ctrl_callback(void)
 
   /*****standalone_motor_ctrl*****/
   //__M8010_motor_control_hook();
-__dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_gripper);
- __dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J5);
+//__dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_gripper);
+ //__dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J5);
  __dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J3);
-__dm4310_mit_output_ctrl(&hfdcan2,&DM_Motor_J2);
-__AK_joint_motor_ctrl_hook(&AK70_10_motor,&hfdcan2);
+//__dm4310_mit_output_ctrl(&hfdcan2,&DM_Motor_J2);
+//__AK_joint_motor_ctrl_hook(&AK70_10_motor,&hfdcan2);
  
   __DJI_CANBus_ctrl_loop(&DJI_CAN1_Bus_ctrl);
   __DJI_CANBus_ctrl_loop(&DJI_CAN2_Bus_ctrl);

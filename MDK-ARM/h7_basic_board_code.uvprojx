@@ -314,7 +314,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>2</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;..\components\modules;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/;..\components\modules\DJI_motor_module;..\components\modules\CAN_receive;..\components\modules\cubemars;..\components\modules\Custom_contrllor;..\components\modules\Ex_encoder;..\components\modules\M4310_module;..\components\modules\M8010_motor_module;..\components\modules\remote_control;..\components\modules\RM_UI;..\components\modules\servo;..\components\modules\ws2812;..\application\chassis;..\application\catcher;..\application\gimbal;..\application\hand;..\application\detect_task;..\application\referee;..\application\usart_measure_task;..\application\vofa_uart_task</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../bsp;../components/modules;../application;../components/algorithm;../components/support;../Drivers/CMSIS/DSP/Include;../Drivers/CMSIS/RTOS/Template/;../components/modules/DJI_motor_module;../components/modules/CAN_receive;../components/modules/cubemars;../components/modules/Custom_contrllor;../components/modules/Ex_encoder;../components/modules/M4310_module;../components/modules/M8010_motor_module;../components/modules/remote_control;../components/modules/RM_UI;../components/modules/servo;../components/modules/ws2812;../application/chassis;../application/catcher;../application/gimbal;../application/hand;../application/detect_task;../application/referee;../application/usart_measure_task;../application/vofa_uart_task</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

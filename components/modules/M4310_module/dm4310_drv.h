@@ -19,7 +19,7 @@
 #define T_MIN -10.0f
 #define T_MAX 10.0f
 
-
+#pragma pack(1)
 typedef struct 
 {
 	uint16_t id;
@@ -35,7 +35,7 @@ typedef struct
 	float Tmos;
 	float Tcoil;
 }motor_fbpara_t;
-
+#pragma pack()
 
 typedef struct
 {
