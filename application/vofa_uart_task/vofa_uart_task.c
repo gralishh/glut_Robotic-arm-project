@@ -160,7 +160,13 @@ void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, Joint_Motor_t *mo
 // 关于发送
 void vofa_data_into_pack(fp32 *vofa_send_data_pack)
 {
-    vofa_send_data_pack[0] = power_heat_data_t.chassis_power_buffer;
+    vofa_send_data_pack[0] = hand_task_handler.feedback_motor_angle[0];
+    vofa_send_data_pack[1] = hand_task_handler.feedback_motor_speed[0];
+    vofa_send_data_pack[2] = hand_task_handler.feedback_motor_current[0];
+    vofa_send_data_pack[3] = 0;
+    vofa_send_data_pack[4] = 0;
+    vofa_send_data_pack[5] = 0;
+    vofa_send_data_pack[6] = 0;
     // vofa_send_data_pack[0] = total_power;
     // vofa_send_data_pack[1] = total_power1;
     // vofa_send_data_pack[0] = chassis_task_handler.motor_speed[0];

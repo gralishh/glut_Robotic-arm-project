@@ -55,7 +55,7 @@ void motor_timer_ctrl_callback(void)
   }
 
   /*****standalone_motor_ctrl*****/
-  __M8010_motor_control_hook();
+  //__M8010_motor_control_hook();
 
   //延时控制发送频率
   static uint32_t last_time_j2 = 0;

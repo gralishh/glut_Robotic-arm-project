@@ -141,26 +141,26 @@ void __gimbal_oid_rc_ctrl(void);
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
 
-#define __BUTTON_PRESS_SWITCH_WRAP(button, mode_var, id, loop_cnt, func) \
-  {                                                                      \
-    static uint8_t press_loop_cnt = 0;                                   \
-    if (button && press_loop_cnt < loop_cnt)                             \
-    {                                                                    \
-      press_loop_cnt++;                                                  \
-    }                                                                    \
-    else if (press_loop_cnt == loop_cnt)                                 \
-    {                                                                    \
-      mode_var = mode_var == id ? 0 : id;                                \
-    }                                                                    \
-    if (button == 0)                                                     \
-    {                                                                    \
-      press_loop_cnt = 0;                                                \
-    }                                                                    \
-    if (mode_var == id)                                                  \
-    {                                                                    \
-      func();                                                            \
-    }                                                                    \
-  }
+// #define __BUTTON_PRESS_SWITCH_WRAP(button, mode_var, id, loop_cnt, func) \
+//   {                                                                      \
+//     static uint8_t press_loop_cnt = 0;                                   \
+//     if (button && press_loop_cnt < loop_cnt)                             \
+//     {                                                                    \
+//       press_loop_cnt++;                                                  \
+//     }                                                                    \
+//     else if (press_loop_cnt == loop_cnt)                                 \
+//     {                                                                    \
+//       mode_var = mode_var == id ? 0 : id;                                \
+//     }                                                                    \
+//     if (button == 0)                                                     \
+//     {                                                                    \
+//       press_loop_cnt = 0;                                                \
+//     }                                                                    \
+//     if (mode_var == id)                                                  \
+//     {                                                                    \
+//       func();                                                            \
+//     }                                                                    \
+//   }
 
 void gimbal_task_init()
 {

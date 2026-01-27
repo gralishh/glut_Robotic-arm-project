@@ -14,59 +14,61 @@
 #include "main.h"
 #include "Vofa.h"
 
- fp32 vofa_display_power[4] = {0};
- int16_t limit_flag = 0;
-  fp32 vofa_display_power1[4] = {0};
-  float total_power = 0;
+// 分电板上对应底盘前左轮的can线线序与其他的can相反，大抵是画板的时候连错线了
 
- // int16_t vofa_power_limit = 0; // vofac查看输出功率
- // fp32 motor_current[4] = {0}; // 测试使用
+fp32 vofa_display_power[4] = {0};
+int16_t limit_flag = 0;
+fp32 vofa_display_power1[4] = {0};
+float total_power = 0;
+
+// int16_t vofa_power_limit = 0; // vofac查看输出功率
+// fp32 motor_current[4] = {0}; // 测试使用
 
 #define HANDLER chassis_task_handler
 #define HANDLER_PTR chassis_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
 
- /*extern*/
- extern FDCAN_HandleTypeDef hfdcan1;
- extern GIMBAL_TASK_HANDLER_TYPE *gimbal_task_handler_ptr;
+/*extern*/
+extern FDCAN_HandleTypeDef hfdcan1;
+extern GIMBAL_TASK_HANDLER_TYPE *gimbal_task_handler_ptr;
 #define UL_HEIGHT (gimbal_task_handler_ptr->joint_angle[0])
 #define UL_MAX (gimbal_task_handler_ptr->max_joint_angle[0])
 #define UL_MIN (gimbal_task_handler_ptr->min_joint_angle[0])
 
- /*global macro variable*/
- // joint mapping parameter
+/*global macro variable*/
+// joint mapping parameter
 
- // controller sensity(degree per loop)
+// controller sensity(degree per loop)
 #define VX_CTRL_SEN 4.23f
 #define VY_CTRL_SEN 4.23f
 #define WZ_CTRL_SEN 9.0f
- // chassis para
+// chassis para
 #define CHASSIS_WZ_SET_SCALE 0.03f
 #define MOTOR_DISTANCE_TO_CENTER 0.3f
 
- /*global motor handler*/
- DJI_Motor_Ctrl_t DJI_Motor_LeftFront;
- DJI_Motor_Ctrl_t DJI_Motor_RightFront;
- DJI_Motor_Ctrl_t DJI_Motor_LeftBack;
- DJI_Motor_Ctrl_t DJI_Motor_RightBack;
+/*global motor handler*/
+DJI_Motor_Ctrl_t DJI_Motor_LeftFront;
+DJI_Motor_Ctrl_t DJI_Motor_RightFront;
+DJI_Motor_Ctrl_t DJI_Motor_LeftBack;
+DJI_Motor_Ctrl_t DJI_Motor_RightBack;
 
- static void __chassis_nonforce(void);
- static void __chassis_idle_ctrl(void);
- static void __chassis_rc_ctrl(void);
- static void __chassis_rc_slow_ctrl(void);
- static void __chassis_union_rc_ctrl(void);
- void chassis_power_control_limit(void);
- void chassis_power_control(void);
- //void getrealpower(void);
+static void __chassis_nonforce(void);
+static void __chassis_idle_ctrl(void);
+static void __chassis_rc_ctrl(void);
+static void __chassis_rc_slow_ctrl(void);
+static void __chassis_union_rc_ctrl(void);
+void chassis_power_control_limit(void);
+void chassis_power_control(void);
+// void getrealpower(void);
 
- // void chassis_reset(void);
+// void chassis_reset(void);
 
- /*general handler method*/
- /**
-  * macro name format:
-  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
-  */
- /*获取电机状态*/
+/*general handler method*/
+/**
+ * macro name format:
+ *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
+ */
+/*获取电机状态*/
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
 #define __SET_MOTOR_INSTANCE(index, instance_ptr) (HANDLER_PTR->motor_instance[index] = ((void *)instance_ptr))
 #define __GET_STRUCT_MODE() (HANDLER_PTR->ctrl_mode)
@@ -80,21 +82,21 @@
 #define __CLEAR_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 0)
 #define __IS_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index])
 
- /*获取电机设定目标值*/
+/*获取电机设定目标值*/
 #define __GET_SET_MOTOR_ANGLE(index) (HANDLER_PTR->motor_angle[index])
 #define __GET_SET_MOTOR_SPEED(index) (HANDLER_PTR->motor_speed[index])
 #define __GET_SET_MOTOR_CURRENT(index) (HANDLER_PTR->motor_current[index])
- /*获取电机反馈*/
+/*获取电机反馈*/
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
 #define __GET_MOTOR_SPEED(index) (HANDLER_PTR->feedback_motor_speed[index])
 #define __GET_MOTOR_CURRENT(index) (HANDLER_PTR->feedback_motor_current[index])
 
- /*电机输出控制*/
-#define __SET_MOTOR_ANGLE(index, value)                                       \
-   {                                                                           \
-     (HANDLER_PTR->motor_angle[index] = value);                                \
-     (HANDLER_PTR->motor_ctrl_mode[index] = POS_LOOP);                         \
-   }
+/*电机输出控制*/
+#define __SET_MOTOR_ANGLE(index, value)               \
+  {                                                   \
+    (HANDLER_PTR->motor_angle[index] = value);        \
+    (HANDLER_PTR->motor_ctrl_mode[index] = POS_LOOP); \
+  }
 #define __ADD_MOTOR_ANGLE(index, value)               \
   {                                                   \
     (HANDLER_PTR->motor_angle[index] += value);       \
@@ -142,7 +144,7 @@
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
 
-     void chassis_task_init()
+void chassis_task_init()
 {
   /*基础初始化*/
   __HALT_TICKS_COUNTING();
@@ -161,13 +163,11 @@
   DJI_Motor_Speed_PID_init(&DJI_Motor_RightFront, PID_POSITION, 18, 0.000, 0.05, 16000, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightFront, PID_POSITION, 15, 0, 0, 1000, 0);
 
-
   __SET_MOTOR_INSTANCE(DJI_RB, &DJI_Motor_RightBack);
   __SET_MOTOR_TYPE(DJI_RB, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_RightBack, &DJI_CAN1_Bus_ctrl, M3508, 0x203);
   DJI_Motor_Speed_PID_init(&DJI_Motor_RightBack, PID_POSITION, 18, 0.000, 0.05, 16000, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_RightBack, PID_POSITION, 15, 0, 0, 1000, 0);
-
 
   __SET_MOTOR_INSTANCE(DJI_LB, &DJI_Motor_LeftBack);
   __SET_MOTOR_TYPE(DJI_LB, DJI_MOTOR);
@@ -209,7 +209,7 @@ void chassis_task_get_feedback()
                                &__GET_MOTOR_SPEED(index),
                                &__GET_MOTOR_ANGLE(index))
   }
-  //getrealpower();
+  // getrealpower();
   /*joint angle map*/
   /*
   __GET_JOINT_ANGLE(index,
@@ -547,7 +547,7 @@ void __chassis_union_rc_ctrl()
 //   }
 // }
 
-//void getrealpower(void)
+// void getrealpower(void)
 //{
 //	  float InitialGivePower[4]; // initial power from PID calculation
 
@@ -585,7 +585,6 @@ void __chassis_union_rc_ctrl()
 //  }
 //}
 
-
 void chassis_power_control_limit(void)
 {
   for (int8_t index = 0; index < CHASSIS_MOTOR_COUNT; index++)
@@ -594,7 +593,7 @@ void chassis_power_control_limit(void)
   }
   chassis_power_control();
 }
-    // 移植步兵功率控制
+// 移植步兵功率控制
 void chassis_power_control(void)
 {
 
@@ -605,20 +604,20 @@ void chassis_power_control(void)
   float InitialTotalPower = 0;
   float ScaledGivePower[4];
 
-  //float chassis_energy_buffer = 50.0f;
+  // float chassis_energy_buffer = 50.0f;
 
   float toque_coefficient = 1.99688994e-6f; // (20/16384)*(0.3)*(187/3591)/9.55
   float k1 = 1.23e-07;                      // k1
   float k2 = 1.453e-07;                     // k2
-//  float constant = 4.081f;
-	float constant = 10.081f;
+                                            //  float constant = 4.081f;
+  float constant = 10.081f;
 
   ChassisMaxPower = (float)RefereePowerLimit;
 
   for (uint8_t i = 0; i < 4; i++) // first get all the initial motor power and total motor power
   {
     // vofa_display_power[i] = (int16_t)__GET_MOTOR_SPEED(i);//
-    //vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);//
+    // vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);//
     //__GET_MOTOR_SPEED(i) = 3000;//
     InitialGivePower[i] = __GET_SET_MOTOR_CURRENT(i) * toque_coefficient * (int16_t)__GET_MOTOR_SPEED(i) +
                           k2 * (int16_t)__GET_MOTOR_SPEED(i) * (int16_t)__GET_MOTOR_SPEED(i) +
@@ -630,23 +629,23 @@ void chassis_power_control(void)
     // 化为以下的关于out的二次方程
     // k1 * out^2 + (toque_coefficient * speed_rpm) * out + (k2 * speed_rpm^2 + constant - ScaledGivePower[i]) = 0
     // 通过对其的逆解算，解出pid的输出值从而对其进行限幅
-	  
-    //vofa_display_power[i] = InitialGivePower[i];
-	  
+
+    // vofa_display_power[i] = InitialGivePower[i];
+
     if (InitialGivePower < 0) // negative power not included (transitory)
       continue;
     InitialTotalPower += InitialGivePower[i];
-   // total_power = InitialTotalPower; //
+    // total_power = InitialTotalPower; //
   }
 
   if (InitialTotalPower > ChassisMaxPower) // determine if larger than max power
   {
     float power_scale = ChassisMaxPower / InitialTotalPower;
-	  
+
     for (uint8_t i = 0; i < 4; i++)
     {
 
-            ScaledGivePower[i] = InitialGivePower[i] * power_scale; // get scaled power
+      ScaledGivePower[i] = InitialGivePower[i] * power_scale; // get scaled power
 
       float b = toque_coefficient * (int16_t)__GET_MOTOR_SPEED(i);
       float c = k2 * (int16_t)__GET_MOTOR_SPEED(i) * (int16_t)__GET_MOTOR_SPEED(i) - ScaledGivePower[i] + constant;
@@ -659,17 +658,18 @@ void chassis_power_control(void)
       // 判别式小于0则跳过该电机
       else if (__GET_SET_MOTOR_CURRENT(i) > 0) // Selection of the calculation formula according to the direction of the original moment
       {
-         //limit_flag ++;//
+        // limit_flag ++;//
         float temp = (-b + sqrt(inside)) / (2 * k1); // 用公式求出电机的输出值，对其进行限幅
         if (temp > 16000)
         {
           __GET_SET_MOTOR_CURRENT(i) = 16000;
         }
         else
-		{__GET_SET_MOTOR_CURRENT(i) = temp;
-		  //vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);//
-        //vofa_display_power[i] = temp;//
-		}
+        {
+          __GET_SET_MOTOR_CURRENT(i) = temp;
+          // vofa_display_power[i] = __GET_SET_MOTOR_CURRENT(i);//
+          // vofa_display_power[i] = temp;//
+        }
       }
       else
       {
@@ -681,10 +681,8 @@ void chassis_power_control(void)
         else
           __GET_SET_MOTOR_CURRENT(i) = temp;
       }
-	  
     }
   }
 }
 #undef HANDLER
 #undef HANDLER_PTR
-
