@@ -56,6 +56,8 @@ void vofa_rx_unpack(void)
 }
 
 //  关于接收
+//用于更改状态使得操作与接收数据隔离
+//要修改让看的修改内容更直观可直接改枚举和vofa上的名字就行虽然没必要
 //修改一下使得他更符合代码调试（未完成）
 void vofa_rece_set_type(VOFA_TASK_HANDKER_TYPE *handler, RX_pack *Rece_pack_ptr)
 {
@@ -110,51 +112,47 @@ void vofa_rece_set_type(VOFA_TASK_HANDKER_TYPE *handler, RX_pack *Rece_pack_ptr)
     }
 }
 
-// 加点保护
-void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, Joint_Motor_t *motor_handler, uint8_t motor)
+//处理
+void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, AK_Joint_Motor_t *motor_handler, uint8_t motor)
 {
-    if (handler->vofa_motor_en & MOTOR_START)
-    {
-        if (handler->vofa_motor_en & MOTOR_SPEED_LOOP_EN)
-        {
-            handler->vofa_motor_en |= MOTOR_POS_LOOP_DISEN; // 位置环失能
 
-            if (handler->vofa_motor_en & MOTOR_GET_SPEED)
-                hand_task_handler_ptr->motor_speed[motor] = handler->speed_ref;
-            if (handler->vofa_motor_en & MOTOR_GET_SPEED_Kp)
-                motor_handler->Kp = handler->speed_Kp;
-            // if(handler->vofa_motor_en &= MOTOR_GET_SPEED_Ki)
-            // motor_handler->ki = handler->speed_Ki;
-        }
-        else if (handler->vofa_motor_en & MOTOR_SPEED_LOOP_DISEN)
-        {
-            hand_task_handler_ptr->motor_ctrl_mode[motor] = NON_FORCE;
-            // motor_handler->Kp = 0.0001f;
-            // motor_handler->Ki = 0.00001f;
-        }
+//        if (handler->vofa_motor_en & MOTOR_SPEED_LOOP_EN)
+//        {
+//            handler->vofa_motor_en |= MOTOR_POS_LOOP_DISEN; // 位置环失能
 
-        if (handler->vofa_motor_en & MOTOR_POS_LOOP_EN)
-        {
-            handler->vofa_motor_en |= MOTOR_SPEED_LOOP_DISEN; // 速度环失能
-            if (handler->vofa_motor_en & MOTOR_GET_POS)
-                hand_task_handler_ptr->motor_angle[motor] = handler->pos_ref;
-            if (handler->vofa_motor_en & MOTOR_GET_POS_Kp)
-                motor_handler->Kp = handler->pos_Kp;
-            if (handler->vofa_motor_en & MOTOR_GET_POS_Kd)
-                motor_handler->Kd = handler->pos_Kd;
-        }
-        else if (handler->vofa_motor_en & MOTOR_POS_LOOP_DISEN)
-        {
-            hand_task_handler_ptr->motor_ctrl_mode[motor] = NON_FORCE;
-            motor_handler->Kp = 0.0001f;
-            motor_handler->Kd = 0.00001f;
-        }
-    }
-    else if (handler->vofa_motor_en & MOTOR_OFF)
-    {
-        // 电机失能
-        hand_task_handler_ptr->motor_ctrl_mode[motor] = NON_FORCE;
-    }
+//           // if (handler->vofa_motor_en & MOTOR_GET_SPEED)
+//           //     hand_task_handler_ptr->motor_speed[motor] = handler->speed_ref;
+//           if (handler->vofa_motor_en & MOTOR_GET_SPEED_Kp)
+//               //motor_handler->Kp = handler->speed_Kp;
+//               //motor_handler->ak_sp = handler->speed_Kp;
+//           if (handler->vofa_motor_en &= MOTOR_GET_SPEED_Ki)
+//               //motor_handler->ak_rpa = handler->speed_Ki;
+//           // motor_handler->ki = handler->speed_Ki;
+//        }
+        // else if (handler->vofa_motor_en & MOTOR_SPEED_LOOP_DISEN)
+        // {
+        //     hand_task_handler_ptr->motor_ctrl_mode[motor] = NON_FORCE;
+        //     // motor_handler->Kp = 0.0001f;
+        //     // motor_handler->Ki = 0.00001f;
+        // }
+
+        // if (handler->vofa_motor_en & MOTOR_POS_LOOP_EN)
+        // {
+        //     handler->vofa_motor_en |= MOTOR_SPEED_LOOP_DISEN; // 速度环失能
+        //     if (handler->vofa_motor_en & MOTOR_GET_POS)
+        //         hand_task_handler_ptr->motor_angle[motor] = handler->pos_ref;
+        //     if (handler->vofa_motor_en & MOTOR_GET_POS_Kp)
+        //         motor_handler->Kp = handler->pos_Kp;
+        //     if (handler->vofa_motor_en & MOTOR_GET_POS_Kd)
+        //         motor_handler->Kd = handler->pos_Kd;
+        // }
+        // else if (handler->vofa_motor_en & MOTOR_POS_LOOP_DISEN)
+        // {
+        //     hand_task_handler_ptr->motor_ctrl_mode[motor] = NON_FORCE;
+        //     motor_handler->Kp = 0.0001f;
+        //     motor_handler->Kd = 0.00001f;
+        // }
+
 }
 
 // 关于发送
@@ -162,7 +160,7 @@ void vofa_data_into_pack(fp32 *vofa_send_data_pack)
 {
     vofa_send_data_pack[0] = hand_task_handler.feedback_motor_angle[0];
     vofa_send_data_pack[1] = hand_task_handler.feedback_motor_speed[0];
-    vofa_send_data_pack[2] = hand_task_handler.feedback_motor_current[0];
+    vofa_send_data_pack[2] = hand_task_handler.joint_angle[0];
     vofa_send_data_pack[3] = 0;
     vofa_send_data_pack[4] = 0;
     vofa_send_data_pack[5] = 0;
@@ -198,7 +196,7 @@ void vofa_uart_task(void *argument)
     while (1)
     {
         // vofa接收调用
-        // vofa_rx_unpack();
+         vofa_rx_unpack();
         // vofa_rece_set_type(vofa_para_ptr, &Rece_pack);
         // vofa_type_set_motor_HOOK(vofa_para_ptr, &DM_Motor_J2, DM_J2);
         // vofa发送调用

@@ -7,6 +7,7 @@
 #include "task.h"
 
 #include "dm4310_drv.h"
+#include "AK_series.h"
 
 #define PI 3.14159f
 typedef enum
@@ -86,7 +87,7 @@ extern VOFA_TASK_HANDKER_TYPE *vofa_para_ptr;
 // 发送数据包
 void vofa_rx_unpack(void);
 void vofa_rece_set_type(VOFA_TASK_HANDKER_TYPE *handler, RX_pack *Rece_pack_ptr);
-void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, Joint_Motor_t *motor_handler, uint8_t motor);
+void vofa_type_set_motor_HOOK(VOFA_TASK_HANDKER_TYPE *handler, AK_Joint_Motor_t *motor_handler, uint8_t motor);
 
 // 将想要显示的数据填入发送包中
 void vofa_data_into_pack(fp32 *vofa_send_data_pack);
