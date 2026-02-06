@@ -34,7 +34,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define HAND_CTRL_CAN
 // joint mapping parameter
 // #define J1_MAP_K   0.167 /*for m8010*/
-#define J1_MAP_K (3.14f / 174.0f)
+#define J1_MAP_K (3.14f / 180.0f)
 #define J1_MAP_D 0
 #define J2_MAP_K 1.0f
 #define J2_MAP_D 0
@@ -218,15 +218,15 @@ void hand_task_init()
 
   basic_motor_init();
   osDelay(100);
-  //   __gripper_init();
-  // 	osDelay(50);
-  //   __J5_init();
-  //  osDelay(50);
-  //   __J4_init();
-  //  osDelay(50);
-  //   __J3_init();
-  // 	osDelay(50);
-  //   __J2_init();
+    __gripper_init();
+  	osDelay(50);
+    __J5_init();
+   osDelay(50);
+    __J4_init();
+   osDelay(50);
+    __J3_init();
+  	osDelay(50);
+    __J2_init();
   osDelay(50);
   __J1_init();
 }
@@ -976,7 +976,7 @@ uint8_t __hand_J2_init(void)
 }
 uint8_t __hand_J3_init(void)
 {
-  if (DM_Motor_J3.para.state == 0x00)
+  if (toe_is_error(TOE_J3) || DM_Motor_J3.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J3, NON_FORCE);
     disable_motor_mode(&hfdcan2, 1, POS_MODE);
@@ -992,14 +992,14 @@ uint8_t __hand_J4_init(void)
   static float last__angle = 0.0f;
   static uint8_t init_complete_flag = 0;
 
-  if (__IS_MODE_SWITCHED())
-  {
-    init_complete_flag = 0;
-    loop_count = 0;
-    last__angle = 0.0f;
-  }
+  // if (__IS_MODE_SWITCHED())
+  // {
+  //   init_complete_flag = 0;
+  //   loop_count = 0;
+  //   last__angle = 0.0f;
+  // }
 
-  if (init_complete_flag == 0)
+  if (toe_is_error(TOE_J4) || init_complete_flag == 0)
   {
 
     osDelay(50);
@@ -1018,12 +1018,9 @@ uint8_t __hand_J4_init(void)
     else
     {
       init_complete_flag = 1;
-      //__SET_JOINT_ANGLE(HAND_J3, 0.0f);
       __SET_MOTOR_CURRENT(DJI_2006_J4, 0);
       DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_2006_J4));
       hand_task_get_feedback();
-      // J3_D=-__GET_MOTOR_ANGLE(DJI_2006_J4);
-
       return 1;
     }
   }
@@ -1032,7 +1029,7 @@ uint8_t __hand_J4_init(void)
 
 uint8_t __hand_J5_init(void)
 {
-  if (DM_Motor_J5.para.state == 0x00)
+  if (toe_is_error(TOE_J5) || DM_Motor_J5.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J5, NON_FORCE);
     disable_motor_mode(&hfdcan2, 3, POS_MODE);
@@ -1044,7 +1041,7 @@ uint8_t __hand_J5_init(void)
 }
 uint8_t __hand_gripper_init(void)
 {
-  if (DM_Motor_gripper.para.state == 0x00)
+  if (toe_is_error(TOE_G) || DM_Motor_gripper.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_G, NON_FORCE);
     // ���һ����Ҫ��ʧ����ʹ�ܣ��᲻֪��Ϊʲôһֱ��ʼ������

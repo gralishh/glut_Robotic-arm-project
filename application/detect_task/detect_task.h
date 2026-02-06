@@ -61,25 +61,24 @@
 //错误码以及对应设备顺序
 enum errorList
 {
-  DBUSTOE = 0,
-  CAMERA_TOE,
-  TOE_3508_M1_ID,
-  TOE_3508_M2_ID,
-  TOE_3508_M3_ID,
-  TOE_3508_M4_ID,
-  TOE_J1,
-  TOE_J2,
-//   TOE_J3,
-  //TOE_HE_L,
-  //TOE_HE_R,
-  TOE_UPLIFT,
-  TOE_UPLIFT_ECD,
-	//RefereeSystemTOE,
+    DBUSTOE = 0,
+    CAMERA_TOE,
+    TOE_3508_M1_ID,
+    TOE_3508_M2_ID,
+    TOE_3508_M3_ID,
+    TOE_3508_M4_ID,
+    TOE_J1,
+    TOE_J2,
+    TOE_J3,
+    TOE_J4,
+    TOE_J5,
+    TOE_G,
+    TOE_UPLIFT,
+    TOE_UPLIFT_ECD,
+    // RefereeSystemTOE,
 
-
-  errorListLength,
+    errorListLength,
 };
-
 
 typedef __packed struct
 {
