@@ -104,7 +104,7 @@ static void __gripper_init(void);
 
 static void __DM_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_value, float l_value);
 static uint8_t __hand_J1_init(uint8_t);
-//static uint8_t __hand_J1_init(void);
+// static uint8_t __hand_J1_init(void);
 static uint8_t __hand_J2_init(void);
 static uint8_t __hand_J3_init(void);
 static uint8_t __hand_J4_init(void);
@@ -115,7 +115,7 @@ static uint8_t __hand_gripper_init(void);
 static void __hand_move_GGM(void);
 static void __hand_move_SM(void);
 
-//static void __hand_move_reset(void);
+// static void __hand_move_reset(void);
 static void __hand_rc2_ctrl(void);
 
 // static void hand_pitch_reset(void);
@@ -215,21 +215,20 @@ void hand_task_init()
   __RESET_TICKS();
 
   // init_hand_handle_struct();//检出是否会影响
-	
-  basic_motor_init();
-	osDelay(100);
-//   __gripper_init();
-// 	osDelay(50);
-//   __J5_init();
-//  osDelay(50);
-//   __J4_init();
-//  osDelay(50);
-//   __J3_init();
-// 	osDelay(50);
-//   __J2_init();
- osDelay(50);
-  __J1_init();
 
+  basic_motor_init();
+  osDelay(100);
+  //   __gripper_init();
+  // 	osDelay(50);
+  //   __J5_init();
+  //  osDelay(50);
+  //   __J4_init();
+  //  osDelay(50);
+  //   __J3_init();
+  // 	osDelay(50);
+  //   __J2_init();
+  osDelay(50);
+  __J1_init();
 }
 
 /**
@@ -419,7 +418,6 @@ void hand_task_set_output()
   //   __SET_MOTOR_OFFLINE(DJI_HE_R);
   //}
 
-  
   // if (toe_is_error(TOE_J1) || __IS_MOTOR_OFFLINE(AK_J1))
   // {
   //   __SET_MOTOR_CTRL_MODE(AK_J1, OFFLINE);
@@ -438,18 +436,17 @@ void hand_task_set_output()
   // 加个按键
   //  __hand_move_reset();
 
-
-  //小心使用再次初始化！！！，如果一直错误判断会让他一直初始化一直循环创造一个新的大疆结构体导致他溢栈，最会进入硬错误
-  // if (
-  //     // toe_is_error(TOE_HE_L) &&
-  //     // toe_is_error(TOE_HE_R) &&
-  //     toe_is_error(TOE_J1) &&
-  //     toe_is_error(TOE_J2)
-  //     // &&toe_is_error(TOE_J3)
-  //     )
-  // {
-  //   hand_task_init();
-  // }
+  // 小心使用再次初始化！！！，如果一直错误判断会让他一直初始化一直循环创造一个新的大疆结构体导致他溢栈，最会进入硬错误
+  //  if (
+  //      // toe_is_error(TOE_HE_L) &&
+  //      // toe_is_error(TOE_HE_R) &&
+  //      toe_is_error(TOE_J1) &&
+  //      toe_is_error(TOE_J2)
+  //      // &&toe_is_error(TOE_J3)
+  //      )
+  //  {
+  //    hand_task_init();
+  //  }
 }
 
 /**
@@ -561,7 +558,7 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, uint8_t E
 {
   if (EN & J5_EN)
   {
-    if (ABS( J5- HANDLER_PTR->joint_angle[HAND_J2]) > 0.08f)
+    if (ABS(J5 - HANDLER_PTR->joint_angle[HAND_J2]) > 0.08f)
     {
       __ADD_JOINT_ANGLE(HAND_J2, J5 > HANDLER_PTR->joint_angle[HAND_J2] ? 0.0023f : -0.0023f);
       //__ADD_JOINT_ANGLE(HAND_J2,0.002f*(J2-HANDLER_PTR->joint_angle[HAND_J2]));
@@ -689,7 +686,7 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, uint8_t E
 //   return 0;
 // }
 
-//自定义控制器
+// 自定义控制器
 void init_hand_handle_struct(void)
 {
   memset(&AK70_10_motor, 0, sizeof(AK_Joint_Motor_t));
@@ -755,12 +752,12 @@ void basic_motor_init(void)
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
 
   // limit
-  //dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
+  // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
   __SET_JOINT_LIMIT(HAND_J1, 0, 3.11);
-  __SET_JOINT_LIMIT(HAND_J2, -5.52,-0.94);                    //-128.5714~128.5714
-  __SET_JOINT_LIMIT(HAND_J3, -3.14, 3.14 );                   //正反90度，使用上位机更设置过零点
-  __SET_JOINT_LIMIT(HAND_J4, -162, 0);                        // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5, -3.14+1.2, 3.14+1.2);            //-180~180(0.35为中心点)
+  __SET_JOINT_LIMIT(HAND_J2, -5.52, -0.94);            //-128.5714~128.5714
+  __SET_JOINT_LIMIT(HAND_J3, -3.14, 3.14);             // 正反90度，使用上位机更设置过零点
+  __SET_JOINT_LIMIT(HAND_J4, -162, 0);                 // map from -351.25~3 to -162~0
+  __SET_JOINT_LIMIT(HAND_J5, -3.14 + 1.2, 3.14 + 1.2); //-180~180(0.35为中心点)
 
   __SET_JOINT_LIMIT(HAND_G, -2.856f, -2.515f); // 测试得出固定角度
   // while (
@@ -804,7 +801,6 @@ void __J1_init(void)
   hand_task_get_feedback();
   __hand_nonforce();
 
-
   // do
   // {
   //   hand_task_get_feedback();
@@ -813,7 +809,6 @@ void __J1_init(void)
 
   // osDelay(10);
   // __DM_go_setting_angle(HAND_J1, 0, 0.00023f, 0.00008f);
- 
 
   WS2812_Ctrl(30, 100, 50);
   // buzzer_off();
@@ -822,14 +817,14 @@ void __J1_init(void)
 void __J2_init(void)
 {
   while (!__hand_J2_init())
-  hand_task_get_feedback();
+    hand_task_get_feedback();
   __DM_go_setting_angle(HAND_J2, -1.5, 0.00042f, 0.00023f);
 }
 
 void __J3_init(void)
 {
   while (!__hand_J3_init())
-  hand_task_get_feedback();
+    hand_task_get_feedback();
   __DM_go_setting_angle(HAND_J3, 0, 0.00042f, 0.00023f);
 }
 
@@ -844,44 +839,43 @@ void __J4_init(void)
     __hand_nonforce();
   }
   hand_task_get_feedback();
-    __hand_nonforce();
-    hand_task_output();
+  __hand_nonforce();
+  hand_task_output();
 }
 
 void __J5_init(void)
 {
   while (!__hand_J5_init())
-  hand_task_get_feedback();
+    hand_task_get_feedback();
   __DM_go_setting_angle(HAND_J5, 1.2, 0.00023f, 0.00008f);
 }
 void __gripper_init(void)
 {
   while (!__hand_gripper_init())
-  hand_task_get_feedback();
-
+    hand_task_get_feedback();
 }
 
 void __DM_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_value, float l_value)
-{                                                     
-   // get current value and avoid perform go zero
-    __SET_JOINT_ANGLE(index, __GET_JOINT_ANGLE(index)); 
-    
-    while (!__IS_JOINT_AROUND(index, angle_value))
+{
+  // get current value and avoid perform go zero
+  __SET_JOINT_ANGLE(index, __GET_JOINT_ANGLE(index));
+
+  while (!__IS_JOINT_AROUND(index, angle_value))
+  {
+    hand_task_get_feedback();
+    if (ABS(angle_value - HANDLER_PTR->feedback_joint_angle[index]) > 0.08f)
     {
-      hand_task_get_feedback();
-      if (ABS(angle_value - HANDLER_PTR->feedback_joint_angle[index]) > 0.08f)
-      {
-        __ADD_JOINT_ANGLE(index, angle_value > HANDLER_PTR->feedback_joint_angle[index] ? h_value : -h_value);
-      }
-      else if (ABS(angle_value - HANDLER_PTR->feedback_joint_angle[index]) > 0.01f)
-      {
-        __ADD_JOINT_ANGLE(index, angle_value > HANDLER_PTR->feedback_joint_angle[index] ? l_value : -l_value);
-      }
-      hand_task_output();
-      osDelay(1);
+      __ADD_JOINT_ANGLE(index, angle_value > HANDLER_PTR->feedback_joint_angle[index] ? h_value : -h_value);
     }
-__hand_nonforce();
-hand_task_output();
+    else if (ABS(angle_value - HANDLER_PTR->feedback_joint_angle[index]) > 0.01f)
+    {
+      __ADD_JOINT_ANGLE(index, angle_value > HANDLER_PTR->feedback_joint_angle[index] ? l_value : -l_value);
+    }
+    hand_task_output();
+    osDelay(1);
+  }
+  __hand_nonforce();
+  hand_task_output();
 }
 
 // uint8_t __hand_J1_init(void)
@@ -895,85 +889,91 @@ hand_task_output();
 uint8_t __hand_J1_init(uint8_t reset)
 {
 
-static uint8_t send_init_delay_count = 0;
-static float last_joint_angle = 0.0;
-static uint8_t to_limit_flag = 0;
+  static uint8_t send_init_delay_count = 0;
+  static float last_joint_angle = 0.0;
+  static uint8_t to_limit_flag = 0;
 
-if (reset)
-{
-  send_init_delay_count = 0;
-  last_joint_angle = 0.0f;
-  to_limit_flag = 0;
-  AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -1000);
-  osDelay(50);
-  return 0;
-}
-
-if (toe_is_error(TOE_J1))
-  return 0;
-
-if (!to_limit_flag)
-{
-  if (send_init_delay_count < 200)
+  if (reset)
   {
-    send_init_delay_count++;
-    AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -950);
-    return 0;
-  }
-  else if (ABS(__GET_MOTOR_SPEED(AK_J1)) > 700)
-  //else if (ABS(last_joint_angle - __GET_MOTOR_ANGLE(AK_J1)) > 0.15f && to_limit_flag != 1)
-  {
-    //last_joint_angle = __GET_JOINT_ANGLE(HAND_J1);
-    AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -600);
-    osDelay(5);
-    return 0;
-  }
-  else
-  {
-    to_limit_flag = 1;
     send_init_delay_count = 0;
-  }
-}
-
-if (to_limit_flag)
-{
-  if ((0.0f != __GET_JOINT_ANGLE(HAND_J1) || toe_is_error(TOE_J1))) /*等待J1控制板初始化*/
-  {
-    //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
-    //__hand_nonforce();/*防止移动*/
-    /*上述注释代码不会产生任何移动*/
-
-    __SET_MOTOR_CTRL_MODE(HAND_J1, NON_FORCE);
-    if (send_init_delay_count == 0)
-    {
-      AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
-      //AK_joint_motor_set_forever_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
-      send_init_delay_count = 10;
-      osDelay(30);
-    }
-    AK_joint_motor_nonforce_ctrl(__GET_MOTOR_INSTANCE(AK_J1));
-    send_init_delay_count--;
+     last_joint_angle = 0.0f;
+    to_limit_flag = 0;
+    // AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -1000);
+    osDelay(50);
     return 0;
   }
-  send_init_delay_count = 50;
-  return 1;
-}
-return 0;
-}
 
-uint8_t __hand_J2_init(void)
-{//if (DM_Motor_J2.para.state == 0x00)
-	
-  if (toe_is_error(TOE_J2) || DM_Motor_J2.para.state == 0x00)
+  if (toe_is_error(TOE_J1))
+    return 0;
+
+  if (!to_limit_flag)
+  {
+    if (send_init_delay_count < 140)
     {
-      __SET_MOTOR_CTRL_MODE(HAND_J2, NON_FORCE);
-      disable_motor_mode(&hfdcan2, 2, POS_MODE);
+      send_init_delay_count++;
+      AK_joint_motor_current_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -10);
+      return 0;
+    }
+    // else if (ABS(__GET_MOTOR_SPEED(AK_J1)) > 100)
+    else if (ABS(last_joint_angle - __GET_MOTOR_ANGLE(AK_J1)) > 0.03f && to_limit_flag != 1)
+    {
+      // if (ABS(__GET_MOTOR_SPEED(AK_J1)) > 800)
+      // {
+      //   AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -20);
+      // }
+		AK_joint_motor_current_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -10);
+      //AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -700);
       osDelay(5);
-      enable_motor_mode(&hfdcan2, 2, POS_MODE);
+      last_joint_angle = __GET_MOTOR_ANGLE(HAND_J1);
+      return 0;
+    }
+    else
+    {
+      //AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -20);
+      to_limit_flag = 1;
+      send_init_delay_count = 0;
+      return 0;
+    }
+  }
+
+  if (to_limit_flag)
+  {
+    if ((0.0f != __GET_JOINT_ANGLE(HAND_J1) || toe_is_error(TOE_J1))) /*等待J1控制板初始化*/
+    {
+      //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
+      //__hand_nonforce();/*防止移动*/
+      /*上述注释代码不会产生任何移动*/
+
+      __SET_MOTOR_CTRL_MODE(HAND_J1, NON_FORCE);
+      if (send_init_delay_count == 0)
+      {
+        AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
+        // AK_joint_motor_set_forever_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
+        send_init_delay_count = 10;
+         osDelay(3);
+      }
+      AK_joint_motor_nonforce_ctrl(__GET_MOTOR_INSTANCE(AK_J1));
+      send_init_delay_count--;
       return 0;
     }
     return 1;
   }
+  return 0;
+}
+
+uint8_t __hand_J2_init(void)
+{ // if (DM_Motor_J2.para.state == 0x00)
+
+  if (toe_is_error(TOE_J2) || DM_Motor_J2.para.state == 0x00)
+  {
+    __SET_MOTOR_CTRL_MODE(HAND_J2, NON_FORCE);
+    disable_motor_mode(&hfdcan2, 2, POS_MODE);
+    osDelay(5);
+    enable_motor_mode(&hfdcan2, 2, POS_MODE);
+    return 0;
+  }
+  return 1;
+}
 uint8_t __hand_J3_init(void)
 {
   if (DM_Motor_J3.para.state == 0x00)
@@ -1047,8 +1047,8 @@ uint8_t __hand_gripper_init(void)
   if (DM_Motor_gripper.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_G, NON_FORCE);
-	  //���һ����Ҫ��ʧ����ʹ�ܣ��᲻֪��Ϊʲôһֱ��ʼ������
-    //disable_motor_mode(&hfdcan2, 4, POS_MODE);
+    // ���һ����Ҫ��ʧ����ʹ�ܣ��᲻֪��Ϊʲôһֱ��ʼ������
+    // disable_motor_mode(&hfdcan2, 4, POS_MODE);
     osDelay(5);
     enable_motor_mode(&hfdcan2, 4, POS_MODE);
     return 0;
@@ -1244,14 +1244,14 @@ void __hand_move_SM(void)
       __hand_move2_subctrl(SM_STEP2_J1_ANGLE2, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN);
   }
 }
-//如果j1电机为双编码能实现掉电仍能获取位置可使用
-//  uint8_t __hand_J1_init(uint8_t reset)
-//  {
-//    if (reset)
-//    {
-//    }
-//      if (toe_is_error(TOE_J1))
-//        return 0;
+// 如果j1电机为双编码能实现掉电仍能获取位置可使用
+//   uint8_t __hand_J1_init(uint8_t reset)
+//   {
+//     if (reset)
+//     {
+//     }
+//       if (toe_is_error(TOE_J1))
+//         return 0;
 
 //      if ((__GET_JOINT_ANGLE(HAND_J1) - 0.0f <= 0.02f))
 //        return 1;

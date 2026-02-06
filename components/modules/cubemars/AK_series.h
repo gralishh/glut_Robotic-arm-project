@@ -20,9 +20,6 @@ typedef struct{
 
   uint16_t id;
   uint16_t mode;
-  //程序内置pid
-  PidTypeDef pid_speed_loop;
-  PidTypeDef pid_pos_loop;
 
   uint8_t enable;/*输出使能,0为关闭;1为开启,默认关闭*/
 
@@ -54,12 +51,6 @@ void AK_joint_motor_set_forever_zero_pos(AK_Joint_Motor_t *motor);
 
 void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t *motor, AK_hcan_t *can);
 void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor,uint8_t *rx_message);
-
-void AK_Motor_Pos_PID_init(AK_Joint_Motor_t *motor, enum PID_MODE pid_mode,fp32 Kp, fp32 Ki, fp32 Kd,fp32 max_out, fp32 max_iout);
-void AK_Motor_Speed_PID_init(AK_Joint_Motor_t *motor, enum PID_MODE pid_mode,fp32 Kp, fp32 Ki, fp32 Kd,fp32 max_out, fp32 max_iout);
-
-void AK_motor_pid_speed_ctrl(AK_Joint_Motor_t *motor, float speed);
-void AK_motor_pid_position_ctrl(AK_Joint_Motor_t *motor, float angle);
 /*test code*/
 
 #endif
