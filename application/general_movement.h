@@ -36,17 +36,18 @@ typedef enum
   SM_uplift_down,
   SM_complete,
 } save_mine_t;
-#define SM_STEP1_HEIGHT 275
+#define SM_STEP1_HEIGHT 255
 
-#define SM_STEP2_G_ANGLE -2.856f
+#define SM_STEP2_G_ANGLE -2.8f
 #define SM_STEP2_J5_ANGLE 1.2f
-#define SM_STEP2_J4_ANGLE -100.0f
-#define SM_STEP2_J3_ANGLE 1.1f
+#define SM_STEP2_J4_ANGLE -155.0f
+#define SM_STEP2_J3_ANGLE -1.5f
 
-#define SM_STEP3_J2_ANGLE -2.1f
-#define SM_STEP3_J1_ANGLE 1.6f
+#define SM_STEP3_J2_ANGLE -1.6f
+#define SM_STEP3_J1_ANGLE 3.0f
+#define SM_STEP3_G_ANGLE -2.5f
 
-#define SM_STEP3_HEIGHT 228
+#define SM_STEP4_HEIGHT 188
 #define SM_STEP4_DELAY_LOOP 500
 #define SM_CPLT_HEIGHT 275
 
