@@ -7,7 +7,7 @@ typedef enum
 {
   BTD = 1,
   GGM,
-  SM
+  ONCE_CLICK_SAVE_MINE,
 } movement_t;
 
 /*get_gound_mine*/
@@ -16,7 +16,7 @@ typedef enum
   GGM_uplift_to_higher = 0,
   GGM_hand_to_pos,
   GGM_uplift_down,
-  GGM_complete
+  GGM_complete,
 } get_gound_mine_t;
 #define GGM_STEP1_HEIGHT 56.0f
 #define GGM_STEP2_J1_ANGLE -0.43f
@@ -32,16 +32,20 @@ typedef enum
   SM_uplift_to_pos = 0,
   SM_hand_to_pos,
   SM_hand_to_pos2,
+  SM_hand_gri_open,
   SM_uplift_down,
-  SM_pump1_off,
-  SM_complete
+  SM_complete,
 } save_mine_t;
 #define SM_STEP1_HEIGHT 275
-#define SM_STEP2_J1_ANGLE -1.3
-#define SM_STEP2_J2_ANGLE 1.642
-#define SM_STEP2_J3_ANGLE 0.283
-#define SM_STEP2_J1_ANGLE2 -0.02
-#define SM_STEP2_PITCH_ANGLE 1.87
+
+#define SM_STEP2_G_ANGLE -2.856f
+#define SM_STEP2_J5_ANGLE 1.2f
+#define SM_STEP2_J4_ANGLE -100.0f
+#define SM_STEP2_J3_ANGLE 1.1f
+
+#define SM_STEP3_J2_ANGLE -2.1f
+#define SM_STEP3_J1_ANGLE 1.6f
+
 #define SM_STEP3_HEIGHT 228
 #define SM_STEP4_DELAY_LOOP 500
 #define SM_CPLT_HEIGHT 275
