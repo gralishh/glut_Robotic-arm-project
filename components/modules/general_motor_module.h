@@ -73,6 +73,8 @@ typedef enum
       case LOCK:                                                                              \
         DJI_Motor_lockup((DJI_Motor_Ctrl_t *)instance_ptr);                                   \
         break;                                                                                \
+      case OFFLINE:                                                                           \
+        DJI_Motor_set_offline((DJI_Motor_Ctrl_t *)instance_ptr);                              \
       case NON_FORCE:                                                                         \
         break;                                                                                \
       default:                                                                                \

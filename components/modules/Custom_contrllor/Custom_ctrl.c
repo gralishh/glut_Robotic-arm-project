@@ -39,7 +39,7 @@ void Custom_Ctrl_unpack(void)
 {
   UART7_Recv(RX_BUF, sizeof(frame_header_t)+sizeof(uint16_t));  
   if(((data_t*)RX_BUF)->cmd_id==0x0302)
-    UART7_Recv((void*)&(((data_t*)RX_BUF)->key),sizeof(float)*6+sizeof(uint8_t)*4+sizeof(uint16_t));
+    UART7_Recv((void*)&(((data_t*)RX_BUF)->key),sizeof(float)*6+sizeof(uint8_t)*4+sizeof(uint16_t));//没有进行校验，后续补上
 
 }
 

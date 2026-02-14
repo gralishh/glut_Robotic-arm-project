@@ -48,8 +48,8 @@ typedef enum
 #define SM_STEP3_G_ANGLE -2.5f
 
 #define SM_STEP4_HEIGHT 188
-#define SM_STEP4_DELAY_LOOP 500
-#define SM_CPLT_HEIGHT 275
+// #define SM_STEP4_DELAY_LOOP 500
+// #define SM_CPLT_HEIGHT 275
 
 typedef enum
 {
@@ -62,6 +62,7 @@ typedef struct
 {
   movement_t movement_type;
   uint8_t movement_step;
+  float hand_move_out_flag;
 } movement_handler_t;
 
 extern movement_handler_t movement;

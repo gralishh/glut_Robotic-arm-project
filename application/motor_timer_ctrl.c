@@ -68,7 +68,7 @@ void motor_timer_ctrl_callback(void)
     uint32_t current_time = HAL_GetTick();
 //达妙电机为同步通信发送等于接收频率，不能发送太快
     // 达妙电机：每3ms发送一次
-    if(current_time - last_time_j2 >= 3) {
+    if(current_time - last_time_j2 >= 2) {
         __dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J2);
         last_time_j2 = current_time;
     }

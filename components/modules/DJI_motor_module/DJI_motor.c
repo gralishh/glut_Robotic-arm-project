@@ -4,8 +4,8 @@
 #include <string.h>
 #include "bsp_buzzer.h"
 
-//vofa测试
-//fp32 vofa_output_speed = 0.0f;
+// vofa测试
+// fp32 vofa_output_speed = 0.0f;
 
 // ABS
 #define ABS(X) ((X) > 0 ? (X) : (-X))
@@ -46,13 +46,27 @@
     }                                                                                           \
   }
 
-/*堵转检测*/
-#define __DJI_Motor_Ctrl_stall_detect(motor_ptr)                        \
-  \ 
-if(__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_STALL_DETECT_INIT)) \
-  {                                                                     \
+/*堵转检测*/ // 稍后完善
+#define __DJI_Motor_Ctrl_stall_detect(motor_ptr)                            \
+                                                                            \
+  if (__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_STALL_DETECT_INIT))  \
+  {                                                                         \
+    if (motor_ptr->stall_loop_count == motor_ptr->stall_loop_count_compare) \
+    {                                                                       \
+      motor_ptr->stall_flag = 1;                                            \
+    }                                                                       \
+    else                                                                    \
+    {                                                                       \
+      motor_ptr->stall_loop_count++;                                        \
+    }                                                                       \
+    if (motor_ptr->stall_flag == 1)                                         \
+    {                                                                       \
+      __DJI_Motor_warning();                                                \
+      DJI_Motor_set_nonforce(motor_ptr);                                    \
+    }                                                                       \
   }
 
+// 使用detect已完成下方两宏函数功能，若没有detect模块时就设置检测一段时间未收到反馈
 /*电机掉线检测*/
 #define __DJI_Motor_offline_detect(motor_ptr)                                          \
   if (__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_OFFLINE_DETECT_INIT))           \
@@ -71,7 +85,7 @@ if(__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_STALL_DETECT_INIT)) \
       DJI_Motor_set_nonforce(motor_ptr);                                               \
     }                                                                                  \
   }
-
+/*电机掉线恢复*/
 #define __DJI_Motor_offline_counter(motor_ptr)                               \
   if (__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_OFFLINE_DETECT_INIT)) \
   {                                                                          \
@@ -90,12 +104,12 @@ if(__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_STALL_DETECT_INIT)) \
     }                                                                        \
   }
 
-    /**
-     * @brief 电机初始化
-     * @param[out] motor 电机控制句柄
-     * @param[in] bus 电机搭载can总线句柄
-     * @param[in] id 电机can总线id(0x201~0x208)
-     */
+/**
+ * @brief 电机初始化
+ * @param[out] motor 电机控制句柄
+ * @param[in] bus 电机搭载can总线句柄
+ * @param[in] id 电机can总线id(0x201~0x208)
+ */
 void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Type_e motor_type, uint16_t id)
 {
   memset((void *)motor, 0x0, sizeof(DJI_Motor_Ctrl_t));
@@ -103,6 +117,7 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Typ
   motor->id = id;
   motor->mounted_bus = bus;
   motor->ref_ptr = &(motor->ecd_angle);
+  DJI_Motor_set_offline_detect(motor, 10, 0);
 
   DJI_CANBus_add_motor(bus, motor);
   DJI_Motor_set_nonforce(motor);
@@ -121,7 +136,7 @@ void DJI_Motor_init(DJI_Motor_Ctrl_t *motor, DJI_Motor_Bus_t *bus, DJI_Motor_Typ
  * 或min_angle ~ min_angle+braking_angle
  * 的范围时，设置为最值的位置环控制
  */
-//暂未使用
+// 暂未使用
 void DJI_Motor_set_angle_limit(DJI_Motor_Ctrl_t *motor, fp32 max_angle, fp32 min_angle, fp32 braking_angle)
 {
   if (motor == NULL)
@@ -206,6 +221,7 @@ inline void DJI_Motor_set_stall_detect(DJI_Motor_Ctrl_t *motor)
   __DJI_Motor_Ctrl_set_init_state(motor, MOTOR_STALL_DETECT_INIT);
 }
 
+//检测若长时间未接收到反馈
 void DJI_Motor_set_offline_detect(DJI_Motor_Ctrl_t *motor, uint16_t counter, uint8_t recoverable)
 {
   motor->non_feedback_counter_compare = counter;
@@ -217,6 +233,9 @@ void DJI_Motor_set_offline_detect(DJI_Motor_Ctrl_t *motor, uint16_t counter, uin
 
 void DJI_Motor_set_angle(DJI_Motor_Ctrl_t *motor, fp32 angle)
 {
+  motor->offline_recover = 1;
+  __DJI_Motor_offline_counter(motor);
+
   if (!__DJI_Motor_Ctrl_get_init_state(motor, MOTOR_SPEED_PID_INIT | MOTOR_POS_PID_INIT))
   {
     __DJI_Motor_Ctrl_set_init_state(motor, NON_FORCE);
@@ -237,6 +256,9 @@ void DJI_Motor_set_angle(DJI_Motor_Ctrl_t *motor, fp32 angle)
 
 void DJI_Motor_set_speed(DJI_Motor_Ctrl_t *motor, fp32 speed_rpm)
 {
+  motor->offline_recover = 1;
+  __DJI_Motor_offline_counter(motor);
+
   if (!__DJI_Motor_Ctrl_get_init_state(motor, MOTOR_SPEED_PID_INIT))
   {
     __DJI_Motor_Ctrl_set_init_state(motor, NON_FORCE);
@@ -257,6 +279,9 @@ void DJI_Motor_set_speed(DJI_Motor_Ctrl_t *motor, fp32 speed_rpm)
 
 void DJI_Motor_set_current(DJI_Motor_Ctrl_t *motor, int16_t current)
 {
+  motor->offline_recover = 1;
+  __DJI_Motor_offline_counter(motor);
+  
   if (__DJI_Motor_Ctrl_get_init_state(motor, MOTOR_CURRENT_LIMIT_INIT))
   {
     if (current > motor->current_limit)
@@ -288,6 +313,12 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t *motor)
     motor->set_lock_angle = __DJI_Motor_Ctrl_get_ecd_angle(motor);
 }
 
+// 使用时若没有detect模块，将motor->mode = OFFLINE改为检测未更新数据的判断
+void DJI_Motor_set_offline(DJI_Motor_Ctrl_t *motor)
+{
+  if (motor->mode = OFFLINE)
+    __DJI_Motor_offline_detect(motor);//若一段时间内offline则设置flag
+}
 /**
  * @brief 获取反馈数值
  * @param[in]  motor  电机控制句柄
@@ -333,7 +364,7 @@ void DJI_Motor_clear_circle_count(DJI_Motor_Ctrl_t *motor)
  */
 void __DJI_Motor_ctrl_loop(DJI_Motor_Ctrl_t *motor)
 {
-  __DJI_Motor_offline_detect(motor);
+ // __DJI_Motor_offline_detect(motor);
   switch (motor->mode)
   {
   case SPEED_LOOP:
@@ -454,14 +485,14 @@ void __DJI_Motor_get_feedback(DJI_Motor_Ctrl_t *motor, uint8_t *rx_msg)
   }
 
   // 掉线检测计数置零
-  __DJI_Motor_offline_counter(motor);
+  //__DJI_Motor_offline_counter(motor);
 }
 
 static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t *motor)
 {
-	//vofa测试
-	//vofa_output_speed = motor->set_speed;
-    return PID_Calc(&(motor->pid_speed_loop), __DJI_Motor_Ctrl_get_speed(motor), motor->set_speed);
+  // vofa测试
+  // vofa_output_speed = motor->set_speed;
+  return PID_Calc(&(motor->pid_speed_loop), __DJI_Motor_Ctrl_get_speed(motor), motor->set_speed);
 }
 
 static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t *motor)
@@ -483,16 +514,17 @@ static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t *motor)
         angle_normalize(motor->set_angle, -__DJI_Motor_Ctrl_get_angle(motor)));
   }
 
-  __DJI_Motor_Ctrl_stall_detect(motor);
+  //__DJI_Motor_Ctrl_stall_detect(motor);
 
-  //vofa测试
-  //vofa_output_speed = output_speed;
+  // vofa测试
+  // vofa_output_speed = output_speed;
 
   return PID_Calc(&(motor->pid_speed_loop),
                   __DJI_Motor_Ctrl_get_speed(motor),
                   output_speed);
 }
 
-static void __DJI_Motor_warning(void){
-    // buzzer_on(0,0);
+static void __DJI_Motor_warning(void)
+{
+  // buzzer_on(0,0);
 }

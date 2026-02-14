@@ -154,9 +154,10 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t* motor);//电机自锁
 void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t* motor,fp32* torque,fp32* speed,fp32* angle);
 uint8_t DJI_Motor_get_stall_flag(DJI_Motor_Ctrl_t* motor);
 uint8_t DJI_Motor_get_offline_flag(DJI_Motor_Ctrl_t* motor);
+void DJI_Motor_set_offline(DJI_Motor_Ctrl_t *motor);
 
 /*电机状态控制接口*/
-void DJI_Motor_clear_offline_flag(DJI_Motor_Ctrl_t* motor);
+void DJI_Motor_clear_offline_flag(DJI_Motor_Ctrl_t *motor);
 void DJI_Motor_clear_circle_count(DJI_Motor_Ctrl_t* motor);
 
 /*DJI_Motor循环控制接口*/

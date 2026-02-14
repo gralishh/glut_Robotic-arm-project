@@ -92,9 +92,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, ui
 
   if (CANx == &hfdcan2)
   {
-    // j4
-     __DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl, rx_message, rx_header->Identifier);
-     DetectHook(TOE_J4);
+
      switch (rx_header->Identifier)
      {
        // j1
@@ -121,19 +119,20 @@ void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, ui
     case 0x33:
      dm4310_fbdata(&DM_Motor_J5, rx_message, FDCAN_DLC_BYTES_8);
      DetectHook(TOE_J5);
-
      break;
 
 
-      //    case 0x201:
-      //      DetectHook(TOE_HE_L);
-      //break;
-    //case 0x204:
- //     DetectHook(TOE_J3);
-   //   break;
-//    case 0x208:
-//      DetectHook(TOE_HE_R);
-      //break;
+    case 0x201:
+      // j4
+      __DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl, rx_message, rx_header->Identifier);
+      DetectHook(TOE_J4);
+      break;
+           // case 0x204:
+           //     DetectHook(TOE_J3);
+           //   break;
+           //    case 0x208:
+           //      DetectHook(TOE_HE_R);
+           // break;
     default:
       break; /*do nothing*/
     }

@@ -12,7 +12,10 @@ uint8_t get_movement(void)
 {
   return movement.movement_type;
 }
-
+uint8_t get_out_flag(void)
+{
+  return movement.hand_move_out_flag;
+}
 uint8_t get_step(void)
 {
   return movement.movement_step;
