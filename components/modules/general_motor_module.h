@@ -92,6 +92,8 @@ typedef enum
         M8010_motor_lock((M8010_motor_t *)instance_ptr);                                      \
         break;                                                                                \
       case NON_FORCE:                                                                         \
+        M8010_motor_nonforce((M8010_motor_t *)instance_ptr);                                  \
+        break;                                                                                \
       case OFFLINE:                                                                           \
       default:                                                                                \
         M8010_motor_nonforce((M8010_motor_t *)instance_ptr);                                  \
@@ -105,8 +107,13 @@ typedef enum
         dm_set_pos((Joint_Motor_t *)instance_ptr, angle);                                     \
         break;                                                                                \
       case LOCK:                                                                              \
+        pos_speed_ctrl((Joint_Motor_t *)instance_ptr, angle, 0.0001);                         \
         break;                                                                                \
       case NON_FORCE:                                                                         \
+        pos_speed_ctrl((Joint_Motor_t *)instance_ptr, angle, 0.0001);                         \
+        break;                                                                                \
+      case OFFLINE:                                                                           \
+        DM_Motor_Offline_Handler((Joint_Motor_t *)instance_ptr);                              \
         break;                                                                                \
       default:                                                                                \
         pos_speed_ctrl((Joint_Motor_t *)instance_ptr, angle, 0.0001);                         \
@@ -120,9 +127,12 @@ typedef enum
         AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t *)instance_ptr, angle, 3500, 4500);   \
         break;                                                                                \
       case LOCK:                                                                              \
+        AK_joint_motor_lock_ctrl((AK_Joint_Motor_t *)instance_ptr);                           \
         break;                                                                                \
       case NON_FORCE:                                                                         \
         AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t *)instance_ptr);                       \
+        break;                                                                                \
+      case OFFLINE:                                                                           \
         break;                                                                                \
       default:                                                                                \
         AK_joint_motor_nonforce_ctrl((AK_Joint_Motor_t *)instance_ptr);                       \

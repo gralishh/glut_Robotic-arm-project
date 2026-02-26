@@ -79,6 +79,7 @@ extern uint32_t FloatTohex(float HEX);//浮点数到十六进制转换
 extern float uint_to_float(int x_int, float x_min, float x_max, int bits);
 extern int float_to_uint(float x_float, float x_min, float x_max, int bits);
 void dm_set_pos(Joint_Motor_t *motor_ptr, float angle);
+void DM_Motor_Offline_Handler(Joint_Motor_t *motor_ptr);
 
 #endif /* __DM4310_DRV_H__ */
 

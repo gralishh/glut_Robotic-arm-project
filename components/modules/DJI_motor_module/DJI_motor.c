@@ -221,7 +221,7 @@ inline void DJI_Motor_set_stall_detect(DJI_Motor_Ctrl_t *motor)
   __DJI_Motor_Ctrl_set_init_state(motor, MOTOR_STALL_DETECT_INIT);
 }
 
-//检测若长时间未接收到反馈
+// 检测若长时间未接收到反馈
 void DJI_Motor_set_offline_detect(DJI_Motor_Ctrl_t *motor, uint16_t counter, uint8_t recoverable)
 {
   motor->non_feedback_counter_compare = counter;
@@ -233,8 +233,7 @@ void DJI_Motor_set_offline_detect(DJI_Motor_Ctrl_t *motor, uint16_t counter, uin
 
 void DJI_Motor_set_angle(DJI_Motor_Ctrl_t *motor, fp32 angle)
 {
-  motor->offline_recover = 1;
-  __DJI_Motor_offline_counter(motor);
+  DJI_Motor_set_online(motor);
 
   if (!__DJI_Motor_Ctrl_get_init_state(motor, MOTOR_SPEED_PID_INIT | MOTOR_POS_PID_INIT))
   {
@@ -256,8 +255,7 @@ void DJI_Motor_set_angle(DJI_Motor_Ctrl_t *motor, fp32 angle)
 
 void DJI_Motor_set_speed(DJI_Motor_Ctrl_t *motor, fp32 speed_rpm)
 {
-  motor->offline_recover = 1;
-  __DJI_Motor_offline_counter(motor);
+  DJI_Motor_set_online(motor);
 
   if (!__DJI_Motor_Ctrl_get_init_state(motor, MOTOR_SPEED_PID_INIT))
   {
@@ -279,9 +277,8 @@ void DJI_Motor_set_speed(DJI_Motor_Ctrl_t *motor, fp32 speed_rpm)
 
 void DJI_Motor_set_current(DJI_Motor_Ctrl_t *motor, int16_t current)
 {
-  motor->offline_recover = 1;
-  __DJI_Motor_offline_counter(motor);
-  
+  DJI_Motor_set_online(motor);
+
   if (__DJI_Motor_Ctrl_get_init_state(motor, MOTOR_CURRENT_LIMIT_INIT))
   {
     if (current > motor->current_limit)
@@ -317,7 +314,15 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t *motor)
 void DJI_Motor_set_offline(DJI_Motor_Ctrl_t *motor)
 {
   if (motor->mode = OFFLINE)
-    __DJI_Motor_offline_detect(motor);//若一段时间内offline则设置flag
+    __DJI_Motor_offline_detect(motor); // 若一段时间内offline则设置flag
+
+  // 蜂鸣器报警
+}
+
+void DJI_Motor_set_online(DJI_Motor_Ctrl_t *motor)
+{
+  motor->offline_recover = 1;
+  __DJI_Motor_offline_counter(motor);
 }
 /**
  * @brief 获取反馈数值
@@ -364,7 +369,7 @@ void DJI_Motor_clear_circle_count(DJI_Motor_Ctrl_t *motor)
  */
 void __DJI_Motor_ctrl_loop(DJI_Motor_Ctrl_t *motor)
 {
- // __DJI_Motor_offline_detect(motor);
+  // __DJI_Motor_offline_detect(motor);
   switch (motor->mode)
   {
   case SPEED_LOOP:

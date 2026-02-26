@@ -70,7 +70,12 @@ void AK_joint_motor_nonforce_ctrl(AK_Joint_Motor_t * motor)
   AK_joint_motor_current_ctrl(motor, 0.0f);
 }
 
-void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t * motor, uint8_t *rx_message)
+void AK_joint_motor_lock_ctrl(AK_Joint_Motor_t *motor)
+{
+  AK_joint_motor_pos_speed_ctrl(motor, motor->pos, 3500, 5500);
+}
+
+void __AK_joint_motor_feedback_hook(AK_Joint_Motor_t *motor, uint8_t *rx_message)
 {
   // void motor_receive(float* motor_pos,float* motor_spd,float* cur,int_8* temp,int_8* error,rx_message)
   // float motor_pos,motor_spd,cur;
