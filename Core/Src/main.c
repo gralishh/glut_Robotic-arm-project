@@ -320,7 +320,7 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of USART2_measure */
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);

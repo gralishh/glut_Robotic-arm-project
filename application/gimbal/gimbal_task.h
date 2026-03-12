@@ -43,13 +43,13 @@ typedef struct{
 
   /*feedback value*/
   fp32 feedback_motor_angle[GIMBAL_MOTOR_COUNT];
-  int32_t feedback_motor_speed[GIMBAL_MOTOR_COUNT];
-  int32_t feedback_motor_current[GIMBAL_MOTOR_COUNT];
+  fp32 feedback_motor_speed[GIMBAL_MOTOR_COUNT];
+  fp32 feedback_motor_current[GIMBAL_MOTOR_COUNT];
 
   /*output value*/
   fp32 motor_angle[GIMBAL_MOTOR_COUNT];
-  int32_t motor_speed[GIMBAL_MOTOR_COUNT];
-  int32_t motor_current[GIMBAL_MOTOR_COUNT];
+  fp32 motor_speed[GIMBAL_MOTOR_COUNT];
+  fp32 motor_current[GIMBAL_MOTOR_COUNT];
 
   /*for arm ctrl*/
   fp32 feedback_joint_angle[GIMBAL_JOINT_COUNT];

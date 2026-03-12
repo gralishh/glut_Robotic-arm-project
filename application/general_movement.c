@@ -2,9 +2,9 @@
 
 movement_handler_t movement;
 
-void set_movement(uint8_t movement_type)
+void set_movement(movement_t movement_type)
 {
-  movement.movement_type=movement_type;
+  movement.movement_type = movement_type;
   movement.movement_step=0;
 }
         

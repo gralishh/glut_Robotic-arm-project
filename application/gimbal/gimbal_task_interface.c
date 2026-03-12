@@ -37,8 +37,8 @@ DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
 External_ecd_handler_t *uplift_ecd_ptr = &uplift_ecd;
 
-static uint8_t pump1 = 0;
-static uint8_t pump2 = 0;
+// static uint8_t pump1 = 0;
+// static uint8_t pump2 = 0;
 
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
@@ -245,8 +245,9 @@ void gimbal_task_get_feedback()
 void gimbal_task_mode_flush()
 {
  // static uint8_t nonforce_start_flag = 0;
-  static uint8_t last_mode = GIMBAL_MODE_NONFORCE;
-  last_mode = HANDLER_PTR->ctrl_mode;
+
+  // static uint8_t last_mode = GIMBAL_MODE_NONFORCE;
+  // last_mode = HANDLER_PTR->ctrl_mode;
 
   //  switch(GET_SWITCH())
   //  {
@@ -509,7 +510,7 @@ void __gimbal_uplift_custom_ctrl()
   else if (middle_pos > UL_MAX_ENCODE)
     middle_pos = UL_MAX_ENCODE;
 
-  __uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5), 0x01);
+  __uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
 
   //__ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0);
   servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);

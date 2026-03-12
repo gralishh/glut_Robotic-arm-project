@@ -96,7 +96,7 @@ void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, ui
      switch (rx_header->Identifier)
      {
        // j1
-     case 0x295d:
+     case 0x295d: // 0x295dÎªÀ©Õ¹id
        __AK_joint_motor_feedback_hook(&AK70_10_motor, rx_message);
        DetectHook(TOE_J1);
        break;
@@ -238,8 +238,8 @@ void CanSendMoreMess(FDCAN_HandleTypeDef *CANx, uint32_t SendID, uint8_t *messag
 
 void Set_CAN_cmd_SuperCap(CAN_SuperCapTXDataTypeDef *TX_Temp)
 {
-  TX_Temp->Enable = 0;
-  TX_Temp->Charge = 0;
+  TX_Temp->Enable = DISABLE;
+  TX_Temp->Charge = DISCHARGE;
   TX_Temp->PowerLimint = 100;
   TX_Temp->PowerOffset = 0;
   TX_Temp->ChargePower = 0;

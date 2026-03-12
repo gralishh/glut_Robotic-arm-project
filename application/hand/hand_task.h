@@ -63,12 +63,12 @@ typedef struct
   /*feedback value*/
   fp32 feedback_motor_angle[HAND_MOTOR_COUNT];
   fp32 feedback_motor_speed[HAND_MOTOR_COUNT];
-  int32_t feedback_motor_current[HAND_MOTOR_COUNT];
+  fp32 feedback_motor_current[HAND_MOTOR_COUNT];
 
   /*output value*/
   fp32 motor_angle[HAND_MOTOR_COUNT];
-  int32_t motor_speed[HAND_MOTOR_COUNT];
-  int32_t motor_current[HAND_MOTOR_COUNT];
+  fp32 motor_speed[HAND_MOTOR_COUNT];
+  fp32 motor_current[HAND_MOTOR_COUNT];
 
   /*for arm ctrl*/
   fp32 feedback_joint_angle[HAND_JOINT_COUNT];

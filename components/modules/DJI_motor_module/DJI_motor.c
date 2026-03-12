@@ -313,7 +313,7 @@ void DJI_Motor_lockup(DJI_Motor_Ctrl_t *motor)
 // 使用时若没有detect模块，将motor->mode = OFFLINE改为检测未更新数据的判断
 void DJI_Motor_set_offline(DJI_Motor_Ctrl_t *motor)
 {
-  if (motor->mode = OFFLINE)
+  if (motor->mode == OFFLINE)
     __DJI_Motor_offline_detect(motor); // 若一段时间内offline则设置flag
 
   // 蜂鸣器报警
@@ -332,7 +332,7 @@ void DJI_Motor_set_online(DJI_Motor_Ctrl_t *motor)
  * @param[out] angle  角度(rad)
  */
 void DJI_Motor_get_feedback(DJI_Motor_Ctrl_t *motor, fp32 *torque, fp32 *speed, fp32 *angle)
-{
+{//整数向浮点数转化属于隐式转换，不会丢失精度
   if (torque != NULL)
     *torque = __DJI_Motor_Ctrl_get_torque(motor);
   if (speed != NULL)

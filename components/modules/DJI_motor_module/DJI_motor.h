@@ -175,6 +175,10 @@ static void __DJI_Motor_preset_pid_m3508(DJI_Motor_Ctrl_t* motor);
 static fp32 __DJI_Motor_speed_loop_calc(DJI_Motor_Ctrl_t* motor);
 static fp32 __DJI_Motor_angle_loop_calc(DJI_Motor_Ctrl_t* motor);
 
+/*DJI_Motor‘⁄œﬂµÙœﬂ*/
+void DJI_Motor_set_online(DJI_Motor_Ctrl_t *motor);
+
+
 static void __DJI_Motor_warning(void);
 //static void __DJI_Motor_circle_
 

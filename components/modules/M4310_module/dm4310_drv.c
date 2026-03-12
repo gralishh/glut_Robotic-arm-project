@@ -260,18 +260,21 @@ void DM_Motor_Offline_Handler(Joint_Motor_t *motor_ptr)
 	if (motor_ptr == NULL )
 		return;
 
-	// 如果电机处于使能状态，尝试禁用,即使 CAN 已断开，发送也无害,防止掉线后收到错乱数据
-	if (motor_ptr->enable)
-	{
-		//禁用所有模式的指令
-		//disable_motor_mode(&hfdcan2, motor_ptr->para.id, motor_ptr->mode);
+	float current_angle = motor_ptr->para.pos;
+	//使能并发送保持当前位置让电机应答产生反馈刷新掉线标志
+	pos_speed_ctrl(motor_ptr, current_angle, 0.01);
 
-		// 也可以发送 MIT 无力矩指令
-		// mit_nonforce_ctrl(motor);
+	// if (motor_ptr->enable)//除执行刷新外，不让电机执行其他行为避免意外
+	// {
+	// 	//禁用所有模式的指令
+	// 	//disable_motor_mode(&hfdcan2, motor_ptr->para.id, motor_ptr->mode);
 
-		// 清除使能标志
-		motor_ptr->enable = 0;
-	}
+	// 	// 也可以发送 MIT 无力矩指令
+	// 	// mit_nonforce_ctrl(motor);
+
+	// 	// 清除使能标志
+	// 	motor_ptr->enable = 0;
+	// }
 	// 蜂鸣器报警
 }
 

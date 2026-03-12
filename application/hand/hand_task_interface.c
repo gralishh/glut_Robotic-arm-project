@@ -283,8 +283,8 @@ void hand_task_get_feedback()
  */
 void hand_task_mode_flush()
 {
-  static uint8_t last_mode = HAND_MODE_NONFORCE;
-  last_mode = HANDLER_PTR->ctrl_mode;
+  // static uint8_t last_mode = HAND_MODE_NONFORCE;
+  // last_mode = HANDLER_PTR->ctrl_mode;
 
   // 新控
   //   switch(GET_SWITCH())
@@ -528,6 +528,8 @@ void basic_motor_init(void)
   __SET_MOTOR_INSTANCE(DJI_2006_J4, &DJI_Motor_J4);
   __SET_MOTOR_TYPE(DJI_2006_J4, DJI_MOTOR);
   DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
+  // DJI_Motor_set_angle_limit();
+  // DJI_Motor_set_speed_limit();
   DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.001, 0, 5500, 1000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
@@ -880,7 +882,9 @@ void __hand_custom_ctrl(void)
       (cc_joint_angle[0] - PI / 2 - custom_controller_D[0]) * custom_controller_K[0],
       (cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1],
       (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
-      (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3], -cc_joint_angle[5], 0.0f, J1_EN | J2_EN | J3_EN | J4_EN | J5_EN);
+      (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
+       -cc_joint_angle[5], 
+       0.0f, J1_EN | J2_EN | J3_EN | J4_EN | J5_EN);
 }
 
 /**/

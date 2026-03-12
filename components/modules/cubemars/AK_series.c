@@ -44,7 +44,7 @@ void AK_joint_motor_current_ctrl(AK_Joint_Motor_t * motor, float current)
 {
   motor->mode = CAN_PACKET_SET_CURRENT;
   int32_t send_index = 0;
-  buffer_append_int32((motor->tx_buffer), (int32_t)(current * 100.0), &send_index);
+  buffer_append_int32((motor->tx_buffer), (int32_t)(current * 100.0f), &send_index);
 }
 
 void AK_joint_motor_speed_ctrl(AK_Joint_Motor_t * motor, float rpm)
@@ -60,9 +60,9 @@ void AK_joint_motor_pos_speed_ctrl(AK_Joint_Motor_t * motor, float pos, float sp
   motor->mode = CAN_PACKET_SET_POS_SPD;
   int32_t send_index = 0;
   int16_t send_index1 = 4;
-  buffer_append_int32(motor->tx_buffer, (int32_t)(pos * 10000.0), &send_index);
-  buffer_append_int16(motor->tx_buffer, spd / 10.0, &send_index1);
-  buffer_append_int16(motor->tx_buffer, RPA / 10.0, &send_index1);
+  buffer_append_int32(motor->tx_buffer, (int32_t)(pos * 10000.0f), &send_index);
+  buffer_append_int16(motor->tx_buffer, spd / 10.0f, &send_index1);
+  buffer_append_int16(motor->tx_buffer, RPA / 10.0f, &send_index1);
 }
 
 void AK_joint_motor_nonforce_ctrl(AK_Joint_Motor_t * motor)
@@ -138,3 +138,4 @@ void __AK_joint_motor_ctrl_hook(AK_Joint_Motor_t * motor, AK_hcan_t * can)
 //这个电机油大饼啊，各种非人设计，设置永久零点为什么零点不在当前位置,上电后后位置也是混乱的，这根本就不是双编码电机
 //调试该电机请认真阅读书册，最好拆下来尝试
 //上位机写参数前一定要读参数
+
