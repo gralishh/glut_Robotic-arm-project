@@ -4,6 +4,10 @@
 #include "cmsis_os.h"
 #include "detect_task.h"
 
+
+//注意，先等自定义控制器数据稳定再进入自定义模式，否则可能直接输出未经计算的偏移量
+//或者写点标志位避免这种情况
+
 #define HEADER 0xa5
 #define CTRL_HEADER1 0xa9
 #define CTRL_HEADER2 0x53

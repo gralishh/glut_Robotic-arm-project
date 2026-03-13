@@ -82,8 +82,8 @@ extern Joint_Motor_t DM_Motor_gripper;
 
 /*custom controller remap(custom controller -> joint_angle)*/
 float custom_controller_K[5] = {-1, 1, -1, 180/3.14, 1};
-float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.305f};
-float temp_cc_angle[5] = {0};
+float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 0.0f};
+
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
@@ -252,14 +252,6 @@ void hand_task_get_feedback()
                                &__GET_MOTOR_SPEED(index),
                                &__GET_MOTOR_ANGLE(index))
   }
-//temp_angle
-//调参用
-
-temp_cc_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
-temp_cc_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]);
-temp_cc_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
-temp_cc_angle[3] = (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
-temp_cc_angle[4] = (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
 
 /*joint angle map*/
 //__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
@@ -889,7 +881,7 @@ void __hand_custom_ctrl(void)
       (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
       (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
       (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4],
-      0.0f, J1_EN | J2_EN | J3_EN | J4_EN | J5_EN);
+      (cc_joint_angle[5] - custom_controller_D[5]) * custom_controller_K[5],  J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
 }
 
 /**/

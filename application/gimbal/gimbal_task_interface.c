@@ -32,8 +32,8 @@ extern FDCAN_HandleTypeDef hfdcan3;
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
-#define uplift_custom_controller_K ((UL_MAX_ENCODE - UL_MIN_ENCODE) / (38.0f - 1.5f))
-#define uplift_custom_controller_D (1.5f)
+#define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.204f+2.043f))
+#define uplift_custom_controller_D (2.043f)
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
@@ -41,6 +41,7 @@ External_ecd_handler_t *uplift_ecd_ptr = &uplift_ecd;
 
 // static uint8_t pump1 = 0;
 // static uint8_t pump2 = 0;
+//float temp_cc_angle;
 
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
@@ -239,6 +240,8 @@ void gimbal_task_get_feedback()
   )
   ...
   */
+ //调参使用
+  //temp_cc_angle = (cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE;
 }
 
 /**
@@ -286,9 +289,12 @@ void gimbal_task_mode_flush()
     else
       __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
   }
-  else
+  else if (switch_is_down(get_remote_control_point()->rc.s[1]))
   {
-    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+    if (switch_is_mid(get_remote_control_point()->rc.s[0]))
+      __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
+    else
+      __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
   }
 
   if (switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
@@ -522,7 +528,7 @@ void __gimbal_uplift_custom_ctrl(void)
 
 void __gimbal_uplift_temp_custom_ctrl(void)
 {
-  __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K, 0x01);
+  __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
 }
 void __gimbal_any_ctrl(void)
 {
