@@ -42,8 +42,8 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define GR_MAP_D 0
 // #define J3_MAP_K (-3.14f / 42.4f) /*old value(-1.0f/19.2f)*/
 // #define J3_MAP_D (-1.668)
-#define J4_MAP_K (162.0f / 354.75f)
-#define J4_MAP_D (1.9f)
+#define J4_MAP_K (180.0f / -390.0f)
+#define J4_MAP_D (1.18f)
 #define dm_g_max -2.515f
 #define dm_g_min -2.856f
 // #define PITCH_MAP_K (PI / 2 / (135.0f - 50.0f))
@@ -81,9 +81,9 @@ extern Joint_Motor_t DM_Motor_gripper;
 // static fp32 J3_D = 0;
 
 /*custom controller remap(custom controller -> joint_angle)*/
-float custom_controller_K[5] = {1, 1, 1, -1, 1};
-float custom_controller_D[5] = {0, 0, 0, 1.56, 0};
-
+float custom_controller_K[5] = {-1, 1, -1, 180/3.14, 1};
+float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.305f};
+float temp_cc_angle[5] = {0};
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
@@ -252,30 +252,38 @@ void hand_task_get_feedback()
                                &__GET_MOTOR_SPEED(index),
                                &__GET_MOTOR_ANGLE(index))
   }
+//temp_angle
+//调参用
 
-  /*joint angle map*/
-  //__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(AK_J1) + J1_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J3) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J2_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DJI_2006_J4) + J4_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J5) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J2_MAP_D;
-  __GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
+temp_cc_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
+temp_cc_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]);
+temp_cc_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
+temp_cc_angle[3] = (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
+temp_cc_angle[4] = (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
 
-  // __GET_JOINT_ANGLE(HAND_PITCH) = HANDLER_PTR->joint_angle[HAND_PITCH];
-  // __GET_JOINT_ANGLE(HAND_ROLL) = HANDLER_PTR->joint_angle[HAND_ROLL];
+/*joint angle map*/
+//__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
+__GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(AK_J1) + J1_MAP_D;
+__GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
+__GET_JOINT_ANGLE(HAND_J3) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J2_MAP_D;
+__GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DJI_2006_J4) + J4_MAP_D;
+__GET_JOINT_ANGLE(HAND_J5) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J2_MAP_D;
+__GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
 
-  // 角度换算
-  //  已知电机角度 theta_L 和 theta_R 时，计算关节角度：
-  //  __GET_JOINT_ANGLE(HAND_PITCH) = PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
-  //  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) + __GET_MOTOR_ANGLE(DJI_HE_L));
-  /*
-  __GET_JOINT_ANGLE(index,
-    ...
-  )
+// __GET_JOINT_ANGLE(HAND_PITCH) = HANDLER_PTR->joint_angle[HAND_PITCH];
+// __GET_JOINT_ANGLE(HAND_ROLL) = HANDLER_PTR->joint_angle[HAND_ROLL];
+
+// 角度换算
+//  已知电机角度 theta_L 和 theta_R 时，计算关节角度：
+//  __GET_JOINT_ANGLE(HAND_PITCH) = PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
+//  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) + __GET_MOTOR_ANGLE(DJI_HE_L));
+/*
+__GET_JOINT_ANGLE(index,
   ...
-  */
-}
+)
+...
+*/
+  }
 
 /**
  * @brief 模式状态刷新
@@ -320,10 +328,14 @@ void hand_task_mode_flush()
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
-  else
+  else if (switch_is_down(get_remote_control_point()->rc.s[1]))
   {
-    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+    if (switch_is_mid(get_remote_control_point()->rc.s[0]))
+      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+    else
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
+
 
   // static uint8_t mode_var = 0; // 没用
   // if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
@@ -536,20 +548,13 @@ void basic_motor_init(void)
 
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
-  __SET_JOINT_LIMIT(HAND_J1, 0, 3.11);
-  __SET_JOINT_LIMIT(HAND_J2, -2.261, 2.289);            //-128.5714~128.5714
-  __SET_JOINT_LIMIT(HAND_J3, -3.14, 3.14);             // 正反90度，使用上位机更设置过零点
-  __SET_JOINT_LIMIT(HAND_J4, -162, 0);                 // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5, -3.14 + 1.2, 3.14 + 1.2); //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, -2.856f, -2.515f);         // 测试得出固定角度
+  __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.11f);
+  __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f);            //-128.5714~128.5714
+  __SET_JOINT_LIMIT(HAND_J3, -3.14f, 3.14f ); // 正反90度，使用上位机更设置过零点
+  __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);                 // map from -351.25~3 to -162~0
+  __SET_JOINT_LIMIT(HAND_J5,  - 2.8f, 1.8f); //-180~180(0.35为中心点)
+  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.9f);         // 测试得出固定角度
 
-  // while (
-  //     // toe_is_error(TOE_HE_L) ||
-  //     // toe_is_error(TOE_HE_R) ||
-  //     toe_is_error(TOE_J1) ||
-  //     toe_is_error(TOE_J2) ||
-  //     toe_is_error(TOE_J3))
-  //   ;
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
@@ -610,7 +615,7 @@ void __J5_init(void)
 {
   while (!__hand_J5_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J5, 1.2, 0.00023f, 0.00008f);
+  __DM_go_setting_angle(HAND_J5, 0, 0.00023f, 0.00008f);
 }
 void __gripper_init(void)
 {
@@ -879,12 +884,12 @@ void __set_motor_offline_flag(void)
 void __hand_custom_ctrl(void)
 {
   __hand_move2_subctrl(
-      (cc_joint_angle[0] - PI / 2 - custom_controller_D[0]) * custom_controller_K[0],
-      (cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1],
+      (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0],
+      -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]),
       (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
       (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
-       -cc_joint_angle[5], 
-       0.0f, J1_EN | J2_EN | J3_EN | J4_EN | J5_EN);
+      (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4],
+      0.0f, J1_EN | J2_EN | J3_EN | J4_EN | J5_EN);
 }
 
 /**/

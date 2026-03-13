@@ -17,7 +17,8 @@
 #define HANDLER_PTR gimbal_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
 
-/*extern*/
+
+    /*extern*/
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan3;
 
@@ -31,7 +32,8 @@ extern FDCAN_HandleTypeDef hfdcan3;
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
-
+#define uplift_custom_controller_K ((UL_MAX_ENCODE - UL_MIN_ENCODE) / (38.0f - 1.5f))
+#define uplift_custom_controller_D (1.5f)
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
@@ -51,6 +53,7 @@ static void __gimbal_any_ctrl(void);
 static void __uplift_move2_subctrl(fp32 UL, uint8_t EN);
 // static void __pump_subctrl(void);
 // static void __pump_nonctrl(void);
+static void __gimbal_uplift_temp_custom_ctrl(void);
 
 static void __gimbal_move_GGM(void);
 static void __gimbal_move_OCSM(void);
@@ -390,8 +393,9 @@ void gimbal_task_set_output()
     __gimbal_uplift_rc_ctrl();
     break;
   case GIMBAL_MODE_CUSTOM_CTRL:
-    __gimbal_uplift_custom_ctrl();
-    break;
+   // __gimbal_uplift_custom_ctrl();
+   __gimbal_uplift_temp_custom_ctrl();
+   break;
   case GIMBAL_MODE_SM_CTRL:
     __gimbal_move_OCSM();
     break;
@@ -481,7 +485,7 @@ void __gimbal_uplift_rc_ctrl()
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.00024f);
 }
 
-void __gimbal_uplift_custom_ctrl()
+void __gimbal_uplift_custom_ctrl(void)
 {
   static float middle_pos = UL_MIN_ENCODE;
   if (__IS_MODE_SWITCHED())
@@ -516,6 +520,10 @@ void __gimbal_uplift_custom_ctrl()
   servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
 }
 
+void __gimbal_uplift_temp_custom_ctrl(void)
+{
+  __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K, 0x01);
+}
 void __gimbal_any_ctrl(void)
 {
 
