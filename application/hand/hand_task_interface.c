@@ -42,7 +42,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define GR_MAP_D 0
 // #define J3_MAP_K (-3.14f / 42.4f) /*old value(-1.0f/19.2f)*/
 // #define J3_MAP_D (-1.668)
-#define J4_MAP_K (180.0f / -390.0f)
+#define J4_MAP_K (180.0f / -457.0f)
 #define J4_MAP_D (1.18f)
 #define dm_g_max -2.515f
 #define dm_g_min -2.856f
@@ -82,7 +82,7 @@ extern Joint_Motor_t DM_Motor_gripper;
 
 /*custom controller remap(custom controller -> joint_angle)*/
 float custom_controller_K[5] = {-1, 1, -1, 180/3.14, 1};
-float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 0.0f};
+float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.88f};
 
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
@@ -225,7 +225,7 @@ void hand_task_init()
   osDelay(50);
   __J5_init();
   osDelay(50);
-  __J4_init();
+   __J4_init();
   osDelay(50);
   __J3_init();
   osDelay(50);
@@ -275,6 +275,13 @@ __GET_JOINT_ANGLE(index,
 )
 ...
 */
+
+CC_handler.joint_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
+CC_handler.joint_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]);
+CC_handler.joint_angle[2] =  (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
+CC_handler.joint_angle[3] =  (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
+CC_handler.joint_angle[4] =  (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
+CC_handler.joint_angle[5] =  cc_joint_angle[5];
   }
 
 /**
@@ -545,7 +552,7 @@ void basic_motor_init(void)
   __SET_JOINT_LIMIT(HAND_J3, -3.14f, 3.14f ); // 正反90度，使用上位机更设置过零点
   __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);                 // map from -351.25~3 to -162~0
   __SET_JOINT_LIMIT(HAND_J5,  - 2.8f, 1.8f); //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.9f);         // 测试得出固定角度
+  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);         // 测试得出固定角度
 
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
@@ -880,8 +887,8 @@ void __hand_custom_ctrl(void)
       -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]),
       (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
       (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
-      (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4],
-      (cc_joint_angle[5] - custom_controller_D[5]) * custom_controller_K[5],  J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
+      -((cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4]),
+      cc_joint_angle[5],  J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
 }
 
 /**/

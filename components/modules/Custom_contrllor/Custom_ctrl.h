@@ -55,7 +55,7 @@ typedef data_t CUSTOM_CTRL_RX_PACK;
 
 typedef struct{
   CUSTOM_CTRL_RX_PACK rx_pack;
-  fp32 joint_angle[5];
+  fp32 joint_angle[7];
 } CUSTOM_CTRL_T;
 
 enum {
@@ -104,6 +104,7 @@ typedef __packed struct
 }remote_data_t;
 
 extern remote_data_t remote_data;
+extern CUSTOM_CTRL_T CC_handler;
 
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
 data_t* Custom_Ctrl_get_rx_pack_ptr(void);

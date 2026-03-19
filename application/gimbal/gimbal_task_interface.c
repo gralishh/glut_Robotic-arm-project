@@ -32,8 +32,8 @@ extern FDCAN_HandleTypeDef hfdcan3;
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
 #define UL_CTRL_SEN 0
-#define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.204f+2.043f))
-#define uplift_custom_controller_D (2.043f)
+#define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.75f+2.25f))
+#define uplift_custom_controller_D (3.75f)
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
@@ -241,7 +241,7 @@ void gimbal_task_get_feedback()
   ...
   */
  //调参使用
-  //temp_cc_angle = (cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE;
+  CC_handler.joint_angle[6] = (cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE;
 }
 
 /**
@@ -528,7 +528,8 @@ void __gimbal_uplift_custom_ctrl(void)
 
 void __gimbal_uplift_temp_custom_ctrl(void)
 {
-  __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
+	 __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, RC_CTRL_PTR->rc.ch[1] * 0.00024f);
+  //__uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
 }
 void __gimbal_any_ctrl(void)
 {

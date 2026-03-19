@@ -1073,6 +1073,11 @@
               <FilePath>..\application\detect_task\detect_task.c</FilePath>
             </File>
             <File>
+              <FileName>motor_timer_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\motor_timer_ctrl.c</FilePath>
+            </File>
+            <File>
               <FileName>referee.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\referee\referee.c</FilePath>
@@ -1086,11 +1091,6 @@
               <FileName>general_movement.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\general_movement.c</FilePath>
-            </File>
-            <File>
-              <FileName>motor_timer_ctrl.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\motor_timer_ctrl.c</FilePath>
             </File>
             <File>
               <FileName>usart_measure_task.c</FileName>
