@@ -40,6 +40,7 @@ typedef struct{
   uint8_t mode_switch; //Ä£Ê½ÇÐ»»Ê±ÖÃ1
   Motor_Type_e motor_type[GIMBAL_MOTOR_COUNT];
   Motor_Ctrl_mode_e motor_ctrl_mode[GIMBAL_MOTOR_COUNT];
+  uint8_t motor_offline_flag[GIMBAL_MOTOR_COUNT];
 
   /*feedback value*/
   fp32 feedback_motor_angle[GIMBAL_MOTOR_COUNT];

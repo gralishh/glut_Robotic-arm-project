@@ -259,10 +259,10 @@ void DM_Motor_Offline_Handler(Joint_Motor_t *motor_ptr)
 {
 	if (motor_ptr == NULL )
 		return;
-
-	float current_angle = motor_ptr->para.pos;
 	//使能并发送保持当前位置让电机应答产生反馈刷新掉线标志
-	pos_speed_ctrl(motor_ptr, current_angle, 0.01);
+	//disable_motor_mode(&hfdcan2, motor_ptr->para.id, motor_ptr->mode);
+	float current_angle = motor_ptr->para.pos;
+	pos_speed_ctrl(motor_ptr, current_angle, 0.001);
 
 	// if (motor_ptr->enable)//除执行刷新外，不让电机执行其他行为避免意外
 	// {

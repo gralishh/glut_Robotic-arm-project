@@ -3,6 +3,11 @@
  * @attention lockup的逻辑大抵没有大🐱饼
  * @note hand_task内的角度单位为rad
  */
+
+ //notice:(未解决)
+/*调试时在debug运行程序开控打断点或者直接停止后再运行3508电机会出现奇怪现象(遗留问题)
+底盘会抽搐，抬升可能是pid的i值积累到最大瞬间输出，猜测可能调试阶段芯片一部分控制权给keil，停止后一部分任在运行导致程序错乱
+*/
 #include <string.h>
 #include "hand_task_interface.h"
 #include "struct_typedef.h"
@@ -81,7 +86,7 @@ extern Joint_Motor_t DM_Motor_gripper;
 // static fp32 J3_D = 0;
 
 /*custom controller remap(custom controller -> joint_angle)*/
-float custom_controller_K[5] = {-1, 1, -1, 180/3.14, 1};
+float custom_controller_K[5] = {-1, 1, -1, 180 / 3.14, 1};
 float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.88f};
 
 static void __hand_nonforce(void);
@@ -94,6 +99,7 @@ static void __hand_catch_ground(void);
 static void hand_move_detect(void);
 
 static void __detect_motor_offline(void);
+static uint8_t __hand_motor_refresh_online(int index);
 static void __set_motor_offline_flag(void);
 
 static void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, uint8_t EN);
@@ -108,11 +114,11 @@ static void __J5_init(void);
 static void __gripper_init(void);
 
 static void __DM_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_value, float l_value);
-static uint8_t __hand_J1_init(uint8_t);
+static uint8_t __hand_J1_init(uint8_t reset);
 // static uint8_t __hand_J1_init(void);
 static uint8_t __hand_J2_init(void);
 static uint8_t __hand_J3_init(void);
-static uint8_t __hand_J4_init(void);
+static uint8_t __hand_J4_init(uint8_t reset);
 static uint8_t __hand_J5_init(void);
 static uint8_t __hand_gripper_init(void);
 // static uint8_t __hand_pitch_pos_init(uint8_t);
@@ -225,7 +231,7 @@ void hand_task_init()
   osDelay(50);
   __J5_init();
   osDelay(50);
-   __J4_init();
+  __J4_init();
   osDelay(50);
   __J3_init();
   osDelay(50);
@@ -253,36 +259,36 @@ void hand_task_get_feedback()
                                &__GET_MOTOR_ANGLE(index))
   }
 
-/*joint angle map*/
-//__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
-__GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(AK_J1) + J1_MAP_D;
-__GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
-__GET_JOINT_ANGLE(HAND_J3) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J2_MAP_D;
-__GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DJI_2006_J4) + J4_MAP_D;
-__GET_JOINT_ANGLE(HAND_J5) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J2_MAP_D;
-__GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
+  /*joint angle map*/
+  //__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(AK_J1) + J1_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J3) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J2_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DJI_2006_J4) + J4_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J5) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J2_MAP_D;
+  __GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
 
-// __GET_JOINT_ANGLE(HAND_PITCH) = HANDLER_PTR->joint_angle[HAND_PITCH];
-// __GET_JOINT_ANGLE(HAND_ROLL) = HANDLER_PTR->joint_angle[HAND_ROLL];
+  // __GET_JOINT_ANGLE(HAND_PITCH) = HANDLER_PTR->joint_angle[HAND_PITCH];
+  // __GET_JOINT_ANGLE(HAND_ROLL) = HANDLER_PTR->joint_angle[HAND_ROLL];
 
-// 角度换算
-//  已知电机角度 theta_L 和 theta_R 时，计算关节角度：
-//  __GET_JOINT_ANGLE(HAND_PITCH) = PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
-//  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) + __GET_MOTOR_ANGLE(DJI_HE_L));
-/*
-__GET_JOINT_ANGLE(index,
+  // 角度换算
+  //  已知电机角度 theta_L 和 theta_R 时，计算关节角度：
+  //  __GET_JOINT_ANGLE(HAND_PITCH) = PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
+  //  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) + __GET_MOTOR_ANGLE(DJI_HE_L));
+  /*
+  __GET_JOINT_ANGLE(index,
+    ...
+  )
   ...
-)
-...
-*/
+  */
 
-CC_handler.joint_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
-CC_handler.joint_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]);
-CC_handler.joint_angle[2] =  (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
-CC_handler.joint_angle[3] =  (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
-CC_handler.joint_angle[4] =  (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
-CC_handler.joint_angle[5] =  cc_joint_angle[5];
-  }
+  CC_handler.joint_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
+  CC_handler.joint_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]);
+  CC_handler.joint_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
+  CC_handler.joint_angle[3] = (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
+  CC_handler.joint_angle[4] = (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
+  CC_handler.joint_angle[5] = cc_joint_angle[5];
+}
 
 /**
  * @brief 模式状态刷新
@@ -334,7 +340,6 @@ void hand_task_mode_flush()
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
-
 
   // static uint8_t mode_var = 0; // 没用
   // if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
@@ -397,6 +402,7 @@ void hand_task_mode_flush()
  */
 void hand_task_set_output()
 {
+
   switch (__GET_STRUCT_MODE())
   {
   case HAND_MODE_IDLE:
@@ -431,20 +437,6 @@ void hand_task_set_output()
   __detect_motor_offline();
 
   __set_motor_offline_flag();
-  // 加个按键
-  //  __hand_move_reset();
-
-  // 小心使用再次初始化！！！，如果一直错误判断会让他一直初始化一直循环创造一个新的大疆结构体导致他溢栈，最会进入硬错误
-  //  if (
-  //      // toe_is_error(TOE_HE_L) &&
-  //      // toe_is_error(TOE_HE_R) &&
-  //      toe_is_error(TOE_J1) &&
-  //      toe_is_error(TOE_J2)
-  //      // &&toe_is_error(TOE_J3)
-  //      )
-  //  {
-  //    hand_task_init();
-  //  }
 }
 
 /**
@@ -548,12 +540,11 @@ void basic_motor_init(void)
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
   __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.11f);
-  __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f);            //-128.5714~128.5714
-  __SET_JOINT_LIMIT(HAND_J3, -3.14f, 3.14f ); // 正反90度，使用上位机更设置过零点
-  __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);                 // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5,  - 2.8f, 1.8f); //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);         // 测试得出固定角度
-
+  __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f); //-128.5714~128.5714
+  __SET_JOINT_LIMIT(HAND_J3, -3.14f, 3.14f);   // 正反90度，使用上位机更设置过零点
+  __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);    // map from -351.25~3 to -162~0
+  __SET_JOINT_LIMIT(HAND_J5, -2.8f, 1.8f);     //-180~180(0.35为中心点)
+  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);       // 测试得出固定角度
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
@@ -597,8 +588,8 @@ void __J3_init(void)
 
 void __J4_init(void)
 {
-
-  while (!__hand_J4_init())
+  __hand_J4_init(1);
+  while (!__hand_J4_init(0))
   {
     hand_task_output();
     osDelay(1);
@@ -740,20 +731,23 @@ uint8_t __hand_J3_init(void)
   }
   return 1;
 }
-uint8_t __hand_J4_init(void)
+uint8_t __hand_J4_init(uint8_t reset)
 {
   static int loop_count = 0;
   static float last__angle = 0.0f;
   static uint8_t init_complete_flag = 0;
 
-  // if (__IS_MODE_SWITCHED())
-  // {
-  //   init_complete_flag = 0;
-  //   loop_count = 0;
-  //   last__angle = 0.0f;
-  // }
+  if (reset)
+  {
+    init_complete_flag = 0;
+    loop_count = 0;
+    last__angle = 0.0f;
+     return 0;
+  }
+  if (toe_is_error(TOE_J4))
+    return 0;
 
-  if (toe_is_error(TOE_J4) || init_complete_flag == 0)
+  if (init_complete_flag == 0)
   {
 
     osDelay(50);
@@ -863,10 +857,68 @@ void __detect_motor_offline(void)
     {
       __SET_MOTOR_CTRL_MODE(index - 6, OFFLINE);
     }
+
+    // 在此添加应用层初始化
+    //  加个按键按一次后置标志让他一直初始化
+    // if (GET_KEY(KEY_R))//如果掉线时位置没有被改变虽然掉线标志位没有被清除，但任然能正常使用，可自主选择
+    // {
+    //   static count = 0;
+    //   if(count == 200)//按下一段时间后才初始化
+    //   {
+         if (HANDLER_PTR->motor_ctrl_mode[index - 6] != OFFLINE && __IS_MOTOR_OFFLINE(index - 6) == 1)
+        {
+        __SET_MOTOR_CTRL_MODE(index - 6, NON_FORCE);
+        if (__hand_motor_refresh_online(index - 6))
+        {
+          __CLEAR_MOTOR_OFFLINE(index - 6);
+          //count = 0;
+        }
+       }
+  //     }
+  //     count++;
+  //  }
+  }
+}
+
+uint8_t __hand_motor_refresh_online(int index)
+{
+  switch (index)//达妙电机失能了就重新使能读取位置，若原先就为使能(位置不会改变)，就直接退出
+  {
+  case dm_gripper:
+    if (__hand_gripper_init())
+      return 1;
     else
-    {
-      __CLEAR_MOTOR_OFFLINE(index - 6);
-    }
+      return 0;
+    break;
+  case DM_J5:
+    if (__hand_J5_init())
+      return 1;
+    else
+      return 0;
+    break;
+  case DJI_2006_J4:
+    __J4_init();
+    return 1;
+    break;
+  case DM_J3:
+    if (__hand_J3_init())
+      return 1;
+    else
+      return 0;
+    break;
+  case DM_J2:
+    if (__hand_J2_init())
+      return 1;
+    else
+      return 0;
+    break;
+  case AK_J1:
+    __J1_init();
+    return 1;
+    break;
+  default:
+    return 0;
+    break;
   }
 }
 void __set_motor_offline_flag(void)
@@ -888,7 +940,7 @@ void __hand_custom_ctrl(void)
       (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
       (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
       -((cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4]),
-      cc_joint_angle[5],  J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
+      cc_joint_angle[5], J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
 }
 
 /**/

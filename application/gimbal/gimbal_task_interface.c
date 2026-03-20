@@ -51,6 +51,7 @@ static void __gimbal_uplift_shouldRoll_ctrl(void);
 static void __gimbal_uplift_custom_ctrl(void);
 static void __gimbal_any_ctrl(void);
 
+static void __detect_uplift_motor_offline(void);
 static void __uplift_move2_subctrl(fp32 UL, uint8_t EN);
 // static void __pump_subctrl(void);
 // static void __pump_nonctrl(void);
@@ -77,6 +78,9 @@ void __gimbal_oid_rc_ctrl(void);
 #define __GET_MOTOR_TYPE(index) (HANDLER_PTR->motor_type[index])
 #define __SET_MOTOR_TYPE(index, type) (HANDLER_PTR->motor_type[index] = (type))
 #define __GET_MOTOR_CTRL_MODE(index) (HANDLER_PTR->motor_ctrl_mode[index])
+#define __SET_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 1)
+#define __CLEAR_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index] = 0)
+#define __IS_MOTOR_OFFLINE(index) (HANDLER_PTR->motor_offline_flag[index])
 
 /*获取电机反馈*/
 #define __GET_MOTOR_ANGLE(index) (HANDLER_PTR->feedback_motor_angle[index])
@@ -106,6 +110,7 @@ void __gimbal_oid_rc_ctrl(void);
   }
 #define __SET_MOTOR_LOCKUP(index) (HANDLER_PTR->motor_ctrl_mode[index] = LOCK)
 #define __SET_MOTOR_NONFORCE(index) (HANDLER_PTR->motor_ctrl_mode[index] = NON_FORCE)
+#define __SET_MOTOR_CTRL_MODE(index, mode) (HANDLER_PTR->motor_ctrl_mode[index] = mode)
 
 /*关节控制*/
 #define __GET_JOINT_ANGLE(index) (HANDLER_PTR->feedback_joint_angle[index])
@@ -610,6 +615,17 @@ void __gimbal_any_ctrl(void)
 //   PUMP1_OFF();
 //   PUMP2_OFF();
 // }
+
+void __detect_uplift_motor_offline(void) 
+{
+  // 掉电检测
+
+  if (toe_is_error(TOE_UPLIFT))
+  {
+    HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] = OFFLINE;
+  }
+
+}
 
 void __uplift_move2_subctrl(fp32 UL, uint8_t EN)
 {

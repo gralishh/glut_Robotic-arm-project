@@ -37,6 +37,7 @@ typedef struct{
   uint8_t mode_switch; //??????1
   Motor_Type_e motor_type[CHASSIS_MOTOR_COUNT];
   Motor_Ctrl_mode_e motor_ctrl_mode[CHASSIS_MOTOR_COUNT];
+  uint8_t motor_offline_flag[CHASSIS_MOTOR_COUNT];
 
   /*feedback value*/
   fp32 feedback_motor_angle[CHASSIS_MOTOR_COUNT];

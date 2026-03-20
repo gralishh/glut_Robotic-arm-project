@@ -66,7 +66,7 @@
     }                                                                       \
   }
 
-// 使用detect已完成下方两宏函数功能，若没有detect模块时就设置检测一段时间未收到反馈
+// 使用应用层的detect模块中已完成下方两宏函数功能(保留)，若没有detect模块时就设置检测一段时间未收到反馈来设置掉线标志位
 /*电机掉线检测*/
 #define __DJI_Motor_offline_detect(motor_ptr)                                          \
   if (__DJI_Motor_Ctrl_get_init_state(motor_ptr, MOTOR_OFFLINE_DETECT_INIT))           \
