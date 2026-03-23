@@ -64,7 +64,7 @@ void __gimbal_oid_rc_ctrl(void);
 /*general handler method*/
 /**
  * macro name format:
- *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
+ *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index,[value])
  */
 /*自定义控制器*/
 #define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
@@ -206,9 +206,6 @@ void gimbal_task_init()
   External_can_ecd_init(&uplift_ecd, 0x14A0, 0x0904, OID_ECD, ECD_CAN_COMMUNICATION, 0x04, 0x04);
   __SET_JOINT_LIMIT(GIMBAL_UPLIFT, UL_MIN_ENCODE, UL_MAX_ENCODE);
 
-  //  while (toe_is_error(TOE_UPLIFT))
-  //    ;
-
   for (int i = 0; i < 40; i++)
   {
     osDelay(20);
@@ -257,8 +254,8 @@ void gimbal_task_mode_flush()
 {
  // static uint8_t nonforce_start_flag = 0;
 
-  // static uint8_t last_mode = GIMBAL_MODE_NONFORCE;
-  // last_mode = HANDLER_PTR->ctrl_mode;
+  static uint8_t last_mode = GIMBAL_MODE_NONFORCE;
+  last_mode = HANDLER_PTR->ctrl_mode;
 
   //  switch(GET_SWITCH())
   //  {
@@ -377,14 +374,14 @@ void gimbal_task_mode_flush()
   //   __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   // }
 
-  // if (HANDLER_PTR->ctrl_mode == last_mode)
-  //   HANDLER_PTR->mode_switch = 0;
-  // else
-  // {
-  //   __RESET_TICKS();
-  //   __HALT_TICKS_COUNTING();
-  //   HANDLER_PTR->mode_switch = 1;
-  // }
+  if (HANDLER_PTR->ctrl_mode == last_mode)
+    HANDLER_PTR->mode_switch = 0;
+  else
+  {
+    __RESET_TICKS();
+    __HALT_TICKS_COUNTING();
+    HANDLER_PTR->mode_switch = 1;
+  }
 }
 /**
  * @brief 设置输出量(电流|速度|位置|力矩)
@@ -418,6 +415,8 @@ void gimbal_task_set_output()
     __gimbal_nonforce();
   }
   __gimbal_any_ctrl();
+
+  __detect_uplift_motor_offline();
 }
 
 /**
@@ -624,7 +623,16 @@ void __detect_uplift_motor_offline(void)
   {
     HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] = OFFLINE;
   }
+  else
+  {
+    __CLEAR_MOTOR_OFFLINE(GIMBAL_UPLIFT);
+  }
 
+  
+  if (HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] == OFFLINE)
+  {
+    __SET_MOTOR_OFFLINE(GIMBAL_UPLIFT);
+  }
 }
 
 void __uplift_move2_subctrl(fp32 UL, uint8_t EN)

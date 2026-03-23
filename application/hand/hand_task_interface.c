@@ -204,15 +204,15 @@ static void __hand_rc2_ctrl(void);
 #define __GET_JOINT_MAX_LIM(index) (HANDLER_PTR->max_joint_angle[index])
 
 /*时间控制*/
-#define __RESET_TICKS() (HANDLER_PTR->tick = 0)
-#define __HALT_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 1)
-#define __HOLD_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 0)
+#define __RESET_TICKS() (HANDLER_PTR->tick = 0) // tick为运行当前任务次数
+#define __HALT_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 1)//停止
+#define __HOLD_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 0)//运行
 #define __IS_TIMER_HALT() (1 == HANDLER_PTR->tick_count_halt)
 #define __GET_TICKS() (HANDLER_PTR->tick)
 // unit:seconds
-#define __GET_TICKS_TIME() (HANDLER_PTR->tick * 1)
-#define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME)
-#define __GET_TICKS_STACK(index) (HANDLER_PTR->tick_stack[index])
+#define __GET_TICKS_TIME() (HANDLER_PTR->tick * 1)//若运行次数和时间为一定比例可修改tick乘积
+#define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME) // 分频率
+#define __GET_TICKS_STACK(index) (HANDLER_PTR->tick_stack[index])//机械臂每个电机单独tick//当前暂不使用
 #define __RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index] = __GET_TICKS_TIME())
 #define __RESET_RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index] = 0)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
@@ -227,6 +227,7 @@ void hand_task_init()
 
   basic_motor_init();
   osDelay(100);
+  // 机械臂初始化
   __gripper_init();
   osDelay(50);
   __J5_init();
@@ -858,7 +859,9 @@ void __detect_motor_offline(void)
       __SET_MOTOR_CTRL_MODE(index - 6, OFFLINE);
     }
 
-    // 在此添加应用层初始化
+    //掉线标志位用于应用层处理使用
+    //模式offline用于模块层处理使用
+    
     //  加个按键按一次后置标志让他一直初始化
     // if (GET_KEY(KEY_R))//如果掉线时位置没有被改变虽然掉线标志位没有被清除，但任然能正常使用，可自主选择
     // {

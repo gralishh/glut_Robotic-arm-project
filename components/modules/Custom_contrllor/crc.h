@@ -7,10 +7,11 @@
 
 #include "main.h"
 #include "string.h"
+#include "stdint.h"
 
 static void Append_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength);
 
-static void Append_CRC16_Check_Sum(unsigned char *pchMessage, unsigned int dwLength);
+static void Append_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
 
 static unsigned int Verify_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength);
 
