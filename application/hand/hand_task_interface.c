@@ -98,9 +98,10 @@ static void __hand_gold_catch_ctrl(void);
 static void __hand_catch_ground(void);
 static void hand_move_detect(void);
 
-static void __detect_motor_offline(void);
+static void __detect_hand_motor_offline(void);
 static uint8_t __hand_motor_refresh_online(int index);
 static void __set_motor_offline_flag(void);
+static void __detect_hand_motor_stall(void);
 
 static void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, uint8_t EN);
 static void __hand_motor_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_dead, float l_dead, float h_value, float l_value);
@@ -258,6 +259,7 @@ void hand_task_get_feedback()
                                &__GET_MOTOR_CURRENT(index),
                                &__GET_MOTOR_SPEED(index),
                                &__GET_MOTOR_ANGLE(index))
+
   }
 
   /*joint angle map*/
@@ -435,7 +437,7 @@ void hand_task_set_output()
     __hand_nonforce();
   }
 
-  __detect_motor_offline();
+  __detect_hand_motor_offline();
 
   __set_motor_offline_flag();
 }
@@ -848,7 +850,9 @@ void __hand_rc2_ctrl(void)
   __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[1] * 0.0000002f);
 }
 
-void __detect_motor_offline(void)
+
+//检测应当在模块层实现但由于检测是通过detect任务实现故放在应用层
+void __detect_hand_motor_offline(void)
 {
   // 掉电检测
   int index;
@@ -861,7 +865,7 @@ void __detect_motor_offline(void)
 
     //掉线标志位用于应用层处理使用
     //模式offline用于模块层处理使用
-    
+
     //  加个按键按一次后置标志让他一直初始化
     // if (GET_KEY(KEY_R))//如果掉线时位置没有被改变虽然掉线标志位没有被清除，但任然能正常使用，可自主选择
     // {
@@ -882,6 +886,8 @@ void __detect_motor_offline(void)
   //  }
   }
 }
+
+
 
 uint8_t __hand_motor_refresh_online(int index)
 {
@@ -935,6 +941,14 @@ void __set_motor_offline_flag(void)
     }
   }
 }
+
+//void __detect_hand_motor_stall(void)
+//{
+//  if (__GET_MOTOR_INSTANCE(index)->stall_flag)
+//  {
+//    __SET_MOTOR_CTRL_MODE(index, STAll);
+//  }
+//}
 void __hand_custom_ctrl(void)
 {
   __hand_move2_subctrl(

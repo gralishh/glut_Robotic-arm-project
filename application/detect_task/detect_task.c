@@ -316,6 +316,7 @@ static void DetectInit(uint32_t time)
         errorList[i].worktime = time;
     }
 
+    //可加自定义控制器数据流
     // errorList[OLED_TOE].data_is_error_fun = NULL;
     // errorList[OLED_TOE].solve_lost_fun = OLED_com_reset;
     // errorList[OLED_TOE].solve_data_error_fun = NULL;

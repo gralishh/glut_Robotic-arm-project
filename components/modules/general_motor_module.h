@@ -12,6 +12,7 @@ typedef enum
   GIVING_CURRENT,
   LOCK,
   OFFLINE,
+  STAll,
 } Motor_Ctrl_mode_e;
 
 typedef enum

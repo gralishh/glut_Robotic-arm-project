@@ -59,6 +59,7 @@ typedef struct
   Motor_Type_e motor_type[HAND_MOTOR_COUNT];
   Motor_Ctrl_mode_e motor_ctrl_mode[HAND_MOTOR_COUNT];
   uint8_t motor_offline_flag[HAND_MOTOR_COUNT];
+  uint8_t motor_stall_flag[HAND_MOTOR_COUNT];
 
   /*feedback value*/
   fp32 feedback_motor_angle[HAND_MOTOR_COUNT];

@@ -46,6 +46,7 @@
     }                                                                                           \
   }
 
+//if (current_speed < 20.0f && current_current > motor->stall_detect_threshold)目标速度
 /*堵转检测*/ // 稍后完善
 #define __DJI_Motor_Ctrl_stall_detect(motor_ptr)                            \
                                                                             \
