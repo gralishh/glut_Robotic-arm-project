@@ -686,3 +686,5 @@ void chassis_power_control(void)
 }
 #undef HANDLER
 #undef HANDLER_PTR
+//防止其他文件也定义了相同名称的宏造成意外替换
+//明确宏的作用范围仅限于当前文件内

@@ -100,13 +100,60 @@ typedef __packed struct
     void (*solveDataErrorFun)(void);
 } error_t;
 
-
-extern const error_t *get_errorList_point(void);
 static void DetectInit(uint32_t time);
 void DetectTask(void const *pvParameters);
 bool_t toe_is_error(uint8_t err);
 void DetectHook(uint8_t toe);
 const error_t *get_errorList_point(void);
-static void DetectInit(uint32_t time);
 
+extern const error_t *get_errorList_point(void);
+
+/*********堵转检测*********/
+
+typedef enum
+{
+    J1 = 0,
+    J2,
+    J3,
+    J4,
+    J5,
+    G,
+    STALL_MOTOR_COUNT,
+} StallMotorList;
+
+typedef __packed struct
+{
+    uint32_t newTime;  
+    uint32_t lastTime;
+    uint32_t worktime; // 恢复正常工作的时间（清除堵转后）
+    uint16_t stall_counter;
+
+    fp32 feedback_angle;
+    fp32 feedback_speed;   
+    fp32 feedback_current;
+
+    fp32 min_avg_current;
+    fp32 speed_slope_threshold;
+
+    fp32 last_speed;         
+    fp32 speed_slope;         // 速度斜率(本质是加速度)
+    fp32 current_history[10]; 
+    uint8_t current_idx;      // 历史索引
+    fp32 avg_current;         
+
+    uint8_t enable : 1;
+    uint8_t Priority : 4; // (预留)
+    uint8_t stall_flag : 1;  
+    uint8_t recoverable : 1; // recoverable可在堵转后紧急处理完成在置1
+   
+    //  堵转恢复时的处理函数指针(预留)
+    void (*solveStallFun)(void);
+} stall_error_t;
+
+// 函数声明
+void StallDetectInit(void);                                                    
+void StallDetectTask(void);                                
+void StallUpdateHook(uint8_t motor_idx, fp32 angle, fp32 speed, fp32 current); // 数据更新钩子
+bool_t StallIsStalled(uint8_t motor_idx);                                      // 查询堵转状态
+void StallClearFlag(uint8_t motor_idx);                                        // 清除堵转标志
 #endif

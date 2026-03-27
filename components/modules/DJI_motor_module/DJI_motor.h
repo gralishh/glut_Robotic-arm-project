@@ -48,7 +48,7 @@ typedef struct __DJI_Motor_Bus_t DJI_Motor_Bus_t;
 typedef struct{
   uint16_t ecd;
   int16_t speed_rpm;
-  uint16_t torque;
+  int16_t torque;
   uint8_t temp;
   uint8_t REMAIN;
 } dji_recv_pack;
