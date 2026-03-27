@@ -134,8 +134,9 @@ typedef __packed struct
 
     fp32 min_avg_current;
     fp32 speed_slope_threshold;
+   // fp32 current_increase_factor;
 
-    fp32 last_speed;         
+    fp32 last_speed;
     fp32 speed_slope;         // 速度斜率(本质是加速度)
     fp32 current_history[10]; 
     uint8_t current_idx;      // 历史索引
@@ -151,9 +152,10 @@ typedef __packed struct
 } stall_error_t;
 
 // 函数声明
-void StallDetectInit(void);                                                    
-void StallDetectTask(void);                                
+void StallDetectInit(void);
+void StallDetectEnable(uint8_t motor_idx, uint8_t enable);
+void StallDetectTask(void);
 void StallUpdateHook(uint8_t motor_idx, fp32 angle, fp32 speed, fp32 current); // 数据更新钩子
-bool_t StallIsStalled(uint8_t motor_idx);                                      // 查询堵转状态
+bool_t toe_is_stall(uint8_t motor_idx);                                        // 查询堵转状态
 void StallClearFlag(uint8_t motor_idx);                                        // 清除堵转标志
 #endif

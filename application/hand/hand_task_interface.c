@@ -260,6 +260,7 @@ void hand_task_get_feedback()
                                &__GET_MOTOR_SPEED(index),
                                &__GET_MOTOR_ANGLE(index))
 
+    StallUpdateHook(index, __GET_MOTOR_ANGLE(index), __GET_MOTOR_SPEED(index), __GET_MOTOR_CURRENT(index));
   }
 
   /*joint angle map*/
@@ -291,6 +292,7 @@ void hand_task_get_feedback()
   CC_handler.joint_angle[3] = (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
   CC_handler.joint_angle[4] = (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
   CC_handler.joint_angle[5] = cc_joint_angle[5];
+
 }
 
 /**
@@ -440,6 +442,7 @@ void hand_task_set_output()
   __detect_hand_motor_offline();
 
   __set_motor_offline_flag();
+  __detect_hand_motor_stall();
 }
 
 /**
@@ -558,6 +561,11 @@ void basic_motor_init(void)
 
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
   hand_task_get_feedback();
+
+  for (uint8_t index = 0; index < HAND_MOTOR_COUNT; index++)
+  {
+    StallDetectEnable(index, 1);
+  }
 }
 void __J1_init(void)
 {
@@ -942,13 +950,17 @@ void __set_motor_offline_flag(void)
   }
 }
 
-//void __detect_hand_motor_stall(void)
-//{
-//  if (__GET_MOTOR_INSTANCE(index)->stall_flag)
-//  {
-//    __SET_MOTOR_CTRL_MODE(index, STAll);
-//  }
-//}
+void __detect_hand_motor_stall(void)
+{
+  int index;
+  for (index = 0; index < HAND_JOINT_COUNT; index++) 
+  {
+    if (toe_is_stall(index))
+    {
+      __SET_MOTOR_CTRL_MODE(index, STAll);
+    }
+  }
+}
 void __hand_custom_ctrl(void)
 {
   __hand_move2_subctrl(

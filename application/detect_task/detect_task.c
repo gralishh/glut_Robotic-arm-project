@@ -53,11 +53,11 @@ uint32_t aRGB = 0xFF0000FF;
 static stall_error_t stall_list[STALL_MOTOR_COUNT];
 
 #define CURRENT_HISTORY_SIZE 10
-#define judge_sign(x) (x > 0) ? 1 : (x < 0) ? -1: 0
+#define judge_sign(x) ((x) > 0 ? 1 : ((x) < 0 ? -1 : 0))
 // 堵转判断参数
-// #define CURRENT_SURGE_FACTOR 2.0f   // 电流突增倍数（当前电流 > avg * factor）
+#define CURRENT_SURGE_FACTOR 2.1f   // 电流突增倍数（当前电流 > avg * factor）
 // #define SPEED_SLOPE_THRESHOLD -2.0f // 速度斜率阈值 (rpm/s) 负值表示急剧减速
-#define STALL_CONFIRM_COUNT 30      // 连续满足条件次数才确认堵转(持续500ms才判断为堵转)
+#define STALL_CONFIRM_COUNT 30      // 连续满足条件次数才确认堵转(持续300ms才判断为堵转)
 
 /**
  * @brief          检测任务
@@ -66,7 +66,7 @@ static stall_error_t stall_list[STALL_MOTOR_COUNT];
  */
 void DetectTask(void const *pvParameters)
 {
-    // StallDetectInit();//堵转初始化
+     StallDetectInit();//堵转初始化
 
     static uint32_t systemTime;
     systemTime = xTaskGetTickCount();
@@ -148,7 +148,7 @@ void DetectTask(void const *pvParameters)
             }
         }
 
-        // StallDetectTask();//
+         StallDetectTask();//
         // DetectDisplay(error_num_display + 1);
         vTaskDelay(DETECT_CONTROL_TIME);
 #if INCLUDE_uxTaskGetStackHighWaterMark
@@ -345,7 +345,9 @@ static void DetectInit(uint32_t time)
 void StallDetectInit(void)
 {
     memset(stall_list, 0, sizeof(stall_list));
-    // 设置历史均值下限，斜率阈值（加速度），优先级
+    // 设置历史均值下限，斜率阈值（加速度），优先级(优先级暂未使用)
+    // 由于电机常态转速不同所以加速度判定大小可能不同和历史均值由于反馈的电流基数不同，推荐自己设置
+    //历史均值设置正常运动反馈电流的0.5倍数即可
     uint16_t setItem[STALL_MOTOR_COUNT][3] =
         {
             // {2, 40, 15}, // SBUS
@@ -354,12 +356,12 @@ void StallDetectInit(void)
             // {20, 20, 12}, // TOE_3508_M2_ID,
             // {20, 20, 11}, // TOE_3508_M3_ID,
             // {20, 20, 10}, // TOE_3508_M4_ID,
-            {30, 20, 9}, // TOE_J1,
-            {50, 40, 8}, // TOE_J2,
-            {50, 20, 7}, // TOE_J3,
-            {30, 20, 6}, //  //TOE_J4,
-            {50, 40, 5}, // TOE_J5,
-            {50, 40, 4}, // TOE_G,
+            {300, 2.5, 9}, // TOE_J1,
+            {500, 1.2, 8}, // TOE_J2,
+            {500, 1.2, 7}, // TOE_J3,
+            {200, 0.8, 6}, //  //TOE_J4,
+            {300, 1.2, 5}, // TOE_J5,
+            {250, 0.4, 4}, // TOE_G,
                          // {20, 20, 3},  // TOE_UPLIFT,
                          // {20, 20, 2},  // TOE_UPLIFT_ECD,
 
@@ -367,7 +369,7 @@ void StallDetectInit(void)
 
     for (int i = 0; i < STALL_MOTOR_COUNT; i++)
     {
-
+        // min_avg_current 一般设为空载电流的 1.2 倍即可
         stall_list[i].min_avg_current = setItem[i][0];
         stall_list[i].speed_slope_threshold = setItem[i][1];
         stall_list[i].Priority = setItem[i][2];
@@ -414,7 +416,10 @@ void StallUpdateHook(uint8_t motor_idx, fp32 angle, fp32 speed, fp32 current)
     // 计算速度斜率（delta_speed / delta_time，注意时间单位为 tick）
     if (stall_list[motor_idx].newTime > stall_list[motor_idx].lastTime)
     {
-        stall_list[motor_idx].speed_slope = (stall_list[motor_idx].feedback_speed - stall_list[motor_idx].last_speed) / (fp32)(stall_list[motor_idx].newTime - stall_list[motor_idx].lastTime);
+        fp32 delta_time = (fp32)(stall_list[motor_idx].newTime - stall_list[motor_idx].lastTime);
+        if (delta_time < 1.0f)
+            delta_time = 1.0f;
+        stall_list[motor_idx].speed_slope = (stall_list[motor_idx].feedback_speed - stall_list[motor_idx].last_speed) / delta_time;
     }
     else
     {
@@ -432,17 +437,17 @@ void StallUpdateHook(uint8_t motor_idx, fp32 angle, fp32 speed, fp32 current)
     }
     stall_list[motor_idx].avg_current = sum / CURRENT_HISTORY_SIZE;
 
-    // 如果之前堵转，且被置恢复标志位//判断条件太宽松了
-    if (stall_list[motor_idx].stall_flag && stall_list[motor_idx].recoverable)
-    {
-        // 恢复条件：电流回到平均附近，且速度斜率不异常，可清除
-        if (fabsf(stall_list[motor_idx].feedback_current) < stall_list[motor_idx].avg_current * 1.5f &&
-            stall_list[motor_idx].speed_slope > SPEED_SLOPE_THRESHOLD)
-        {
-            stall_list[motor_idx].stall_flag = 0;
-            stall_list[motor_idx].worktime = stall_list[motor_idx].newTime;
-        }
-    }
+    // // 如果之前堵转，且被置恢复标志位//判断条件太宽松了
+    // if (stall_list[motor_idx].stall_flag && stall_list[motor_idx].recoverable)
+    // {
+    //     // 恢复条件：电流回到平均附近，且速度斜率不异常，可清除
+    //     if (fabsf(stall_list[motor_idx].feedback_current) < stall_list[motor_idx].avg_current * 1.5f &&
+    //         stall_list[motor_idx].speed_slope > stall_list[motor_idx].speed_slope_threshold)
+    //     {
+    //         stall_list[motor_idx].stall_flag = 0;
+    //         stall_list[motor_idx].worktime = stall_list[motor_idx].newTime;
+    //     }
+    // }
 }
 
 void StallDetectTask(void)
@@ -453,7 +458,6 @@ void StallDetectTask(void)
         if (!stall_list[i].enable)
             continue;
 
-        // 如果已经堵转，不再重复判断（由应用层决定何时清除）
         if (stall_list[i].stall_flag)
             continue;
 
@@ -462,7 +466,7 @@ void StallDetectTask(void)
         // 2. 速度斜率（加速度）绝对值大于阈值,堵转时和速度的负方向的加速度急剧增大
         // 3.电流方向和加速度方向的乘积小于0
         // 4. 均电流有效且数据历史大于最小阈值，避免在开始时环形电流历史值未满得到的均值是当前值的1/倍数
-        // 注意：速度斜率需要根据实际量纲调整，这里假设 speed 单位是 rpm，时间单位是 tick（1ms）
+        // 速度斜率需要根据实际调整，电机的反馈的单位不同计算出的结果不同
 
         if (fabsf(stall_list[i].avg_current) > stall_list[i].min_avg_current &&
             fabsf(stall_list[i].feedback_current) > fabsf(stall_list[i].avg_current) * CURRENT_SURGE_FACTOR &&
@@ -489,7 +493,7 @@ void StallDetectTask(void)
 }
 
 // 查询堵转状态
-bool_t StallIsStalled(uint8_t motor_idx)
+bool_t toe_is_stall(uint8_t motor_idx)
 {
     return stall_list[motor_idx].stall_flag == 1;
 }
