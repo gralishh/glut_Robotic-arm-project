@@ -125,7 +125,7 @@ typedef __packed struct
 {
     uint32_t newTime;  
     uint32_t lastTime;
-    uint32_t worktime; // 恢复正常工作的时间（清除堵转后）
+    uint32_t worktime; //暂未用到
     uint16_t stall_counter;
 
     fp32 feedback_angle;

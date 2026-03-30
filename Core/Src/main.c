@@ -96,14 +96,14 @@ DMA_HandleTypeDef hdma_usart10_tx;
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for ChassisTask */
 osThreadId_t ChassisTaskHandle;
 const osThreadAttr_t ChassisTask_attributes = {
   .name = "ChassisTask",
-  .stack_size = 512 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for USART2_measure */
@@ -138,7 +138,7 @@ const osThreadAttr_t USART3_measure_attributes = {
 osThreadId_t CustomCtrlTaskHandle;
 const osThreadAttr_t CustomCtrlTask_attributes = {
   .name = "CustomCtrlTask",
-  .stack_size = 128 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CatcherTask */

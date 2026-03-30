@@ -44,7 +44,6 @@ void DJI_CANBus_config_init(DJI_Motor_Bus_t* bus, DJI_Motor_Config_t* config)
 {
 
 }
-
 void DJI_CANBus_add_motor(DJI_Motor_Bus_t* bus,DJI_Motor_Ctrl_t* motor)
 {
   if(__DJI_CANBus_get_motor_count(bus)>6)

@@ -348,6 +348,7 @@ void StallDetectInit(void)
     // 设置历史均值下限，斜率阈值（加速度），优先级(优先级暂未使用)
     // 由于电机常态转速不同所以加速度判定大小可能不同和历史均值由于反馈的电流基数不同，推荐自己设置
     //历史均值设置正常运动反馈电流的0.5倍数即可
+    //速度阈值设置为0即关闭速度判断，放在低速堵转时取消这个判断
     uint16_t setItem[STALL_MOTOR_COUNT][3] =
         {
             // {2, 40, 15}, // SBUS
@@ -413,7 +414,7 @@ void StallUpdateHook(uint8_t motor_idx, fp32 angle, fp32 speed, fp32 current)
     stall_list[motor_idx].feedback_speed = speed;
     stall_list[motor_idx].feedback_current = current;
 
-    // 计算速度斜率（delta_speed / delta_time，注意时间单位为 tick）
+    //时间单位为(tick）
     if (stall_list[motor_idx].newTime > stall_list[motor_idx].lastTime)
     {
         fp32 delta_time = (fp32)(stall_list[motor_idx].newTime - stall_list[motor_idx].lastTime);
@@ -463,23 +464,40 @@ void StallDetectTask(void)
 
         // 堵转条件：
         // 1. 当前电流超过平均电流的倍数（突增）（绝对值）
-        // 2. 速度斜率（加速度）绝对值大于阈值,堵转时和速度的负方向的加速度急剧增大
+        // 2. 速度斜率（加速度）绝对值大于阈值,堵转时和速度的负方向的加速度急剧增大//防止加大负载时误判堵转
         // 3.电流方向和加速度方向的乘积小于0
         // 4. 均电流有效且数据历史大于最小阈值，避免在开始时环形电流历史值未满得到的均值是当前值的1/倍数
         // 速度斜率需要根据实际调整，电机的反馈的单位不同计算出的结果不同
 
         if (fabsf(stall_list[i].avg_current) > stall_list[i].min_avg_current &&
             fabsf(stall_list[i].feedback_current) > fabsf(stall_list[i].avg_current) * CURRENT_SURGE_FACTOR &&
-             fabsf(stall_list[i].speed_slope) > stall_list[i].speed_slope_threshold &&
             judge_sign(stall_list[i].feedback_current) * judge_sign(stall_list[i].speed_slope) < 0)
         {
-            stall_list[i].stall_counter++;
-            if (stall_list[i].stall_counter >= STALL_CONFIRM_COUNT)
+            if (stall_list[i].speed_slope_threshold!=0)
             {
-                stall_list[i].stall_flag = 1; // 确认堵转
-                if (stall_list[i].solveStallFun != NULL)
+                if (fabsf(stall_list[i].speed_slope) > stall_list[i].speed_slope_threshold)
                 {
-                    stall_list[i].solveStallFun(); // 仿照大疆代码(这里预留)
+                    stall_list[i].stall_counter++;
+                    if (stall_list[i].stall_counter >= STALL_CONFIRM_COUNT)
+                    {
+                        stall_list[i].stall_flag = 1; // 确认堵转
+                        if (stall_list[i].solveStallFun != NULL)
+                        {
+                            stall_list[i].solveStallFun(); // 仿照大疆代码(这里预留)
+                        }
+                    }
+                }
+                else if (stall_list[i].speed_slope_threshold == 0)
+                {
+                    stall_list[i].stall_counter++;
+                    if (stall_list[i].stall_counter >= STALL_CONFIRM_COUNT)
+                    {
+                        stall_list[i].stall_flag = 1; // 确认堵转
+                        if (stall_list[i].solveStallFun != NULL)
+                        {
+                            stall_list[i].solveStallFun(); // 仿照大疆代码(这里预留)
+                        }
+                    }
                 }
             }
         }
@@ -488,6 +506,7 @@ void StallDetectTask(void)
             // 不满足条件，计数器递减（防抖）
             if (stall_list[i].stall_counter > 0)
                 stall_list[i].stall_counter--;
+        
         }
     }
 }
