@@ -525,7 +525,7 @@ void __detect_chassis_motor_offline(void)
   int index;
   for (index = 2; index < CHASSIS_MOTOR_COUNT+2; index++) 
   {
-    if (toe_is_error(index-2))
+    if (toe_is_error(index))
     {
       __SET_MOTOR_CTRL_MODE(index-2, OFFLINE);
     }
