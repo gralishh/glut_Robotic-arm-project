@@ -57,7 +57,7 @@ static stall_error_t stall_list[STALL_MOTOR_COUNT];
 // 堵转判断参数
 #define CURRENT_SURGE_FACTOR 2.1f   // 电流突增倍数（当前电流 > avg * factor）
 // #define SPEED_SLOPE_THRESHOLD -2.0f // 速度斜率阈值 (rpm/s) 负值表示急剧减速
-#define STALL_CONFIRM_COUNT 30      // 连续满足条件次数才确认堵转(持续300ms才判断为堵转)
+#define STALL_CONFIRM_COUNT 60      // 连续满足条件次数才确认堵转(持续300ms才判断为堵转)
 
 /**
  * @brief          检测任务
@@ -503,7 +503,7 @@ void StallDetectTask(void)
         }
         else
         {
-            // 不满足条件，计数器递减（防抖）
+            // 不满足条件，递减（防抖）
             if (stall_list[i].stall_counter > 0)
                 stall_list[i].stall_counter--;
         
