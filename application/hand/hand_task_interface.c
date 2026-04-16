@@ -335,21 +335,21 @@ void hand_task_mode_flush()
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
     if (switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_down(get_remote_control_point()->rc.s[1]))
   {
     if (switch_is_mid(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
 
   // static uint8_t mode_var = 0; // 没用
   // if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
-  if (__GET_STRUCT_MODE() == HAND_MODE_IDLE)
+  if (__GET_STRUCT_MODE() == HAND_MODE_CUSTOM_CTRL)
   {
     //__BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
     //__BUTTON_PRESS_SWITCH_WRAP
@@ -550,7 +550,7 @@ void basic_motor_init(void)
   __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f); //-128.5714~128.5714
   __SET_JOINT_LIMIT(HAND_J3, -3.14f*2, 3.14f*2);   // 正反90度，使用上位机更设置过零点
   __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);    // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5, -3.14f * 2, 3.14f * 2); //-180~180(0.35为中心点)
+  __SET_JOINT_LIMIT(HAND_J5, -3.14f , 3.14f ); //-180~180(0.35为中心点)
   __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);       // 测试得出固定角度
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
@@ -962,6 +962,8 @@ void __detect_hand_motor_stall(void)
     }
   }
 }
+
+//自定义控制器数据流在自定义芯片上处理
 void __hand_custom_ctrl(void)
 {
   __hand_move2_subctrl(
