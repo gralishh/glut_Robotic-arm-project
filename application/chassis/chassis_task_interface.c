@@ -242,6 +242,8 @@ void chassis_task_mode_flush()
       __SET_STRUCT_MODE(CHASSIS_MODE_RC_CTRL);
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(CHASSIS_MODE_RC_CTRL);
+    else
+      __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
   }
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
@@ -261,11 +263,11 @@ void chassis_task_mode_flush()
   {
     __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
   }
-
-  if (switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
-  {
-    __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
-  }
+//这段代码和上方的功能重复了
+  // if (switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
+  // {
+  //   __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
+  // }
 
   // 系统卡死、死锁时的恢复手段
   if (__GET_STRUCT_MODE() == CHASSIS_MODE_NONFORCE)
@@ -290,22 +292,7 @@ void chassis_task_mode_flush()
   //     count = 0;
   // }
 
-  if (//出现十分极端的情况
-      toe_is_error(TOE_J1) &&
-      toe_is_error(TOE_J2) &&
-      toe_is_error(TOE_J3) &&
-      toe_is_error(TOE_J4) &&
-      toe_is_error(TOE_J5) &&
-      toe_is_error(TOE_G) &&
-      toe_is_error(TOE_UPLIFT) &&
-      toe_is_error(TOE_3508_M1_ID) &&
-      toe_is_error(TOE_3508_M2_ID) &&
-      toe_is_error(TOE_3508_M3_ID) &&
-      toe_is_error(TOE_3508_M4_ID))
-  {
-    __set_FAULTMASK(1); //  系统复位
-    NVIC_SystemReset(); // 重启系统
-  }
+
 
   // if(GetMatchReady())
   //{
@@ -393,14 +380,15 @@ void __chassis_idle_ctrl()
   {
     for (index = 0; index < CHASSIS_MOTOR_COUNT; index++)
     {
-      __SET_MOTOR_ANGLE(index, __GET_MOTOR_ANGLE(index));
+      //__SET_MOTOR_ANGLE(index, __GET_MOTOR_ANGLE(index));
+      __SET_MOTOR_SPEED(index, 0);
     }
   }
 
-  for (index = 0; index < CHASSIS_MOTOR_COUNT; index++)
-  {
-    __ADD_MOTOR_ANGLE(index, 0);
-  }
+  // for (index = 0; index < CHASSIS_MOTOR_COUNT; index++)
+  // {
+  //   __ADD_MOTOR_ANGLE(index, 0);
+  // }
 }
 
 void __chassis_rc_ctrl()
@@ -585,6 +573,7 @@ void __detect_chassis_motor_offline(void)
 //  }
 //}
 
+//功率控制不能用的速度位置环来控制底盘
 void chassis_power_control_limit(void)
 {
   for (int8_t index = 0; index < CHASSIS_MOTOR_COUNT; index++)

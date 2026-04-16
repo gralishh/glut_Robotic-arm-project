@@ -7,6 +7,7 @@
  //notice:(未解决)
 /*调试时在debug运行程序开控打断点或者直接停止后再运行3508电机会出现奇怪现象(遗留问题)
 底盘会抽搐，抬升可能是pid的i值积累到最大瞬间输出，猜测可能调试阶段芯片一部分控制权给keil，停止后一部分任在运行导致程序错乱
+造成该问题的原因可能是打断点的时候timer_ctrl还在运行
 */
 #include <string.h>
 #include "hand_task_interface.h"
@@ -547,9 +548,9 @@ void basic_motor_init(void)
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
   __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.11f);
   __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f); //-128.5714~128.5714
-  __SET_JOINT_LIMIT(HAND_J3, -3.14f, 3.14f);   // 正反90度，使用上位机更设置过零点
+  __SET_JOINT_LIMIT(HAND_J3, -3.14f*2, 3.14f*2);   // 正反90度，使用上位机更设置过零点
   __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);    // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5, -2.8f, 1.8f);     //-180~180(0.35为中心点)
+  __SET_JOINT_LIMIT(HAND_J5, -3.14f * 2, 3.14f * 2); //-180~180(0.35为中心点)
   __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);       // 测试得出固定角度
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
