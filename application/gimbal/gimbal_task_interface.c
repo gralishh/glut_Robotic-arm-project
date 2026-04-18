@@ -16,9 +16,9 @@
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
+//由于26赛季将末端需求从吸盘改为夹爪，该模块多处和气泵相关的代码注释，可以如无刚需建议保留以防以后需要
 
-
-    /*extern*/
+/*extern*/
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan3;
 
@@ -31,7 +31,6 @@ extern FDCAN_HandleTypeDef hfdcan3;
 #define UL_MAX_ENCODE 438
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
-#define UL_CTRL_SEN 0
 #define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.75f+2.25f))
 #define uplift_custom_controller_D (3.75f)
 /*global motor handler*/
@@ -46,8 +45,6 @@ External_ecd_handler_t *uplift_ecd_ptr = &uplift_ecd;
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
 static void __gimbal_rc_ctrl(void);
-static void __gimbal_uplift_rc_ctrl(void);
-static void __gimbal_uplift_shouldRoll_ctrl(void);
 static void __gimbal_uplift_custom_ctrl(void);
 static void __gimbal_any_ctrl(void);
 
@@ -55,7 +52,6 @@ static void __detect_uplift_motor_offline(void);
 static void __uplift_move2_subctrl(fp32 UL, uint8_t EN);
 // static void __pump_subctrl(void);
 // static void __pump_nonctrl(void);
-static void __gimbal_uplift_temp_custom_ctrl(void);
 
 static void __gimbal_move_GGM(void);
 static void __gimbal_move_OCSM(void);
@@ -345,8 +341,7 @@ void gimbal_task_mode_flush()
 
   
   /*movement*/
-  //if (__GET_STRUCT_MODE() == GIMBAL_MODE_IDLE) /*卤拢证虏娄全2碌碌*/
-  //{
+  //if (__GET_STRUCT_MODE() == GIMBAL_MODE_IDLE) 
     if (get_movement() == ONCE_CLICK_SAVE_MINE)
     {
       __SET_STRUCT_MODE(GIMBAL_MODE_SM_CTRL);
@@ -397,12 +392,8 @@ void gimbal_task_set_output()
   case GIMBAL_MODE_RC_CTRL:
     __gimbal_rc_ctrl();
     break;
-  case GIMBAL_MODE_UPLIFT_RC_CTRL:
-    __gimbal_uplift_rc_ctrl();
-    break;
   case GIMBAL_MODE_CUSTOM_CTRL:
-   // __gimbal_uplift_custom_ctrl();
-   __gimbal_uplift_temp_custom_ctrl();
+    __gimbal_uplift_custom_ctrl();
    break;
   case GIMBAL_MODE_SM_CTRL:
     __gimbal_move_OCSM();
@@ -472,8 +463,8 @@ void __gimbal_rc_ctrl()
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
   if (GET_KEY(KEY_V))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.00024f);
-  if (GET_KEY(KEY_SHIFT) && HANDLER_PTR->joint_angle[GIMBAL_UPLIFT] > UL_MAX_ENCODE / 4)
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
+  // if (GET_KEY(KEY_SHIFT) && HANDLER_PTR->joint_angle[GIMBAL_UPLIFT] > UL_MAX_ENCODE / 4)
+  //   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
 }
 
 // 实测发现抽绳编码器在使用过程中存在抖动，不太好用
@@ -483,65 +474,56 @@ void __gimbal_oid_rc_ctrl()
   HANDLER_PTR->motor_speed[GIMBAL_UPLIFT] = __ADD_OID_LENGTH_OUTPUT(HANDLER_PTR->oid_length, &uplift_ecd);
 }
 
-void __gimbal_uplift_rc_ctrl()
+
+void __gimbal_uplift_custom_ctrl(void)
 {
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, RC_CTRL_PTR->rc.ch[1] * 0.00018f);
-  // __ADD_JOINT_ANGLE(GIMBAL_UPLIFT,GET_CH_VALUE(1)*0.00018f);
-  //__pump_subctrl();
+  // static float middle_pos = UL_MIN_ENCODE;
+  // if (__IS_MODE_SWITCHED())
+  // {
+  //   middle_pos = __GET_JOINT_ANGLE(GIMBAL_UPLIFT);
+  // }
+
+  // //__pump_subctrl();
+  // if (-300 > RC_CTRL_PTR->rc.ch[1] || RC_CTRL_PTR->rc.ch[1] > 300)
+  // {
+  //   middle_pos += RC_CTRL_PTR->rc.ch[1] * 0.00048f;
+  // }
+
+  // if (-300 > GET_CH_VALUE(1) || GET_CH_VALUE(1) > 300)
+  // {
+  //   middle_pos += GET_CH_VALUE(1) * 0.00048f;
+  // }
+
+  // if (GET_KEY(KEY_C))
+  //   middle_pos -= 660 * 0.00048f;
+  // if (GET_KEY(KEY_V))
+  //   middle_pos += 660 * 0.00048f;
+
+  // if (middle_pos < UL_MIN_ENCODE)
+  //   middle_pos = UL_MIN_ENCODE;
+  // else if (middle_pos > UL_MAX_ENCODE)
+  //   middle_pos = UL_MAX_ENCODE;
 
   if (GET_KEY(KEY_C))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
   if (GET_KEY(KEY_V))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.00024f);
-}
-
-void __gimbal_uplift_custom_ctrl(void)
-{
-  static float middle_pos = UL_MIN_ENCODE;
-  if (__IS_MODE_SWITCHED())
-  {
-    middle_pos = __GET_JOINT_ANGLE(GIMBAL_UPLIFT);
-  }
-
-  //__pump_subctrl();
-  if (-300 > RC_CTRL_PTR->rc.ch[1] || RC_CTRL_PTR->rc.ch[1] > 300)
-  {
-    middle_pos += RC_CTRL_PTR->rc.ch[1] * 0.00048f;
-  }
-
-  if (-300 > GET_CH_VALUE(1) || GET_CH_VALUE(1) > 300)
-  {
-    middle_pos += GET_CH_VALUE(1) * 0.00048f;
-  }
-
-  if (GET_KEY(KEY_C))
-    middle_pos -= 660 * 0.00048f;
-  if (GET_KEY(KEY_V))
-    middle_pos += 660 * 0.00048f;
-
-  if (middle_pos < UL_MIN_ENCODE)
-    middle_pos = UL_MIN_ENCODE;
-  else if (middle_pos > UL_MAX_ENCODE)
-    middle_pos = UL_MAX_ENCODE;
-
   //__uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
+  __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
 
-  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0);
-  servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);//输出
+
+  // __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0f);//yaw轴不需要动
+  // servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);//尝试用于一键存矿
 }
 
-void __gimbal_uplift_temp_custom_ctrl(void)
-{
-	 __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, RC_CTRL_PTR->rc.ch[1] * 0.00024f);
-  //__uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
-}
-void __gimbal_any_ctrl(void)
+
+void __gimbal_any_ctrl(void)//可设置为舵机运动
 {
 
   if (__GET_STRUCT_MODE() != GIMBAL_MODE_IDLE)
   {
-    //__ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, (float)remote_data.mouse_y / 120.0);
-    servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, (float)remote_data.mouse_y / 120.0f);
+    servo_set_offset(1, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
   }
 }
 
@@ -690,6 +672,12 @@ void __gimbal_move_GGM(void)
 
 void __gimbal_move_OCSM(void)
 {
+  if (movement.hand_move_out_flag == 1)
+  {
+    set_movement(0); // 退出固定动作
+    __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+    movement.hand_move_out_flag = 0;
+  }
   if (get_step() == SM_uplift_to_pos)
   {
     if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP1_HEIGHT, 5.0))

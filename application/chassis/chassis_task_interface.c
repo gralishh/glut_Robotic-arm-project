@@ -17,11 +17,10 @@
 
 // 分电板上对应底盘前左轮的can线线序与其他的can相反，大抵是画板的时候连错线了//已更换新分电板
 
-fp32 vofa_display_power[4] = {0};
-int16_t limit_flag = 0;
-fp32 vofa_display_power1[4] = {0};
-float total_power = 0;
-
+// fp32 vofa_display_power[4] = {0};
+// int16_t limit_flag = 0;
+// fp32 vofa_display_power1[4] = {0};
+// float total_power = 0;
 // int16_t vofa_power_limit = 0; // vofac查看输出功率
 // fp32 motor_current[4] = {0}; // 测试使用
 
@@ -29,12 +28,6 @@ float total_power = 0;
 #define HANDLER_PTR chassis_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
 
-/*extern*/
-extern FDCAN_HandleTypeDef hfdcan1;
-extern GIMBAL_TASK_HANDLER_TYPE *gimbal_task_handler_ptr;
-#define UL_HEIGHT (gimbal_task_handler_ptr->joint_angle[0])
-#define UL_MAX (gimbal_task_handler_ptr->max_joint_angle[0])
-#define UL_MIN (gimbal_task_handler_ptr->min_joint_angle[0])
 
 /*global macro variable*/
 // joint mapping parameter
@@ -44,9 +37,9 @@ extern GIMBAL_TASK_HANDLER_TYPE *gimbal_task_handler_ptr;
 #define VY_CTRL_SEN 4.23f*8 / 6
 #define WZ_CTRL_SEN 9.0f * 7 / 6
 
-#define VX_ADD_SPEED_SEN 9.7f
-#define VY_ADD_SPEED_SEN 9.7f
-#define WZ_ADD_SPEED_SEN 8.0f
+#define VX_ADD_SPEED_SEN 11.3f
+#define VY_ADD_SPEED_SEN 11.3f
+#define WZ_ADD_SPEED_SEN 9.7f
 // chassis para
 #define CHASSIS_WZ_SET_SCALE 0.03f
 #define MOTOR_DISTANCE_TO_CENTER 0.3f
@@ -404,12 +397,10 @@ void __chassis_idle_ctrl()
 void __chassis_rc_ctrl()
 {
   /*设置输入速度(not real)*/
-  if (!remote_data.key)
-  {
+ 
   HANDLER_PTR->vx = -RC_CTRL_PTR->rc.ch[3] * 8 / 6 * VX_CTRL_SEN;
   HANDLER_PTR->vy = -RC_CTRL_PTR->rc.ch[2] * 8 / 6 * VY_CTRL_SEN;
   HANDLER_PTR->wz = -RC_CTRL_PTR->rc.ch[0] * 7 / 6 * WZ_CTRL_SEN;
-  }
 
   // if (!remote_data.trigger)
   // {

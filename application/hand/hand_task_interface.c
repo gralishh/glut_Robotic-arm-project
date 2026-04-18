@@ -4,7 +4,7 @@
  * @note hand_task内的角度单位为rad
  */
 
- //notice:(未解决)
+// notice:(未解决)
 /*调试时在debug运行程序开控打断点或者直接停止后再运行3508电机会出现奇怪现象(遗留问题)
 底盘会抽搐，抬升可能是pid的i值积累到最大瞬间输出，猜测可能调试阶段芯片一部分控制权给keil，停止后一部分任在运行导致程序错乱
 造成该问题的原因可能是打断点的时候timer_ctrl还在运行
@@ -96,8 +96,7 @@ static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
 // static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
-//static void __hand_catch_ground(void);
-static void hand_move_detect(void);
+// static void __hand_catch_ground(void);
 
 static void __detect_hand_motor_offline(void);
 static uint8_t __hand_motor_refresh_online(int index);
@@ -206,18 +205,41 @@ static void __hand_rc2_ctrl(void);
 #define __GET_JOINT_MAX_LIM(index) (HANDLER_PTR->max_joint_angle[index])
 
 /*时间控制*/
-#define __RESET_TICKS() (HANDLER_PTR->tick = 0) // tick为运行当前任务次数
-#define __HALT_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 1)//停止
-#define __HOLD_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 0)//运行
+#define __RESET_TICKS() (HANDLER_PTR->tick = 0)                    // tick为运行当前任务次数
+#define __HALT_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 1) // 停止
+#define __HOLD_TICKS_COUNTING() (HANDLER_PTR->tick_count_halt = 0) // 运行
 #define __IS_TIMER_HALT() (1 == HANDLER_PTR->tick_count_halt)
 #define __GET_TICKS() (HANDLER_PTR->tick)
 // unit:seconds
-#define __GET_TICKS_TIME() (HANDLER_PTR->tick * 1)//若运行次数和时间为一定比例可修改tick乘积
+#define __GET_TICKS_TIME() (HANDLER_PTR->tick * 1)                                 // 若运行次数和时间为一定比例可修改tick乘积
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME) // 分频率
-#define __GET_TICKS_STACK(index) (HANDLER_PTR->tick_stack[index])//机械臂每个电机单独tick//当前暂不使用
+#define __GET_TICKS_STACK(index) (HANDLER_PTR->tick_stack[index])                  // 机械臂每个电机单独tick//当前暂不使用
 #define __RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index] = __GET_TICKS_TIME())
 #define __RESET_RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index] = 0)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
+
+#define __LONG_PRESS_TRIGGER_FUNCTION(key, steady_move) \
+  {                                                     \
+    static uint16_t press_count = 0;                    \
+    static uint8_t aviod_triggered_again = 0;           \
+    if (GET_KEY(KEY_Z))                                 \
+    {                                                   \
+      if (!aviod_triggered_again)                       \
+      {                                                 \
+        press_count++;                                  \
+        if (press_count >= 1000)                        \
+        {                                               \
+          set_movement(steady_move);                    \
+          aviod_triggered_again = 1;                    \
+        }                                               \
+      }                                                 \
+    }                                                   \
+    else                                                \
+    {                                                   \
+      press_count = 0;                                  \
+      aviod_triggered_again = 0;                        \
+    }                                                   \
+  }
 
 void hand_task_init()
 {
@@ -293,7 +315,6 @@ void hand_task_get_feedback()
   CC_handler.joint_angle[3] = (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
   CC_handler.joint_angle[4] = (cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
   CC_handler.joint_angle[5] = cc_joint_angle[5];
-
 }
 
 /**
@@ -351,19 +372,17 @@ void hand_task_mode_flush()
   // if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
   if (__GET_STRUCT_MODE() == HAND_MODE_CUSTOM_CTRL)
   {
-    //__BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);
-    //__BUTTON_PRESS_SWITCH_WRAP
-    // if(GET_KEY(KEY_Z))
-    //  set_movement(GGM);
+    // __BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);//与气泵有关暂时保留
+    // __BUTTON_PRESS_SWITCH_WRAP
 
-    // // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
-    // if (GET_KEY(KEY_Z) || (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1])))
+    // if (GET_KEY(KEY_Z) || (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1])))//使用控调试
     //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
+    // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
+    __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE);
+    //__LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
 
     if (GET_KEY(KEY_B))
       movement.hand_move_out_flag = 1;
-    // if (GET_KEY(KEY_G))
-    //__hand_pitch_pos_init(1);
     //  if (remote_data.trigger)
     //    __hand_rc_ctrl();
 
@@ -547,11 +566,11 @@ void basic_motor_init(void)
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
   __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.11f);
-  __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f); //-128.5714~128.5714
-  __SET_JOINT_LIMIT(HAND_J3, -3.14f*2, 3.14f*2);   // 正反90度，使用上位机更设置过零点
-  __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);    // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5, -3.14f , 3.14f ); //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);       // 测试得出固定角度
+  __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f);       //-128.5714~128.5714
+  __SET_JOINT_LIMIT(HAND_J3, -3.14f * 2, 3.14f * 2); // 正反90度，使用上位机更设置过零点
+  __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);          // map from -351.25~3 to -162~0
+  __SET_JOINT_LIMIT(HAND_J5, -3.14f, 3.14f);         //-180~180(0.35为中心点)
+  __SET_JOINT_LIMIT(HAND_G, 0.0f, 0.6f);             // 测试得出固定角度
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
@@ -754,7 +773,7 @@ uint8_t __hand_J4_init(uint8_t reset)
     init_complete_flag = 0;
     loop_count = 0;
     last__angle = 0.0f;
-     return 0;
+    return 0;
   }
   if (toe_is_error(TOE_J4))
     return 0;
@@ -859,8 +878,7 @@ void __hand_rc2_ctrl(void)
   __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[1] * 0.0000002f);
 }
 
-
-//检测应当在模块层实现但由于检测是通过detect任务实现故放在应用层
+// 检测应当在模块层实现但由于检测是通过detect任务实现故放在应用层
 void __detect_hand_motor_offline(void)
 {
   // 掉电检测
@@ -872,8 +890,8 @@ void __detect_hand_motor_offline(void)
       __SET_MOTOR_CTRL_MODE(index - 6, OFFLINE);
     }
 
-    //掉线标志位用于应用层处理使用
-    //模式offline用于模块层处理使用
+    // 掉线标志位用于应用层处理使用
+    // 模式offline用于模块层处理使用
 
     //  加个按键按一次后置标志让他一直初始化
     // if (GET_KEY(KEY_R))//如果掉线时位置没有被改变虽然掉线标志位没有被清除，但任然能正常使用，可自主选择
@@ -881,26 +899,24 @@ void __detect_hand_motor_offline(void)
     //   static count = 0;
     //   if(count == 200)//按下一段时间后才初始化
     //   {
-         if (HANDLER_PTR->motor_ctrl_mode[index - 6] != OFFLINE && __IS_MOTOR_OFFLINE(index - 6) == 1)
-        {
-        __SET_MOTOR_CTRL_MODE(index - 6, NON_FORCE);
-        if (__hand_motor_refresh_online(index - 6))
-        {
-          __CLEAR_MOTOR_OFFLINE(index - 6);
-          //count = 0;
-        }
-       }
-  //     }
-  //     count++;
-  //  }
+    if (HANDLER_PTR->motor_ctrl_mode[index - 6] != OFFLINE && __IS_MOTOR_OFFLINE(index - 6) == 1)
+    {
+      __SET_MOTOR_CTRL_MODE(index - 6, NON_FORCE);
+      if (__hand_motor_refresh_online(index - 6))
+      {
+        __CLEAR_MOTOR_OFFLINE(index - 6);
+        // count = 0;
+      }
+    }
+    //     }
+    //     count++;
+    //  }
   }
 }
 
-
-
 uint8_t __hand_motor_refresh_online(int index)
 {
-  switch (index)//达妙电机失能了就重新使能读取位置，若原先就为使能(位置不会改变)，就直接退出
+  switch (index) // 达妙电机失能了就重新使能读取位置，若原先就为使能(位置不会改变)，就直接退出
   {
   case dm_gripper:
     if (__hand_gripper_init())
@@ -947,7 +963,7 @@ void __set_motor_offline_flag(void)
 void __detect_hand_motor_stall(void)
 {
   int index;
-  for (index = 0; index < HAND_JOINT_COUNT; index++) 
+  for (index = 0; index < HAND_JOINT_COUNT; index++)
   {
     if (toe_is_stall(index))
     {
@@ -956,7 +972,7 @@ void __detect_hand_motor_stall(void)
   }
 }
 
-//自定义控制器数据流在自定义芯片上处理
+// 自定义控制器数据流在自定义芯片上处理
 void __hand_custom_ctrl(void)
 {
   if (CC_handler.get_cc_data_flag)
@@ -1165,10 +1181,10 @@ void __hand_gold_catch_ctrl(void)
   // __hand_move2_subctrl(0, -0.950, 0, 0, 0, J2_EN);
 }
 
-//void __hand_catch_ground(void)
+// void __hand_catch_ground(void)
 //{
-//  //__hand_move2_subctrl(-PI / 4, -PI * 2 / 3, 0.0f, __GET_JOINT_MAX_LIM(HAND_PITCH), 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
-//}
+//   //__hand_move2_subctrl(-PI / 4, -PI * 2 / 3, 0.0f, __GET_JOINT_MAX_LIM(HAND_PITCH), 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
+// }
 
 // void __hand_pose_ctrl(void)
 // {
@@ -1254,7 +1270,12 @@ void __hand_gold_catch_ctrl(void)
 // 退出固定模式后直接设置为自定义模式就回到原来位置了
 void __hand_move_OCSM(void)
 {
-  hand_move_detect();
+  if (movement.hand_move_out_flag == 1) // 用于出错时紧急退出
+  {
+    set_movement(0); // 退出固定动作
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+    movement.hand_move_out_flag = 0;
+  }
 
   if (get_step() == SM_hand_to_pos)
   {
@@ -1283,16 +1304,6 @@ void __hand_move_OCSM(void)
       next_step();
     else
       __hand_move2_subctrl(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, SM_STEP3_G_ANGLE, JG_EN);
-  }
-}
-
-void hand_move_detect(void)
-{
-  if (movement.hand_move_out_flag == 1)
-  {
-    set_movement(0); // 退出固定动作
-    __SET_STRUCT_MODE(HAND_MODE_IDLE);
-    movement.hand_move_out_flag = 0;
   }
 }
 
