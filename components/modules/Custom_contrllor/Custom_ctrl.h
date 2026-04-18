@@ -56,6 +56,7 @@ typedef data_t CUSTOM_CTRL_RX_PACK;
 typedef struct{
   CUSTOM_CTRL_RX_PACK rx_pack;
   fp32 joint_angle[7];
+  int8_t get_cc_data_flag;
 } CUSTOM_CTRL_T;
 
 enum {

@@ -959,13 +959,17 @@ void __detect_hand_motor_stall(void)
 //自定义控制器数据流在自定义芯片上处理
 void __hand_custom_ctrl(void)
 {
-  __hand_move2_subctrl(
-      (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0],
-      -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]),
-      (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
-      (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
-      -((cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4]),
-      cc_joint_angle[5], J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
+  if (CC_handler.get_cc_data_flag)
+  {
+    __hand_move2_subctrl(
+        (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0],
+        -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] - HANDLER_PTR->min_joint_angle[1]),
+        (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
+        (cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
+        -((cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4]),
+        cc_joint_angle[5], J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
+    CC_handler.get_cc_data_flag = 0;
+  }
 }
 
 /**/

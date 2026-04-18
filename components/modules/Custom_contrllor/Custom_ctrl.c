@@ -44,7 +44,7 @@ void Custom_Ctrl_unpack(void)
   USART1_Recv(RX_BUF, sizeof(frame_header_t)+sizeof(uint16_t));  
   if(((data_t*)RX_BUF)->cmd_id==0x0302)
     USART1_Recv((void*)&(((data_t*)RX_BUF)->key),sizeof(float)*6+sizeof(uint8_t)*4+sizeof(uint16_t));//没有进行校验，后续补上
-
+  CC_handler.get_cc_data_flag = 1;
 }
 
 /**
