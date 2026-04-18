@@ -524,10 +524,10 @@ void __gimbal_uplift_custom_ctrl(void)
   else if (middle_pos > UL_MAX_ENCODE)
     middle_pos = UL_MAX_ENCODE;
 
-  __uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
+  //__uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
 
-  //__ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0);
-  servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);
+  __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0);
+  servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);//Êä³ö
 }
 
 void __gimbal_uplift_temp_custom_ctrl(void)

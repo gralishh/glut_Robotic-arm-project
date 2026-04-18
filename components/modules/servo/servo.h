@@ -11,7 +11,7 @@ typedef enum{
 typedef struct{
   uint16_t max;
   uint16_t min;
-  uint16_t mid;
+  uint16_t base;
 
   int16_t offset;
 
@@ -19,7 +19,7 @@ typedef struct{
   uint16_t duty;
 } Servo_ctrl_t;
 
-void servo_init(uint8_t index,uint16_t duty_max_lim,uint16_t duty_min_lim,uint16_t duty_mid);
+void servo_init(uint8_t index,uint16_t duty_max_lim,uint16_t duty_min_lim,uint16_t duty_base);
 void servo_set_offset(uint8_t index,int16_t offset);
 void servo_add_offset(uint8_t index,int16_t offset);
 void servo_enable(uint8_t index);

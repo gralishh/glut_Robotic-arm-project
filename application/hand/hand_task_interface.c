@@ -96,7 +96,7 @@ static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
 // static void __hand_pose_ctrl(void);
 static void __hand_gold_catch_ctrl(void);
-static void __hand_catch_ground(void);
+//static void __hand_catch_ground(void);
 static void hand_move_detect(void);
 
 static void __detect_hand_motor_offline(void);
@@ -907,36 +907,29 @@ uint8_t __hand_motor_refresh_online(int index)
       return 1;
     else
       return 0;
-    break;
   case DM_J5:
     if (__hand_J5_init())
       return 1;
     else
       return 0;
-    break;
   case DJI_2006_J4:
     __J4_init();
     return 1;
-    break;
   case DM_J3:
     if (__hand_J3_init())
       return 1;
     else
       return 0;
-    break;
   case DM_J2:
     if (__hand_J2_init())
       return 1;
     else
       return 0;
-    break;
   case AK_J1:
     __J1_init();
     return 1;
-    break;
   default:
     return 0;
-    break;
   }
 }
 void __set_motor_offline_flag(void)
@@ -1168,10 +1161,10 @@ void __hand_gold_catch_ctrl(void)
   // __hand_move2_subctrl(0, -0.950, 0, 0, 0, J2_EN);
 }
 
-void __hand_catch_ground(void)
-{
-  //__hand_move2_subctrl(-PI / 4, -PI * 2 / 3, 0.0f, __GET_JOINT_MAX_LIM(HAND_PITCH), 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
-}
+//void __hand_catch_ground(void)
+//{
+//  //__hand_move2_subctrl(-PI / 4, -PI * 2 / 3, 0.0f, __GET_JOINT_MAX_LIM(HAND_PITCH), 0.0f, J1_EN | J2_EN | J3_EN | J4_EN);
+//}
 
 // void __hand_pose_ctrl(void)
 // {

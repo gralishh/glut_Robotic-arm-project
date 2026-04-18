@@ -180,11 +180,10 @@ void chassis_task_init()
   __chassis_idle_ctrl();
   DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
 
-
-  __CLEAR_MOTOR_OFFLINE(TOE_3508_M1_ID);
-  __CLEAR_MOTOR_OFFLINE(TOE_3508_M2_ID);
-  __CLEAR_MOTOR_OFFLINE(TOE_3508_M3_ID);
-  __CLEAR_MOTOR_OFFLINE(TOE_3508_M4_ID);
+  __CLEAR_MOTOR_OFFLINE(DJI_LF);
+  __CLEAR_MOTOR_OFFLINE(DJI_RF);
+  __CLEAR_MOTOR_OFFLINE(DJI_RB);
+  __CLEAR_MOTOR_OFFLINE(DJI_LB);
   osDelay(20);
 }
 
@@ -400,12 +399,12 @@ void __chassis_rc_ctrl()
   HANDLER_PTR->vy = -RC_CTRL_PTR->rc.ch[2] * 8 / 6 * VY_CTRL_SEN;
   HANDLER_PTR->wz = -RC_CTRL_PTR->rc.ch[0] * 7 / 6 * WZ_CTRL_SEN;
 
-  /*
-  if (!remote_data.trigger)
-  {
-    HANDLER_PTR->vx = -GET_CH_VALUE(2) * 9 / 6 * VX_CTRL_SEN;
-    HANDLER_PTR->vy = -GET_CH_VALUE(3) * 9 / 6 * VY_CTRL_SEN;
-    HANDLER_PTR->wz = -GET_CH_VALUE(0) * 9 / 6 * WZ_CTRL_SEN;
+  
+  // if (!remote_data.trigger)
+  // {
+  //   HANDLER_PTR->vx = -GET_CH_VALUE(2) * 9 / 6 * VX_CTRL_SEN;
+  //   HANDLER_PTR->vy = -GET_CH_VALUE(3) * 9 / 6 * VY_CTRL_SEN;
+  //   HANDLER_PTR->wz = -GET_CH_VALUE(0) * 9 / 6 * WZ_CTRL_SEN;
 
     if (GET_KEY(KEY_W))
       HANDLER_PTR->vx = -330 * VX_CTRL_SEN;
@@ -440,8 +439,8 @@ void __chassis_rc_ctrl()
 
     if (remote_data.mouse_x != 0)
       HANDLER_PTR->wz = -remote_data.mouse_x * 10 * WZ_CTRL_SEN;
-  }
-  */
+  //}
+  
 
   __SET_MOTOR_SPEED(DJI_LF, -HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
   __SET_MOTOR_SPEED(DJI_RF, HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
@@ -679,3 +678,5 @@ void chassis_power_control(void)
 #undef HANDLER_PTR
 //防止其他文件也定义了相同名称的宏造成意外替换
 //明确宏的作用范围仅限于当前文件内
+
+

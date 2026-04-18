@@ -41,9 +41,9 @@ inline data_t* Custom_Ctrl_get_rx_pack_ptr(void)
  */
 void Custom_Ctrl_unpack(void)
 {
-  UART7_Recv(RX_BUF, sizeof(frame_header_t)+sizeof(uint16_t));  
+  USART1_Recv(RX_BUF, sizeof(frame_header_t)+sizeof(uint16_t));  
   if(((data_t*)RX_BUF)->cmd_id==0x0302)
-    UART7_Recv((void*)&(((data_t*)RX_BUF)->key),sizeof(float)*6+sizeof(uint8_t)*4+sizeof(uint16_t));//没有进行校验，后续补上
+    USART1_Recv((void*)&(((data_t*)RX_BUF)->key),sizeof(float)*6+sizeof(uint8_t)*4+sizeof(uint16_t));//没有进行校验，后续补上
 
 }
 
@@ -61,36 +61,36 @@ void Data_init(data_t *data_init)
 
 void Custom_Ctrl_Task(void* para)
 {
-  static uint32_t uart7_length=0x00;
+  static uint32_t usart1_length=0x00;
   while(1)
   {
-    uart7_length = UART7_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
+    usart1_length = USART1_GetDataCount();  // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
-    if (IS_HEADER(UART7_At(0)))
+    if (IS_HEADER(USART1_At(0)))
     {
-      if(uart7_length >= PACK_LENGTH)
+      if(usart1_length >= PACK_LENGTH)
         Custom_Ctrl_unpack();
     }
-    else if(UART7_At(0)==CTRL_HEADER1)
+    else if(USART1_At(0)==CTRL_HEADER1)
     {
-      if(uart7_length >= CTRL_PACK_LENGTH)
+      if(usart1_length >= CTRL_PACK_LENGTH)
       {
-        if(IS_CTRL_HEADER(UART7_At(0),UART7_At(1)))
+        if(IS_CTRL_HEADER(USART1_At(0),USART1_At(1)))
         {
-          UART7_Recv(CTRL_RX_BUF, sizeof(remote_data_t));  
+          USART1_Recv(CTRL_RX_BUF, sizeof(remote_data_t));  
           DetectHook(CAMERA_TOE);
         }
         else
-          UART7_Drop(1);
+          USART1_Drop(1);
       }
     }
-    else if(uart7_length > 3000)
+    else if(usart1_length > 3000)
     {
-      UART7_Drop(uart7_length);
+      USART1_Drop(usart1_length);
     }
     else
     {
-      UART7_Drop(1);
+      USART1_Drop(1);
     }
     //else if(usart1_length >= CTRL_PACK_LENGTH && usart1_length >= PACK_LENGTH)
     //{
