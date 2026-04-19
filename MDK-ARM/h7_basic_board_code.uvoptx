@@ -320,6 +320,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>remote_data</ItemText>
         </Ww>
+        <Ww>
+          <count>32</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>movement</ItemText>
+        </Ww>
       </WatchWindow1>
       <MemoryWindow1>
         <Mm>

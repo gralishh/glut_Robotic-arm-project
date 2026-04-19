@@ -222,7 +222,7 @@ static void __hand_rc2_ctrl(void);
   {                                                     \
     static uint16_t press_count = 0;                    \
     static uint8_t aviod_triggered_again = 0;           \
-    if (GET_KEY(KEY_Z))                                 \
+    if (GET_KEY(key))                                   \
     {                                                   \
       if (!aviod_triggered_again)                       \
       {                                                 \
@@ -375,11 +375,11 @@ void hand_task_mode_flush()
     // __BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);//与气泵有关暂时保留
     // __BUTTON_PRESS_SWITCH_WRAP
 
-    // if (GET_KEY(KEY_Z) || (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1])))//使用控调试
+    // if (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1]))//使用控调试
     //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
     // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
     __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE);
-    //__LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
+    __LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
 
     if (GET_KEY(KEY_B))
       movement.hand_move_out_flag = 1;
@@ -565,7 +565,7 @@ void basic_motor_init(void)
 
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
-  __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.11f);
+  __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.14f);
   __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f);       //-128.5714~128.5714
   __SET_JOINT_LIMIT(HAND_J3, -3.14f * 2, 3.14f * 2); // 正反90度，使用上位机更设置过零点
   __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);          // map from -351.25~3 to -162~0
@@ -1270,12 +1270,6 @@ void __hand_gold_catch_ctrl(void)
 // 退出固定模式后直接设置为自定义模式就回到原来位置了
 void __hand_move_OCSM(void)
 {
-  if (movement.hand_move_out_flag == 1) // 用于出错时紧急退出
-  {
-    set_movement(0); // 退出固定动作
-    __SET_STRUCT_MODE(HAND_MODE_IDLE);
-    movement.hand_move_out_flag = 0;
-  }
 
   if (get_step() == SM_hand_to_pos)
   {
@@ -1304,6 +1298,13 @@ void __hand_move_OCSM(void)
       next_step();
     else
       __hand_move2_subctrl(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, SM_STEP3_G_ANGLE, JG_EN);
+  }
+
+  if (movement.hand_move_out_flag == 1) // 用于出错时紧急退出
+  {
+    set_movement(0); // 退出固定动作
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+    movement.hand_move_out_flag = 0;
   }
 }
 
