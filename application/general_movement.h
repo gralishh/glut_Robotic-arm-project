@@ -55,7 +55,7 @@ typedef enum
 #define SM_STEP2_J2_ANGLE_LEFT 1.593f
 #define SM_STEP2_J1_ANGLE_LEFT 3.14f
 
-#define SM_STEP3_HEIGHT 30
+#define SM_STEP3_HEIGHT 64
 
 #define SM_STEP4_JG_ANGLE 0.0f
 
@@ -73,11 +73,21 @@ typedef enum
   BTD_complete
 } back_to_default_t;
 
+#define BTD_STEP1_G_ANGLE 0.59f
+#define BTD_STEP1_J5_ANGLE 0.0f
+#define BTD_STEP1_J4_ANGLE 0.0f
+#define BTD_STEP1_J3_ANGLE 0.0f
+
+#define BTD_STEP2_HEIGHT 6.0f
+#define BTD_STEP2_J2_ANGLE -1.812f
+#define BTD_STEP2_J1_ANGLE 0.251f
 typedef struct
 {
   movement_t movement_type;
   mine_place_t mine_place;
   uint8_t movement_step;
+
+  uint8_t movement_mode;
 
   uint8_t height_step_complete;
   uint8_t hand_step_complete;

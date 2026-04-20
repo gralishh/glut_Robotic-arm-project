@@ -55,7 +55,9 @@ static void __uplift_move2_subctrl(fp32 UL, uint8_t EN);
 
 static void __gimbal_move_GGM(void);
 static void __gimbal_move_OCSM(void);
-void __gimbal_oid_rc_ctrl(void);
+static void __gimbal_move_BTD(void);
+
+static void __gimbal_oid_rc_ctrl(void);
 
 /*general handler method*/
 /**
@@ -339,8 +341,11 @@ void gimbal_task_mode_flush()
   //     press_loop_cnt = 0;
   //   }
   // }
+  if (get_movement() == BTD)
+  {
+    __SET_STRUCT_MODE(GIMBAL_MODE_BTD_CTRL);
+  }
 
-  
   /*movement*/
   if (__GET_STRUCT_MODE() == GIMBAL_MODE_CUSTOM_CTRL)
   {
@@ -401,6 +406,9 @@ void gimbal_task_set_output()
    break;
   case GIMBAL_MODE_SM_CTRL:
     __gimbal_move_OCSM();
+    break;
+  case GIMBAL_MODE_BTD_CTRL:
+    __gimbal_move_BTD();
     break;
   case GIMBAL_OID_RC_CTRL:
     __gimbal_oid_rc_ctrl();
@@ -673,8 +681,25 @@ void __gimbal_uplift_custom_ctrl(void)
         }
       }
     }
+    void __gimbal_move_BTD(void)
+    {
 
-    void __gimbal_move_OCSM(void)//设置动作一标志位在机械臂到达位置上时才进下一个动作
+      if (get_step() == BTD_uplift_to_pos)
+      {
+        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), BTD_STEP2_HEIGHT, 5.0))
+          movement.height_step_complete = 1;
+        else
+          __uplift_move2_subctrl(BTD_STEP2_HEIGHT, 1);
+
+        if (movement.hand_step_complete == 1 && movement.height_step_complete == 1)
+        {
+          next_step();
+          movement.hand_step_complete = 0;
+          movement.height_step_complete = 0;
+        }
+      }
+    }
+    void __gimbal_move_OCSM(void) // 设置动作一标志位在机械臂到达位置上时才进下一个动作
     {
 
       if (get_step() == SM_uplift_to_pos)

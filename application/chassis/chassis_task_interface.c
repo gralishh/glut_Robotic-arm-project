@@ -274,7 +274,7 @@ void chassis_task_mode_flush()
 
   // 系统卡死、死锁时的恢复手段
  //或者死后重启不了就手动重启
-    if ((GET_KEY(KEY_SHIFT) && GET_KEY(KEY_CTRL) && GET_KEY(KEY_B)))
+    if ((GET_KEY(KEY_SHIFT) && GET_KEY(KEY_CTRL) && GET_KEY(KEY_R)))
     {
       __set_FAULTMASK(1);    //  系统复位
       NVIC_SystemReset();    // 重启系统
@@ -445,6 +445,14 @@ void __chassis_rc_ctrl()
     // HANDLER_PTR->vy *= 0.99f;
 
     // wz
+    if (remote_data.mouse_x != 0)
+    {
+      HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 7 / 6, 660 * WZ_CTRL_SEN * 7 / 6);
+    }
+    else
+      HANDLER_PTR->wz += -sign(HANDLER_PTR->wz) * WZ_ADD_SPEED_SEN;
+
     if (GET_KEY(KEY_Q))
     {
       HANDLER_PTR->wz += WZ_ADD_SPEED_SEN;
@@ -466,13 +474,7 @@ void __chassis_rc_ctrl()
     if (fabsf(HANDLER_PTR->wz) < 0.5f)
       HANDLER_PTR->wz = 0.0f;
 
-    if (remote_data.mouse_x != 0)
-    {
-      HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 7 / 6, 660 * WZ_CTRL_SEN * 7 / 6);
-    }
-    else
-      HANDLER_PTR->wz += -sign(HANDLER_PTR->wz) * WZ_ADD_SPEED_SEN;
+
     //}
 
     __SET_MOTOR_SPEED(DJI_LF, -HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);

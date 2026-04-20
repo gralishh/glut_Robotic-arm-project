@@ -86,6 +86,7 @@ extern Joint_Motor_t DM_Motor_gripper;
 // static fp32 J1_D = 0;
 // static fp32 J3_D = 0;
 
+
 /*custom controller remap(custom controller -> joint_angle)*/
 float custom_controller_K[5] = {-1, 1, -1, 185 / 3.14, 1};
 float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.88f};
@@ -122,7 +123,7 @@ static uint8_t __hand_J3_init(void);
 static uint8_t __hand_J4_init(uint8_t reset);
 static uint8_t __hand_J5_init(void);
 static uint8_t __hand_gripper_init(void);
-// static uint8_t __hand_pitch_pos_init(uint8_t);
+static void __hand_move_BTD(void);
 
 // static void __hand_move_GGM(void);
 static void __hand_move_OCSM(void);
@@ -218,27 +219,28 @@ static void __hand_rc2_ctrl(void);
 #define __RESET_RECORD_TICKS(index) (HANDLER_PTR->tick_stack[index] = 0)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
 
-#define __LONG_PRESS_TRIGGER_FUNCTION(key, steady_move) \
-  {                                                     \
-    static uint16_t press_count = 0;                    \
-    static uint8_t aviod_triggered_again = 0;           \
-    if (GET_KEY(key))                                   \
-    {                                                   \
-      if (!aviod_triggered_again)                       \
-      {                                                 \
-        press_count++;                                  \
-        if (press_count >= 1000)                        \
-        {                                               \
-          set_movement(steady_move);                    \
-          aviod_triggered_again = 1;                    \
-        }                                               \
-      }                                                 \
-    }                                                   \
-    else                                                \
-    {                                                   \
-      press_count = 0;                                  \
-      aviod_triggered_again = 0;                        \
-    }                                                   \
+#define __LONG_PRESS_TRIGGER_FUNCTION(key, steady_move, deir) \
+  {                                                           \
+    static uint16_t press_count = 0;                          \
+    static uint8_t aviod_triggered_again = 0;                 \
+    if (GET_KEY(key))                                         \
+    {                                                         \
+      if (!aviod_triggered_again)                             \
+      {                                                       \
+        press_count++;                                        \
+        if (press_count >= 1000)                              \
+        {                                                     \
+          set_movement(steady_move);                          \
+          movement.mine_place = deir;                         \
+          aviod_triggered_again = 1;                          \
+        }                                                     \
+      }                                                       \
+    }                                                         \
+    else                                                      \
+    {                                                         \
+      press_count = 0;                                        \
+      aviod_triggered_again = 0;                              \
+    }                                                         \
   }
 
 void hand_task_init()
@@ -381,22 +383,23 @@ void hand_task_mode_flush()
     // if (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1]))//使用控调试
     //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
     // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
-    if (GET_KEY(KEY_Z))
-    {
-      __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE);
-      movement.mine_place = LEFT;
-    }
-    else if (GET_KEY(KEY_X))
-    {
-      __LONG_PRESS_TRIGGER_FUNCTION(KEY_X, ONCE_CLICK_SAVE_MINE);
-      movement.mine_place = RIGHT;
-    }
 
-      __LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
+    __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE, LEFT);
+    __LONG_PRESS_TRIGGER_FUNCTION(KEY_X, ONCE_CLICK_SAVE_MINE, RIGHT);
+    __LONG_PRESS_TRIGGER_FUNCTION(KEY_G, BTD, NON_DEIR);
 
     if (GET_KEY(KEY_B))
-      set_movement(NON); // 退出固定动作
+     { set_movement(NON); // 退出固定动作
+    movement.hand_step_complete = 0;
+    movement.height_step_complete = 0;
+    movement.mine_place = NON_DEIR;
+    movement.movement_step = 0;
     // movement.hand_move_out_flag = 1;
+     }
+    if (get_movement() == BTD)
+    {
+      __SET_STRUCT_MODE(HAND_MODE_BTD_CTRL);
+    }
 
     if (get_movement() == ONCE_CLICK_SAVE_MINE)
     {
@@ -404,7 +407,7 @@ void hand_task_mode_flush()
     }
   }
 
-  if (GET_KEY(KEY_CTRL) && last_mode == HAND_MODE_CUSTOM_CTRL) // 按住右键保存不动
+  if (GET_KEY(KEY_CTRL) && last_mode == HAND_MODE_CUSTOM_CTRL) // 按住ctrl机械臂保持不动
   {
     __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
@@ -454,9 +457,9 @@ void hand_task_set_output()
   case HAND_MODE_RC2_CTRL:
     __hand_rc2_ctrl();
     break;
-  // case HAND_MODE_POSE_CTRL:
-  //   __hand_pose_ctrl();
-  //   break;
+  case HAND_MODE_BTD_CTRL:
+    __hand_move_BTD();
+    break;
   case HAND_MODE_CUSTOM_CTRL:
     __hand_custom_ctrl();
     break;
@@ -574,7 +577,7 @@ void basic_motor_init(void)
   DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
   // DJI_Motor_set_angle_limit();
   // DJI_Motor_set_speed_limit();
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.001, 0, 5500, 4000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.002, 0, 5500, 5500);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
 
@@ -1012,22 +1015,22 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, 
   }
   if (EN & J5_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J5, J5, 0.08f, 0.01f, 0.0023f, 0.0008f);
+    __hand_motor_go_setting_angle(HAND_J5, J5, 0.08f, 0.01f, 0.0023f, 0.0012f);
   }
 
   if (EN & J4_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J4, J4, 0.5f, 0.2f, 0.023f, 0.01f);
+    __hand_motor_go_setting_angle(HAND_J4, J4, 0.5f, 0.2f, 0.023f, 0.02f);
   }
 
   if (EN & J3_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J3, J3, 0.08f, 0.01f, 0.0023f, 0.0008f);
+    __hand_motor_go_setting_angle(HAND_J3, J3, 0.08f, 0.01f, 0.0023f, 0.0012f);
   }
 
   if (EN & J2_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J2, J2, 0.08f, 0.01f, 0.0023f, 0.0008f);
+    __hand_motor_go_setting_angle(HAND_J2, J2, 0.08f, 0.01f, 0.0023f, 0.0012f);
   }
 
   if (EN & J1_EN)
@@ -1272,8 +1275,39 @@ void __hand_gold_catch_ctrl(void)
 //   }
 // }
 
-// 退出固定模式后直接设置为自定义模式就回到原来位置了
-void __hand_move_OCSM(void)
+void __hand_move_BTD(void)
+{
+  if (get_step() == BTD_hand_to_pos)
+  {
+    if (is_angle_around(BTD_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
+        is_angle_around(BTD_STEP1_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
+        is_angle_around(BTD_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 2.0f) &&
+        is_angle_around(BTD_STEP1_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.08f)) // 如果到达目标位置
+      next_step();
+    else
+      __hand_move2_subctrl(0.0f, 0.0f, BTD_STEP1_J3_ANGLE, BTD_STEP1_J4_ANGLE, BTD_STEP1_J5_ANGLE, BTD_STEP1_G_ANGLE, J3_EN | J4_EN | J5_EN | JG_EN);
+  }
+    if (get_step() == BTD_uplift_to_pos)
+    {
+      if (
+          is_angle_around(BTD_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+          is_angle_around(BTD_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
+        movement.hand_step_complete = 1;
+
+      else
+        __hand_move2_subctrl(BTD_STEP2_J1_ANGLE, BTD_STEP2_J2_ANGLE, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+
+      if (movement.hand_step_complete == 1 && movement.height_step_complete == 1)
+      {
+        next_step();
+        movement.hand_step_complete = 0;
+        movement.height_step_complete = 0;
+      }
+    }
+}
+
+    // 退出固定模式后直接设置为自定义模式就回到原来位置了
+    void __hand_move_OCSM(void)
 {
   if (get_step() == SM_uplift_to_pos)
   {
@@ -1398,22 +1432,7 @@ void __hand_move_OCSM(void)
 //     return 0;
 // }
 
-// 当检测到掉电时通过general_motor_module在电机内部重新初始化，然后标志位在hand中读取到在单独甩该电机大臂
-// void __hand_move_reset(void)
-// {
-//   if (__IS_MOTOR_OFFLINE(AK_J1))
-//   {
-//     hand_J1_reset();
-//   }
-//   if (__IS_MOTOR_OFFLINE(DM_J2))
-//   {
-//     hand_J2_reset();
-//   }
-//   if (__IS_MOTOR_OFFLINE(DJI_2006_J4))
-//   {
-//     hand_J3_reset();
-//   }
-// }
+
 
 /*
   $$$$$$$}.........$$$$$$$$$   "00000000$$$$""""""""""""""""""""""*$$$$%000$$     ........$$.....
