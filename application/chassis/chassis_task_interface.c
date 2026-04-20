@@ -273,14 +273,12 @@ void chassis_task_mode_flush()
   // }
 
   // 系统卡死、死锁时的恢复手段
-  if (__GET_STRUCT_MODE() == CHASSIS_MODE_NONFORCE)
-  {
+ //或者死后重启不了就手动重启
     if ((GET_KEY(KEY_SHIFT) && GET_KEY(KEY_CTRL) && GET_KEY(KEY_B)))
     {
       __set_FAULTMASK(1);    //  系统复位
       NVIC_SystemReset();    // 重启系统
     }
-  }
 
   // {//{}限制static范围
   //   static uint16_t count = 0;

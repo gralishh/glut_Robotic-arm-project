@@ -40,7 +40,7 @@ extern FDCAN_HandleTypeDef hfdcan2;
 #define HAND_CTRL_CAN
 // joint mapping parameter
 // #define J1_MAP_K   0.167 /*for m8010*/
-#define J1_MAP_K (3.14f / 180.0f)
+#define J1_MAP_K (3.14f / 185.0f)
 #define J1_MAP_D 0
 #define J2_MAP_K 1.0f
 #define J2_MAP_D 0
@@ -87,7 +87,7 @@ extern Joint_Motor_t DM_Motor_gripper;
 // static fp32 J3_D = 0;
 
 /*custom controller remap(custom controller -> joint_angle)*/
-float custom_controller_K[5] = {-1, 1, -1, 180 / 3.14, 1};
+float custom_controller_K[5] = {-1, 1, -1, 185 / 3.14, 1};
 float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.88f};
 
 static void __hand_nonforce(void);
@@ -381,8 +381,18 @@ void hand_task_mode_flush()
     // if (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1]))//使用控调试
     //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
     // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
-    __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE);
-    __LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
+    if (GET_KEY(KEY_Z))
+    {
+      __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE);
+      movement.mine_place = LEFT;
+    }
+    else if (GET_KEY(KEY_X))
+    {
+      __LONG_PRESS_TRIGGER_FUNCTION(KEY_X, ONCE_CLICK_SAVE_MINE);
+      movement.mine_place = RIGHT;
+    }
+
+      __LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
 
     if (GET_KEY(KEY_B))
       set_movement(NON); // 退出固定动作
@@ -394,7 +404,7 @@ void hand_task_mode_flush()
     }
   }
 
-  if (remote_data.mouse_right && last_mode == HAND_MODE_CUSTOM_CTRL)//按住右键保存不动
+  if (GET_KEY(KEY_CTRL) && last_mode == HAND_MODE_CUSTOM_CTRL) // 按住右键保存不动
   {
     __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
@@ -1269,7 +1279,7 @@ void __hand_move_OCSM(void)
   {
     if (is_angle_around(SM_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
         is_angle_around(SM_STEP1_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
-        is_angle_around(SM_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 3.0f) &&
+        is_angle_around(SM_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 2.0f) &&
         is_angle_around(SM_STEP1_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.08f)) // 如果到达目标位置
       movement.hand_step_complete = 1;
     else
@@ -1285,12 +1295,25 @@ void __hand_move_OCSM(void)
 
   if (get_step() == SM_hand_to_pos)
   {
-    if (
-        is_angle_around(SM_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
-        is_angle_around(SM_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
-      next_step();
-    else
-      __hand_move2_subctrl(SM_STEP2_J1_ANGLE, SM_STEP2_J2_ANGLE, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+    if (movement.mine_place == RIGHT)
+    {
+      if (
+          is_angle_around(SM_STEP2_J2_ANGLE_RIGHT, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+          is_angle_around(SM_STEP2_J1_ANGLE_RIGHT, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
+                next_step();
+
+      else
+        __hand_move2_subctrl(SM_STEP2_J1_ANGLE_RIGHT, SM_STEP2_J2_ANGLE_RIGHT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+    }
+    else if (movement.mine_place == LEFT)
+    {
+        if (
+            is_angle_around(SM_STEP2_J2_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+            is_angle_around(SM_STEP2_J1_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
+          next_step();
+
+        else __hand_move2_subctrl(SM_STEP2_J1_ANGLE_LEFT, SM_STEP2_J2_ANGLE_LEFT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+    }
   }
 
   if (get_step() == SM_hand_gri_open)
@@ -1304,14 +1327,31 @@ void __hand_move_OCSM(void)
 
   if (get_step() == SM_hand_out)
   {
-    if (
-        is_angle_around(SM_STEP5_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 1.5f) &&
-        is_angle_around(SM_STEP5_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.01f))
-      next_step();
-    else
-      __hand_move2_subctrl(SM_STEP5_J1_ANGLE, SM_STEP5_J2_ANGLE, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+    if (movement.mine_place == RIGHT)
+    {
+      if (
+          is_angle_around(SM_STEP5_J2_ANGLE_RIGHT, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+          is_angle_around(SM_STEP5_J1_ANGLE_RIGHT, __GET_JOINT_ANGLE(HAND_J1), 0.01f))
+      {
+        next_step();
+        movement.mine_place = NON_DEIR;
+      }
+      else
+        __hand_move2_subctrl(SM_STEP5_J1_ANGLE_RIGHT, SM_STEP5_J2_ANGLE_RIGHT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+    }
+    else if (movement.mine_place == LEFT)
+    {
+      if (
+          is_angle_around(SM_STEP5_J2_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+          is_angle_around(SM_STEP5_J1_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J1), 0.01f))
+      {
+        next_step();
+        movement.mine_place = NON_DEIR;
+      }
+      else
+        __hand_move2_subctrl(SM_STEP5_J1_ANGLE_LEFT, SM_STEP5_J2_ANGLE_LEFT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
+    }
   }
-
 
   // if (movement.hand_move_out_flag == 1) // 用于出错时紧急退出
   // {

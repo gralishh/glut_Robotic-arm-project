@@ -11,7 +11,7 @@ frame_header_struct_t referee_send_header;
 
 ext_game_state_t game_state;
 ext_game_result_t game_result;
-ext_game_robot_HP_t game_robot_HP_t;
+ext_game_robot_HP_t game_robot_HP_t;//读取血量，当血为0时重启（机械臂）
 
 ext_event_data_t field_event;
 ext_supply_projectile_action_t supply_projectile_action_t;

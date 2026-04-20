@@ -11,6 +11,13 @@ typedef enum
   ONCE_CLICK_SAVE_MINE,
 } movement_t;
 
+typedef enum
+{
+  NON_DEIR = 0,
+  LEFT,
+  RIGHT,
+} mine_place_t;
+
 /*get_gound_mine*/
 typedef enum
 {
@@ -43,17 +50,19 @@ typedef enum
 #define SM_STEP1_J4_ANGLE 93.0f
 #define SM_STEP1_J3_ANGLE 1.564f
 
-#define SM_STEP2_J2_ANGLE -1.593f
-#define SM_STEP2_J1_ANGLE 0.0f
+#define SM_STEP2_J2_ANGLE_RIGHT -1.593f
+#define SM_STEP2_J1_ANGLE_RIGHT 0.0f
+#define SM_STEP2_J2_ANGLE_LEFT 1.593f
+#define SM_STEP2_J1_ANGLE_LEFT 3.14f
 
-#define SM_STEP3_HEIGHT 26
+#define SM_STEP3_HEIGHT 30
 
 #define SM_STEP4_JG_ANGLE 0.0f
 
-#define SM_STEP5_J1_ANGLE 0.413f
-#define SM_STEP5_J2_ANGLE -1.922f
-
-
+#define SM_STEP5_J1_ANGLE_RIGHT 0.413f
+#define SM_STEP5_J2_ANGLE_RIGHT -1.922f
+#define SM_STEP5_J1_ANGLE_LEFT 2.727f
+#define SM_STEP5_J2_ANGLE_LEFT 1.922f
 // #define SM_STEP4_DELAY_LOOP 500
 // #define SM_CPLT_HEIGHT 275
 
@@ -67,6 +76,7 @@ typedef enum
 typedef struct
 {
   movement_t movement_type;
+  mine_place_t mine_place;
   uint8_t movement_step;
 
   uint8_t height_step_complete;
