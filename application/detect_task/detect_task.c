@@ -522,3 +522,4 @@ void StallClearFlag(uint8_t motor_idx)
 {
     stall_list[motor_idx].stall_flag = 0;
 }
+

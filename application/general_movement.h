@@ -5,7 +5,8 @@
 
 typedef enum
 {
-  BTD = 1,
+  NON = 0,
+  BTD,
   GGM,
   ONCE_CLICK_SAVE_MINE,
 } movement_t;
@@ -31,25 +32,28 @@ typedef enum
 {
   SM_uplift_to_pos = 0,
   SM_hand_to_pos,
-  SM_hand_to_pos2,
+  SM_uplift_to_pos2,
   SM_hand_gri_open,
-  SM_uplift_down,
+  SM_hand_out,
   SM_complete,
 } save_mine_t;
-#define SM_STEP1_HEIGHT 147.5f
+#define SM_STEP1_HEIGHT 179.5f
+#define SM_STEP1_G_ANGLE 0.59f
+#define SM_STEP1_J5_ANGLE 0.0f
+#define SM_STEP1_J4_ANGLE 93.0f
+#define SM_STEP1_J3_ANGLE 1.564f
 
-#define SM_STEP2_G_ANGLE 0.6f
-#define SM_STEP2_J5_ANGLE 0.0f
-#define SM_STEP2_J4_ANGLE 96.2f
-#define SM_STEP2_J3_ANGLE 1.64f
-#define SM_STEP3_J2_ANGLE -1.573f
-#define SM_STEP3_J1_ANGLE 0.0f
+#define SM_STEP2_J2_ANGLE -1.593f
+#define SM_STEP2_J1_ANGLE 0.0f
 
-#define SM_STEP3_J2_ANGLE -1.6f
-#define SM_STEP3_J1_ANGLE 3.0f
-#define SM_STEP3_G_ANGLE -2.5f
+#define SM_STEP3_HEIGHT 26
 
-#define SM_STEP4_HEIGHT 188
+#define SM_STEP4_JG_ANGLE 0.0f
+
+#define SM_STEP5_J1_ANGLE 0.413f
+#define SM_STEP5_J2_ANGLE -1.922f
+
+
 // #define SM_STEP4_DELAY_LOOP 500
 // #define SM_CPLT_HEIGHT 275
 
@@ -64,12 +68,16 @@ typedef struct
 {
   movement_t movement_type;
   uint8_t movement_step;
-  float hand_move_out_flag;
+
+  uint8_t height_step_complete;
+  uint8_t hand_step_complete;
+
 } movement_handler_t;
 
 extern movement_handler_t movement;
 
-void set_movement(uint8_t movement);
+//uint8_t get_out_flag(void);
+void set_movement(movement_t movement);
 uint8_t get_movement(void);
 uint8_t get_step(void);
 void next_step(void);

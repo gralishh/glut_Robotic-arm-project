@@ -342,11 +342,14 @@ void gimbal_task_mode_flush()
 
   
   /*movement*/
-  //if (__GET_STRUCT_MODE() == GIMBAL_MODE_IDLE) 
+  if (__GET_STRUCT_MODE() == GIMBAL_MODE_CUSTOM_CTRL)
+  {
     if (get_movement() == ONCE_CLICK_SAVE_MINE)
     {
       __SET_STRUCT_MODE(GIMBAL_MODE_SM_CTRL);
     }
+  }
+  
     // else
     // {
     //   //__SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);//比赛时用到
@@ -370,7 +373,7 @@ void gimbal_task_mode_flush()
   //   __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   // }
 
-  if (HANDLER_PTR->ctrl_mode == last_mode)
+  if (HANDLER_PTR->ctrl_mode == last_mode)//检测模式变换（暂未用到）
     HANDLER_PTR->mode_switch = 0;
   else
   {
@@ -662,7 +665,7 @@ void __gimbal_uplift_custom_ctrl(void)
       {
         if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), GGM_CPLT_HEIGHT, 5))
         {
-          set_movement(0);
+          set_movement(NON);
         }
         else
         {
@@ -671,52 +674,54 @@ void __gimbal_uplift_custom_ctrl(void)
       }
     }
 
-    void __gimbal_move_OCSM(void)
+    void __gimbal_move_OCSM(void)//设置动作一标志位在机械臂到达位置上时才进下一个动作
     {
 
       if (get_step() == SM_uplift_to_pos)
       {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP1_HEIGHT, 5.0))
-        {
-          next_step();
-        }
-        else
-        {
+        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP1_HEIGHT, 5.0))       
+          movement.height_step_complete = 1; 
+        else  
           __uplift_move2_subctrl(SM_STEP1_HEIGHT, 1);
-        }
+        
+        if (movement.hand_step_complete == 1 &&movement.height_step_complete == 1)
+          {
+            next_step();
+            movement.hand_step_complete = 0;
+            movement.height_step_complete = 0;
+          }
       }
 
-      if (get_step() == SM_uplift_down)
+      if (get_step() == SM_uplift_to_pos2)
       {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP4_HEIGHT, 5.0))
+        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP3_HEIGHT, 5.0))
         {
           next_step();
         }
         else
         {
           //__SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP3_HEIGHT);
-          __uplift_move2_subctrl(SM_STEP4_HEIGHT, 1);
+          __uplift_move2_subctrl(SM_STEP3_HEIGHT, 1);
         }
       }
 
-      if (get_step() == SM_complete)
+      if (get_step() == SM_complete)//设置舵机回正
       {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP4_HEIGHT, 1))
-        {
-          set_movement(0); // 0没有规定步骤，即为设置退出一键模式
-        }
-        else
-        {
-          __SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP4_HEIGHT);
-        }
+        // if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP4_HEIGHT, 1))
+        // {
+          set_movement(NON); // 0没有规定步骤，即为设置退出一键模式
+        // }
+        // else
+        // {
+        //   __SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP4_HEIGHT);
+        // }
       }
 
-      if (movement.hand_move_out_flag == 1)
-      {
-        set_movement(0); // 退出固定动作
-        __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
-        movement.hand_move_out_flag = 0;
-      }
+      // if (movement.hand_move_out_flag == 1)
+      // {
+      //   set_movement(0); // 退出固定动作
+      //   movement.hand_move_out_flag = 0;
+      // }
       //__pump_subctrl();
     }
 

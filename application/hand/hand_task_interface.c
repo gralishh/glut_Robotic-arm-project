@@ -323,8 +323,8 @@ void hand_task_get_feedback()
  */
 void hand_task_mode_flush()
 {
-  // static uint8_t last_mode = HAND_MODE_NONFORCE;
-  // last_mode = HANDLER_PTR->ctrl_mode;
+  static uint8_t last_mode = HAND_MODE_NONFORCE;
+  last_mode = HANDLER_PTR->ctrl_mode;
 
   // 新控
   //   switch(GET_SWITCH())
@@ -375,6 +375,9 @@ void hand_task_mode_flush()
     // __BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);//与气泵有关暂时保留
     // __BUTTON_PRESS_SWITCH_WRAP
 
+    //  if (remote_data.trigger)//新控的
+    //    __hand_rc_ctrl();
+
     // if (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1]))//使用控调试
     //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
     // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
@@ -382,34 +385,36 @@ void hand_task_mode_flush()
     __LONG_PRESS_TRIGGER_FUNCTION(KEY_C, GGM);
 
     if (GET_KEY(KEY_B))
-      movement.hand_move_out_flag = 1;
-    //  if (remote_data.trigger)
-    //    __hand_rc_ctrl();
+      set_movement(NON); // 退出固定动作
+    // movement.hand_move_out_flag = 1;
 
     if (get_movement() == ONCE_CLICK_SAVE_MINE)
     {
       __SET_STRUCT_MODE(HAND_MODE_SM_CTRL);
     }
-    else
-    {
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
-    }
   }
-  // else
-  // {
-  //   mode_var = 0;
-  // }
 
-  // 比赛开始阶段保持当前位置不动
-  //  if (GetMatchReady())
-  //  {
-  //    __SET_STRUCT_MODE(HAND_MODE_IDLE);
-  //  }
-
-  if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
+  if (remote_data.mouse_right && last_mode == HAND_MODE_CUSTOM_CTRL)//按住右键保存不动
   {
-    __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
+
+      
+        // else
+        // {
+        //   mode_var = 0;
+        // }
+
+        // 比赛开始阶段保持当前位置不动
+        //  if (GetMatchReady())
+        //  {
+        //    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+        //  }
+
+        if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
+    {
+      __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
+    }
 
   // if (HANDLER_PTR->ctrl_mode == last_mode)
   //   HANDLER_PTR->mode_switch = 0;
@@ -559,7 +564,7 @@ void basic_motor_init(void)
   DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
   // DJI_Motor_set_angle_limit();
   // DJI_Motor_set_speed_limit();
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.001, 0, 5500, 1000);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.001, 0, 5500, 4000);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
 
@@ -1002,7 +1007,7 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, 
 
   if (EN & J4_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J4, J4, 0.5f, 0.2f, 0.023f, 0.008f);
+    __hand_motor_go_setting_angle(HAND_J4, J4, 0.5f, 0.2f, 0.023f, 0.01f);
   }
 
   if (EN & J3_EN)
@@ -1090,16 +1095,6 @@ void __hand_motor_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, fl
 //   return 0;
 // }
 
-// 自定义控制器
-void init_hand_handle_struct(void)
-{
-  memset(&AK70_10_motor, 0, sizeof(AK_Joint_Motor_t));
-  memset(&DM_Motor_J2, 0, sizeof(Joint_Motor_t));
-  memset(&DM_Motor_J3, 0, sizeof(Joint_Motor_t));
-  memset(&DJI_Motor_J4, 0, sizeof(DJI_Motor_Ctrl_t));
-  memset(&DM_Motor_J5, 0, sizeof(Joint_Motor_t));
-  memset(&DM_Motor_gripper, 0, sizeof(Joint_Motor_t));
-}
 
 // 人来移动机械臂到自己设置的角度来让电机知道自己当前的确切角度初始化（有减速比，一个关节角度（带减速箱）对应多个电机当前角度
 // 下方代码一段和这段相关->__hand_pose_ctrl
@@ -1270,42 +1265,59 @@ void __hand_gold_catch_ctrl(void)
 // 退出固定模式后直接设置为自定义模式就回到原来位置了
 void __hand_move_OCSM(void)
 {
+  if (get_step() == SM_uplift_to_pos)
+  {
+    if (is_angle_around(SM_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
+        is_angle_around(SM_STEP1_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
+        is_angle_around(SM_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 3.0f) &&
+        is_angle_around(SM_STEP1_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.08f)) // 如果到达目标位置
+      movement.hand_step_complete = 1;
+    else
+      __hand_move2_subctrl(0.0f, 0.0f, SM_STEP1_J3_ANGLE, SM_STEP1_J4_ANGLE, SM_STEP1_J5_ANGLE, SM_STEP1_G_ANGLE,J3_EN | J4_EN | J5_EN | JG_EN);
+
+    if (movement.hand_step_complete == 1 &&movement.height_step_complete == 1)
+    {
+      next_step();
+      movement.hand_step_complete = 0;
+      movement.height_step_complete = 0;
+    }
+  }
 
   if (get_step() == SM_hand_to_pos)
   {
-    if (is_angle_around(SM_STEP2_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
-        is_angle_around(SM_STEP2_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
-        is_angle_around(SM_STEP2_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 0.5f) &&
-        is_angle_around(SM_STEP2_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.1f)) // 如果到达目标位置
+    if (
+        is_angle_around(SM_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+        is_angle_around(SM_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
       next_step();
     else
-      __hand_move2_subctrl(0.0f, 0.0f, SM_STEP2_J3_ANGLE, SM_STEP2_J4_ANGLE, SM_STEP2_J5_ANGLE, SM_STEP2_G_ANGLE, J3_EN | J4_EN | J5_EN | JG_EN);
+      __hand_move2_subctrl(SM_STEP2_J1_ANGLE, SM_STEP2_J2_ANGLE, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
   }
 
-  if (get_step() == SM_hand_to_pos2)
-  {
-    if (
-        is_angle_around(SM_STEP3_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 1.5f) &&
-        is_angle_around(SM_STEP3_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.01f))
-      next_step();
-    else
-      __hand_move2_subctrl(SM_STEP3_J1_ANGLE, SM_STEP3_J2_ANGLE, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
-  }
   if (get_step() == SM_hand_gri_open)
   {
     if (
-        is_angle_around(SM_STEP3_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f))
+        is_angle_around(SM_STEP4_JG_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f))
       next_step();
     else
-      __hand_move2_subctrl(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, SM_STEP3_G_ANGLE, JG_EN);
+      __hand_move2_subctrl(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, SM_STEP4_JG_ANGLE, JG_EN);
   }
 
-  if (movement.hand_move_out_flag == 1) // 用于出错时紧急退出
+  if (get_step() == SM_hand_out)
   {
-    set_movement(0); // 退出固定动作
-    __SET_STRUCT_MODE(HAND_MODE_IDLE);
-    movement.hand_move_out_flag = 0;
+    if (
+        is_angle_around(SM_STEP5_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 1.5f) &&
+        is_angle_around(SM_STEP5_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.01f))
+      next_step();
+    else
+      __hand_move2_subctrl(SM_STEP5_J1_ANGLE, SM_STEP5_J2_ANGLE, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
   }
+
+
+  // if (movement.hand_move_out_flag == 1) // 用于出错时紧急退出
+  // {
+  //   set_movement(0); // 退出固定动作
+  //   movement.hand_move_out_flag = 0;
+  // }
 }
 
 // 如果j1电机为双编码能实现掉电仍能获取位置可使用
