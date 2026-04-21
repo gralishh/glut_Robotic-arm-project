@@ -91,7 +91,6 @@ extern Joint_Motor_t DM_Motor_gripper;
 float custom_controller_K[5] = {-1, 1, -1, 185 / 3.14, 1};
 float custom_controller_D[5] = {0.5829f, 4.054f, 2.506f, 0.041f, 2.88f};
 
-uint8_t test_flag;
 
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
@@ -222,7 +221,7 @@ static void __hand_rc2_ctrl(void);
   {                                                           \
     static uint16_t press_count = 0;                          \
     static uint8_t aviod_triggered_again = 0;                 \
-    if (GET_KEY(key))                                         \
+    if (key)                                                  \
     {                                                         \
       if (!aviod_triggered_again)                             \
       {                                                       \
@@ -386,16 +385,11 @@ void hand_task_mode_flush()
 
     //牢骚：对于一键取矿本质是一键存矿的倒转动作，可以设置step++变为step--,但实测发现因为j1电机精度问题夹爪伸进存矿位置有概率伸歪，所有只能再写一套动作
     //后来者如果有条件可以把一键存取左右两边四个动作的代码整合到一个函数内（或者将它抽象封装）
-    // __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_SAVE_MINE, LEFT);
-    // __LONG_PRESS_TRIGGER_FUNCTION(KEY_X, ONCE_CLICK_SAVE_MINE, RIGHT);
-    __LONG_PRESS_TRIGGER_FUNCTION(KEY_Z, ONCE_CLICK_GET_MINE, LEFT);
-    __LONG_PRESS_TRIGGER_FUNCTION(KEY_X, ONCE_CLICK_GET_MINE, RIGHT);
-    __LONG_PRESS_TRIGGER_FUNCTION(KEY_G, BTD, NON_DEIR);
-
-    if (GET_KEY(KEY_F) && GET_KEY(KEY_SHIFT))
-    {
-      test_flag = 1;
-    }
+    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_Z), ONCE_CLICK_SAVE_MINE, LEFT);
+    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_X), ONCE_CLICK_SAVE_MINE, RIGHT);
+    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_G), BTD, NON_DEIR);
+    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_Z) && GET_KEY(KEY_CTRL), ONCE_CLICK_GET_MINE, LEFT);
+    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_X) && GET_KEY(KEY_CTRL), ONCE_CLICK_GET_MINE, RIGHT);
 
     if (GET_KEY(KEY_B))
     {
