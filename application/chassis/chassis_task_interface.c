@@ -433,12 +433,12 @@ void __chassis_rc_ctrl()
     if (GET_KEY(KEY_A))
     {
       HANDLER_PTR->vy += VY_ADD_SPEED_SEN;
-      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, 0, 660 * VY_CTRL_SEN * 5 / 6);
+      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, 0, 660 * VY_CTRL_SEN * 2/3);
     }
     else if (GET_KEY(KEY_D))
     {
       HANDLER_PTR->vy += -VY_ADD_SPEED_SEN;
-      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, -660 * VY_CTRL_SEN * 5 / 6, 0);
+      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, -660 * VY_CTRL_SEN * 2/3, 0);
     }
     else
       HANDLER_PTR->vy += -sign(HANDLER_PTR->vy) * VY_ADD_SPEED_SEN;
@@ -450,18 +450,15 @@ void __chassis_rc_ctrl()
       HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
       HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 7 / 6, 660 * WZ_CTRL_SEN * 7 / 6);
     }
-    else
-      HANDLER_PTR->wz += -sign(HANDLER_PTR->wz) * WZ_ADD_SPEED_SEN;
-
-    if (GET_KEY(KEY_Q))
+    else if (GET_KEY(KEY_Q))
     {
       HANDLER_PTR->wz += WZ_ADD_SPEED_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, 0, 660 * WZ_CTRL_SEN * 7 / 6);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, 0, 660 * WZ_CTRL_SEN * 2 / 3);
     }
     else if (GET_KEY(KEY_E))
     {
       HANDLER_PTR->wz += -WZ_ADD_SPEED_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 7 / 6, 0);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 2 / 3, 0);
     }
     else
        HANDLER_PTR->wz += -sign(HANDLER_PTR->wz) * WZ_ADD_SPEED_SEN;
@@ -482,7 +479,7 @@ void __chassis_rc_ctrl()
     __SET_MOTOR_SPEED(DJI_RB, HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
     __SET_MOTOR_SPEED(DJI_LB, -HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
 }
-    void __chassis_union_rc_ctrl()
+    void __chassis_union_rc_ctrl()//暂未用到考虑删除
     {
       /*设置输入速度(not real)*/
       HANDLER_PTR->vx = -RC_CTRL_PTR->rc.ch[3] * VX_CTRL_SEN;

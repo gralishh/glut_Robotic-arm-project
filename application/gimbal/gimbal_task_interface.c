@@ -16,7 +16,7 @@
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
 #define RC_CTRL_PTR (get_remote_control_point())
-//由于26赛季将末端需求从吸盘改为夹爪，该模块多处和气泵相关的代码注释，可以如无刚需建议保留以防以后需要
+// 由于26赛季将末端需求从吸盘改为夹爪，该模块多处和气泵相关的代码注释，可以如无刚需建议保留以防以后需要
 
 /*extern*/
 extern FDCAN_HandleTypeDef hfdcan1;
@@ -31,7 +31,7 @@ extern FDCAN_HandleTypeDef hfdcan3;
 #define UL_MAX_ENCODE 438
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
-#define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.75f+2.25f))
+#define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.75f + 2.25f))
 #define uplift_custom_controller_D (3.75f)
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
@@ -40,7 +40,7 @@ External_ecd_handler_t *uplift_ecd_ptr = &uplift_ecd;
 
 // static uint8_t pump1 = 0;
 // static uint8_t pump2 = 0;
-//float temp_cc_angle;
+// float temp_cc_angle;
 
 static void __gimbal_nonforce(void);
 static void __gimbal_idle_ctrl(void);
@@ -53,7 +53,7 @@ static void __uplift_move2_subctrl(fp32 UL, uint8_t EN);
 // static void __pump_subctrl(void);
 // static void __pump_nonctrl(void);
 
-static void __gimbal_move_GGM(void);
+static void __gimbal_move_GSM(void);
 static void __gimbal_move_OCSM(void);
 static void __gimbal_move_BTD(void);
 
@@ -240,7 +240,7 @@ void gimbal_task_get_feedback()
   )
   ...
   */
- //调参使用
+  // 调参使用
   CC_handler.joint_angle[6] = (cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE;
 }
 
@@ -250,7 +250,7 @@ void gimbal_task_get_feedback()
  */
 void gimbal_task_mode_flush()
 {
- // static uint8_t nonforce_start_flag = 0;
+  // static uint8_t nonforce_start_flag = 0;
 
   static uint8_t last_mode = GIMBAL_MODE_NONFORCE;
   last_mode = HANDLER_PTR->ctrl_mode;
@@ -281,7 +281,7 @@ void gimbal_task_mode_flush()
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
       //__SET_STRUCT_MODE(GIMBAL_MODE_UPLIFT_RC_CTRL);
       __SET_STRUCT_MODE(GIMBAL_MODE_CUSTOM_CTRL);
-      //__SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
+    //__SET_STRUCT_MODE(GIMBAL_MODE_IDLE);
   }
   else if (switch_is_up(get_remote_control_point()->rc.s[1]))
   {
@@ -301,7 +301,7 @@ void gimbal_task_mode_flush()
   if (switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
   {
     __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
-    //nonforce_start_flag = 1;
+    // nonforce_start_flag = 1;
   }
 
   if (toe_is_error(DBUSTOE))
@@ -353,13 +353,18 @@ void gimbal_task_mode_flush()
     {
       __SET_STRUCT_MODE(GIMBAL_MODE_SM_CTRL);
     }
+
+    if (get_movement() == ONCE_CLICK_GET_MINE)
+    {
+      __SET_STRUCT_MODE(GIMBAL_MODE_GSM_CTRL);
+    }
   }
-  
-    // else
-    // {
-    //   //__SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);//比赛时用到
-    //   __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);//测试时放置和机械臂控制干涉
-    // }
+
+  // else
+  // {
+  //   //__SET_STRUCT_MODE(GIMBAL_MODE_RC_CTRL);//比赛时用到
+  //   __SET_STRUCT_MODE(GIMBAL_MODE_IDLE);//测试时放置和机械臂控制干涉
+  // }
   //}
 
   // /*put in the last*/
@@ -378,7 +383,7 @@ void gimbal_task_mode_flush()
   //   __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   // }
 
-  if (HANDLER_PTR->ctrl_mode == last_mode)//检测模式变换（暂未用到）
+  if (HANDLER_PTR->ctrl_mode == last_mode) // 检测模式变换（暂未用到）
     HANDLER_PTR->mode_switch = 0;
   else
   {
@@ -403,7 +408,10 @@ void gimbal_task_set_output()
     break;
   case GIMBAL_MODE_CUSTOM_CTRL:
     __gimbal_uplift_custom_ctrl();
-   break;
+    break;
+  case GIMBAL_MODE_GSM_CTRL:
+    __gimbal_move_GSM();
+    break;
   case GIMBAL_MODE_SM_CTRL:
     __gimbal_move_OCSM();
     break;
@@ -456,7 +464,7 @@ void __gimbal_nonforce()
     __SET_JOINT_ANGLE(index, HANDLER_PTR->feedback_joint_angle[index]); // 设置关节输出值为当前关节角度
     __SET_MOTOR_NONFORCE(index);
   }
- // __pump_nonctrl();
+  // __pump_nonctrl();
 }
 
 void __gimbal_idle_ctrl()
@@ -485,7 +493,6 @@ void __gimbal_oid_rc_ctrl()
   __ADD_ROPE_LENGTH(uplift_ecd_ptr, (int32_t)(RC_CTRL_PTR->rc.ch[1] * 0.002f));
   HANDLER_PTR->motor_speed[GIMBAL_UPLIFT] = __ADD_OID_LENGTH_OUTPUT(HANDLER_PTR->oid_length, &uplift_ecd);
 }
-
 
 void __gimbal_uplift_custom_ctrl(void)
 {
@@ -530,225 +537,227 @@ void __gimbal_uplift_custom_ctrl(void)
   // servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);//尝试用于一键存矿
 }
 
-  void __gimbal_any_ctrl(void) // 可设置为舵机运动
-  {
+void __gimbal_any_ctrl(void) // 可设置为舵机运动
+{
 
-    if (__GET_STRUCT_MODE() != GIMBAL_MODE_IDLE)
+  if (__GET_STRUCT_MODE() != GIMBAL_MODE_IDLE)
+  {
+    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, (float)remote_data.mouse_y / 120.0f);
+    servo_set_offset(1, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+  }
+}
+
+// void __pump_subctrl()
+// {
+// if(cc_key_value.k1 || GET_KEY(KEY_F))
+// {
+//   pump=PUMP_PULL;
+//   __RESET_TICKS();
+//   __HALT_TICKS_COUNTING();
+// }
+// else
+// {
+//   __HALT_TICKS_COUNTING();
+//   if(__GET_TICKS()<500)
+//   {
+//     pump=PUMP_PULL;
+//     __HOLD_TICKS_COUNTING();
+//   }
+//   else
+//   {
+//     pump=PUMP_RESET;
+//   }
+// }
+
+// if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
+// {
+//   if(pump==PUMP_PULL)
+//     pump=PUMP_RESET;
+//   else if(pump==PUMP_RESET)
+//     pump=PUMP_PULL;
+// }
+// else if(RC_CTRL_PTR->rc.ch[4]<-660/3*2)
+// {
+//   pump=PUMP_PUSH;
+// }
+// else
+// {
+//   if(pump==PUMP_PUSH)
+//   {
+//     pump=PUMP_RESET;
+//   }
+// }
+
+//   switch (pump1)
+//   {
+//   case PUMP_PULL:
+//     PUMP1_ON();
+//     break;
+//   case PUMP_RESET:
+//   default:
+//     PUMP1_OFF();
+//     break;
+//   }
+
+//   switch (pump2)
+//   {
+//   case PUMP_PULL:
+//     PUMP2_ON();
+//     break;
+//   case PUMP_RESET:
+//   default:
+//     PUMP2_OFF();
+//     break;
+//   }
+// }
+
+// void __pump_nonctrl(void)
+// {
+//   PUMP1_OFF();
+//   PUMP2_OFF();
+// }
+
+void __detect_uplift_motor_offline(void)
+{
+  // 掉电检测
+
+  if (toe_is_error(TOE_UPLIFT))
+  {
+    HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] = OFFLINE;
+  }
+  else
+  {
+    __CLEAR_MOTOR_OFFLINE(GIMBAL_UPLIFT);
+  }
+
+  if (HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] == OFFLINE)
+  {
+    __SET_MOTOR_OFFLINE(GIMBAL_UPLIFT);
+  }
+}
+
+void __uplift_move2_subctrl(fp32 UL, uint8_t EN)
+{
+  if (EN)
+  {
+    if (ABS(UL - HANDLER_PTR->joint_angle[GIMBAL_UPLIFT]) > 1.0f)
     {
-      __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, (float)remote_data.mouse_y / 120.0f);
-      servo_set_offset(1, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
+      __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, UL > HANDLER_PTR->joint_angle[GIMBAL_UPLIFT] ? 0.2f : -0.2f);
+    }
+    else
+    {
+      __SET_JOINT_ANGLE(GIMBAL_UPLIFT, HANDLER_PTR->feedback_joint_angle[GIMBAL_UPLIFT]);
+    }
+  }
+}
+
+void __gimbal_move_GSM(void)
+{
+
+  if (get_step() == GSM_uplift_to_higher)
+  {
+    if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), GSM_STEP1_HEIGHT, 5.0))
+      movement.height_step_complete = 1;
+    else
+      __uplift_move2_subctrl(GSM_STEP1_HEIGHT, 1);
+
+    if (movement.hand_step_complete == 1 && movement.height_step_complete == 1)
+    {
+      next_step();
+      movement.hand_step_complete = 0;
+      movement.height_step_complete = 0;
     }
   }
 
-    // void __pump_subctrl()
+  if (get_step() == GSM_uplift_to_up)
+  {
+    if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), GSM_STEP6_HEIGHT, 5.0))
+      next_step();
+    else
+      __uplift_move2_subctrl(GSM_STEP6_HEIGHT, 1);
+  }
+
+  if (get_step() == GSM_complete) // 设置舵机回正
+  {
+    // if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP4_HEIGHT, 1))
     // {
-    // if(cc_key_value.k1 || GET_KEY(KEY_F))
-    // {
-    //   pump=PUMP_PULL;
-    //   __RESET_TICKS();
-    //   __HALT_TICKS_COUNTING();
+    set_movement(NON); // 0没有规定步骤，即为设置退出一键模式
     // }
     // else
     // {
-    //   __HALT_TICKS_COUNTING();
-    //   if(__GET_TICKS()<500)
-    //   {
-    //     pump=PUMP_PULL;
-    //     __HOLD_TICKS_COUNTING();
-    //   }
-    //   else
-    //   {
-    //     pump=PUMP_RESET;
-    //   }
+    //   __SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP4_HEIGHT);
     // }
+  }
+}
+void __gimbal_move_BTD(void)
+{
 
-    // if(RC_CTRL_PTR->rc.ch[4]>660/3*2)
+  if (get_step() == BTD_uplift_to_pos)
+  {
+    if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), BTD_STEP2_HEIGHT, 5.0))
+      movement.height_step_complete = 1;
+    else
+      __uplift_move2_subctrl(BTD_STEP2_HEIGHT, 1);
+
+    if (movement.hand_step_complete == 1 && movement.height_step_complete == 1)
+    {
+      next_step();
+      movement.hand_step_complete = 0;
+      movement.height_step_complete = 0;
+    }
+  }
+  if (get_step() == BTD_complete)
+  {
+
+    set_movement(NON); // 0没有规定步骤，即为设置退出一键模式
+  }
+}
+void __gimbal_move_OCSM(void) // 设置动作一标志位在机械臂到达位置上时才进下一个动作
+{
+
+  if (get_step() == SM_uplift_to_pos)
+  {
+    if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP1_HEIGHT, 5.0))
+      movement.height_step_complete = 1;
+    else
+      __uplift_move2_subctrl(SM_STEP1_HEIGHT, 1);
+
+    if (movement.hand_step_complete == 1 && movement.height_step_complete == 1)
+    {
+      next_step();
+      movement.hand_step_complete = 0;
+      movement.height_step_complete = 0;
+    }
+  }
+
+  if (get_step() == SM_uplift_to_pos2)
+  {
+    if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP3_HEIGHT, 5.0))
+      next_step();
+    else
+      //__SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP3_HEIGHT);
+      __uplift_move2_subctrl(SM_STEP3_HEIGHT, 1);
+  }
+
+  if (get_step() == SM_complete) // 设置舵机回正
+  {
+    // if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP4_HEIGHT, 1))
     // {
-    //   if(pump==PUMP_PULL)
-    //     pump=PUMP_RESET;
-    //   else if(pump==PUMP_RESET)
-    //     pump=PUMP_PULL;
-    // }
-    // else if(RC_CTRL_PTR->rc.ch[4]<-660/3*2)
-    // {
-    //   pump=PUMP_PUSH;
+    set_movement(NON); // 0没有规定步骤，即为设置退出一键模式
     // }
     // else
     // {
-    //   if(pump==PUMP_PUSH)
-    //   {
-    //     pump=PUMP_RESET;
-    //   }
+    //   __SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP4_HEIGHT);
     // }
+  }
 
-    //   switch (pump1)
-    //   {
-    //   case PUMP_PULL:
-    //     PUMP1_ON();
-    //     break;
-    //   case PUMP_RESET:
-    //   default:
-    //     PUMP1_OFF();
-    //     break;
-    //   }
-
-    //   switch (pump2)
-    //   {
-    //   case PUMP_PULL:
-    //     PUMP2_ON();
-    //     break;
-    //   case PUMP_RESET:
-    //   default:
-    //     PUMP2_OFF();
-    //     break;
-    //   }
-    // }
-
-    // void __pump_nonctrl(void)
-    // {
-    //   PUMP1_OFF();
-    //   PUMP2_OFF();
-    // }
-
-    void __detect_uplift_motor_offline(void)
-    {
-      // 掉电检测
-
-      if (toe_is_error(TOE_UPLIFT))
-      {
-        HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] = OFFLINE;
-      }
-      else
-      {
-        __CLEAR_MOTOR_OFFLINE(GIMBAL_UPLIFT);
-      }
-
-      if (HANDLER_PTR->motor_ctrl_mode[GIMBAL_UPLIFT] == OFFLINE)
-      {
-        __SET_MOTOR_OFFLINE(GIMBAL_UPLIFT);
-      }
-    }
-
-    void __uplift_move2_subctrl(fp32 UL, uint8_t EN)
-    {
-      if (EN)
-      {
-        if (ABS(UL - HANDLER_PTR->joint_angle[GIMBAL_UPLIFT]) > 1.0f)
-        {
-          __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, UL > HANDLER_PTR->joint_angle[GIMBAL_UPLIFT] ? 0.2f : -0.2f);
-        }
-        else
-        {
-          __SET_JOINT_ANGLE(GIMBAL_UPLIFT, HANDLER_PTR->feedback_joint_angle[GIMBAL_UPLIFT]);
-        }
-      }
-    }
-
-    void __gimbal_move_GGM(void)
-    {
-      if (get_step() == GGM_uplift_to_higher)
-      {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), GGM_STEP1_HEIGHT, 5))
-        {
-          next_step();
-        }
-        else
-        {
-          __SET_JOINT_ANGLE(GIMBAL_UPLIFT, GGM_STEP1_HEIGHT);
-        }
-      }
-      else if (get_step() == GGM_uplift_down)
-      {
-        // pump1 = 1;
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), GGM_STEP3_HEIGHT, 5))
-        {
-          next_step();
-        }
-        else
-        {
-          __SET_JOINT_ANGLE(GIMBAL_UPLIFT, GGM_STEP3_HEIGHT);
-        }
-      }
-      else if (get_step() == GGM_complete)
-      {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), GGM_CPLT_HEIGHT, 5))
-        {
-          set_movement(NON);
-        }
-        else
-        {
-          __SET_JOINT_ANGLE(GIMBAL_UPLIFT, GGM_CPLT_HEIGHT);
-        }
-      }
-    }
-    void __gimbal_move_BTD(void)
-    {
-
-      if (get_step() == BTD_uplift_to_pos)
-      {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), BTD_STEP2_HEIGHT, 5.0))
-          movement.height_step_complete = 1;
-        else
-          __uplift_move2_subctrl(BTD_STEP2_HEIGHT, 1);
-
-        if (movement.hand_step_complete == 1 && movement.height_step_complete == 1)
-        {
-          next_step();
-          movement.hand_step_complete = 0;
-          movement.height_step_complete = 0;
-        }
-      }
-    }
-    void __gimbal_move_OCSM(void) // 设置动作一标志位在机械臂到达位置上时才进下一个动作
-    {
-
-      if (get_step() == SM_uplift_to_pos)
-      {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP1_HEIGHT, 5.0))       
-          movement.height_step_complete = 1; 
-        else  
-          __uplift_move2_subctrl(SM_STEP1_HEIGHT, 1);
-        
-        if (movement.hand_step_complete == 1 &&movement.height_step_complete == 1)
-          {
-            next_step();
-            movement.hand_step_complete = 0;
-            movement.height_step_complete = 0;
-          }
-      }
-
-      if (get_step() == SM_uplift_to_pos2)
-      {
-        if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP3_HEIGHT, 5.0))
-        {
-          next_step();
-        }
-        else
-        {
-          //__SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP3_HEIGHT);
-          __uplift_move2_subctrl(SM_STEP3_HEIGHT, 1);
-        }
-      }
-
-      if (get_step() == SM_complete)//设置舵机回正
-      {
-        // if (is_angle_around(__GET_JOINT_ANGLE(GIMBAL_UPLIFT), SM_STEP4_HEIGHT, 1))
-        // {
-          set_movement(NON); // 0没有规定步骤，即为设置退出一键模式
-        // }
-        // else
-        // {
-        //   __SET_JOINT_ANGLE(GIMBAL_UPLIFT, SM_STEP4_HEIGHT);
-        // }
-      }
-
-      // if (movement.hand_move_out_flag == 1)
-      // {
-      //   set_movement(0); // 退出固定动作
-      //   movement.hand_move_out_flag = 0;
-      // }
-      //__pump_subctrl();
-    }
+  // if (movement.hand_move_out_flag == 1)
+  // {
+  //   set_movement(0); // 退出固定动作
+  //   movement.hand_move_out_flag = 0;
+  // }
+  //__pump_subctrl();
+}
 
 #undef HANDLER
 #undef HANDLER_PTR

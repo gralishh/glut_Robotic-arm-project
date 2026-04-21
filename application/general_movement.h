@@ -7,7 +7,7 @@ typedef enum
 {
   NON = 0,
   BTD,
-  GGM,
+  ONCE_CLICK_GET_MINE,
   ONCE_CLICK_SAVE_MINE,
 } movement_t;
 
@@ -18,21 +18,43 @@ typedef enum
   RIGHT,
 } mine_place_t;
 
-/*get_gound_mine*/
+/*get_storage_mine*/
 typedef enum
 {
-  GGM_uplift_to_higher = 0,
-  GGM_hand_to_pos,
-  GGM_uplift_down,
-  GGM_complete,
-} get_gound_mine_t;
-#define GGM_STEP1_HEIGHT 56.0f
-#define GGM_STEP2_J1_ANGLE -0.43f
-#define GGM_STEP2_J2_ANGLE -1.738f
-#define GGM_STEP2_J3_ANGLE -0.56f
-#define GGM_STEP2_PITCH_ANGLE 1.84f
-#define GGM_STEP3_HEIGHT 10.0f
-#define GGM_CPLT_HEIGHT 30
+  GSM_uplift_to_higher = 0,
+  GSM_hand_to_pos1,
+  GSM_hand_to_pos2,
+  GSM_hand_to_pos3,
+  GSM_hand_gri_close,
+  GSM_uplift_to_up,
+  GSM_complete,
+} get_storage_mine_t;
+#define GSM_STEP1_HEIGHT 64.0f
+
+#define GSM_STEP1_G_ANGLE 0.0f
+#define GSM_STEP1_J5_ANGLE 0.0f
+#define GSM_STEP1_J4_ANGLE 93.0f
+#define GSM_STEP1_J3_ANGLE 1.564f
+
+#define GSM_STEP2_J2_ANGLE_RIGHT -1.896f
+#define GSM_STEP2_J1_ANGLE_RIGHT 0.306f
+#define GSM_STEP2_J2_ANGLE_LEFT 1.92f
+#define GSM_STEP2_J1_ANGLE_LEFT  2.827f
+
+#define GSM_STEP3_J2_ANGLE_RIGHT -1.709f
+#define GSM_STEP3_J1_ANGLE_RIGHT 0.145f
+#define GSM_STEP3_J2_ANGLE_LEFT 1.721f
+#define GSM_STEP3_J1_ANGLE_LEFT 2.99f
+
+#define GSM_STEP4_J2_ANGLE_RIGHT -1.549f
+#define GSM_STEP4_J1_ANGLE_RIGHT 0.0f
+#define GSM_STEP4_J2_ANGLE_LEFT 1.579f
+#define GSM_STEP4_J1_ANGLE_LEFT 3.14f
+
+#define GSM_STEP5_G_ANGLE 0.6f
+
+#define GSM_STEP6_HEIGHT 180.0f
+//#define GGM_CPLT_HEIGHT 30
 
 /*save_mine_t*/
 typedef enum
@@ -70,7 +92,7 @@ typedef enum
 {
   BTD_hand_to_pos = 0,
   BTD_uplift_to_pos,
-  BTD_complete
+  BTD_complete,
 } back_to_default_t;
 
 #define BTD_STEP1_G_ANGLE 0.59f
