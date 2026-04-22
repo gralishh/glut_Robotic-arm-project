@@ -191,14 +191,14 @@ void gimbal_task_init()
   DJI_Motor_uplift.circle_count_flag = 1;
   // DJI_Motor_set_stall_detect(&DJI_Motor_uplift);
 
-  __SET_JOINT_LIMIT(GIMBAL_CAMERA_YAW, 260 - 500, 700 - 500);
+  __SET_JOINT_LIMIT(GIMBAL_CAMERA_YAW, 180 - 520, 880 - 520);
   __SET_JOINT_ANGLE(GIMBAL_CAMERA_YAW, 0);
-  servo_init(PWM1, 532, 380, 500);
+  servo_init(PWM1, 880, 180, 520); // 500base
   servo_enable(PWM1);
 
-  __SET_JOINT_LIMIT(GIMBAL_CAMERA_PITCH, 350 - 500, 540 - 500);
+  __SET_JOINT_LIMIT(GIMBAL_CAMERA_PITCH, 220 - 280, 360 - 280);
   __SET_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, 0);
-  servo_init(PWM2, 532, 380, 500);
+  servo_init(PWM2, 360, 220, 280); // 280为base
   servo_enable(PWM2);
 
   External_can_ecd_init(&uplift_ecd, 0x14A0, 0x0904, OID_ECD, ECD_CAN_COMMUNICATION, 0x04, 0x04);
@@ -542,7 +542,7 @@ void __gimbal_any_ctrl(void) // 可设置为舵机运动
 
   if (__GET_STRUCT_MODE() != GIMBAL_MODE_IDLE)
   {
-    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, (float)remote_data.mouse_y / 120.0f);
+    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, -(float)remote_data.mouse_y / 120.0f);
     servo_set_offset(1, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
   }
 }

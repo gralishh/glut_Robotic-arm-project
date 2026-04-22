@@ -448,17 +448,17 @@ void __chassis_rc_ctrl()
     if (remote_data.mouse_x != 0)
     {
       HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 7 / 6, 660 * WZ_CTRL_SEN * 7 / 6);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN , 660 * WZ_CTRL_SEN );
     }
     else if (GET_KEY(KEY_Q))
     {
       HANDLER_PTR->wz += WZ_ADD_SPEED_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, 0, 660 * WZ_CTRL_SEN * 2 / 3);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, 0, 660 * WZ_CTRL_SEN * 1/2);
     }
     else if (GET_KEY(KEY_E))
     {
       HANDLER_PTR->wz += -WZ_ADD_SPEED_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 2 / 3, 0);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 1/2, 0);
     }
     else
        HANDLER_PTR->wz += -sign(HANDLER_PTR->wz) * WZ_ADD_SPEED_SEN;
