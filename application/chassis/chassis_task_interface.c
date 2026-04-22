@@ -266,11 +266,8 @@ void chassis_task_mode_flush()
   {
     __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
   }
-//这段代码和上方的功能重复了
-  // if (switch_is_down(get_remote_control_point()->rc.s[1]) && switch_is_down(get_remote_control_point()->rc.s[0]))
-  // {
-  //   __SET_STRUCT_MODE(CHASSIS_MODE_NONFORCE);
-  // }
+if (GET_KEY(KEY_CTRL))
+  __SET_STRUCT_MODE(CHASSIS_MODE_IDLE);
 
   // 系统卡死、死锁时的恢复手段
  //或者死后重启不了就手动重启

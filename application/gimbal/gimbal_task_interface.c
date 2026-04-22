@@ -533,18 +533,27 @@ void __gimbal_uplift_custom_ctrl(void)
     __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
     CC_handler.get_cc_data_flag = 0;
   }
-  // __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0f);//yaw轴不需要动
-  // servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]);//尝试用于一键存矿
+
 }
 
 void __gimbal_any_ctrl(void) // 可设置为舵机运动
 {
-
+//pitch
   if (__GET_STRUCT_MODE() != GIMBAL_MODE_IDLE)
   {
     __ADD_JOINT_ANGLE(GIMBAL_CAMERA_PITCH, -(float)remote_data.mouse_y / 120.0f);
     servo_set_offset(1, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_PITCH]);
   }
+//yaw
+  if(GET_KEY(KEY_CTRL))
+  {
+    __ADD_JOINT_ANGLE(GIMBAL_CAMERA_YAW, (float)-remote_data.mouse_x / 50.0f);
+  }
+  else
+  {
+    __SET_JOINT_ANGLE(GIMBAL_CAMERA_YAW, 0);
+  }
+  servo_set_offset(0, HANDLER_PTR->joint_angle[GIMBAL_CAMERA_YAW]); // 尝试用于一键存矿
 }
 
 // void __pump_subctrl()
