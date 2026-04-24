@@ -12,6 +12,7 @@
 #include "general_movement.h"
 
 #include "referee.h"
+#include "user_lib.h"
 
 #define HANDLER gimbal_task_handler
 #define HANDLER_PTR gimbal_task_handler_ptr
@@ -31,8 +32,9 @@ extern FDCAN_HandleTypeDef hfdcan3;
 #define UL_MAX_ENCODE 438
 #define UL_MIN_ENCODE 5
 // controller sensity(degree per loop)
-#define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.75f + 2.25f))
-#define uplift_custom_controller_D (3.75f)
+// #define uplift_custom_controller_K (-(UL_MAX_ENCODE - UL_MIN_ENCODE) / (3.75f + 2.25f))
+// #define uplift_custom_controller_D (3.75f)
+
 /*global motor handler*/
 DJI_Motor_Ctrl_t DJI_Motor_uplift;
 External_ecd_handler_t uplift_ecd;
@@ -65,7 +67,7 @@ static void __gimbal_oid_rc_ctrl(void);
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index,[value])
  */
 /*自定义控制器*/
-#define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->adc_val)
+#define cc_joint_angle_up (Custom_Ctrl_get_rx_pack_ptr()->CC_val_i)
 #define cc_key_value (Custom_Ctrl_get_rx_pack_ptr()->key)
 /*获取电机状态*/
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
@@ -241,7 +243,8 @@ void gimbal_task_get_feedback()
   ...
   */
   // 调参使用
-  CC_handler.joint_angle[6] = (cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE;
+  //CC_handler.joint_angle[6] = (cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE;
+  CC_handler.CC_data[3] = int16_deadline(((((int16_t)cc_joint_angle_up[1] >> 16) & 0xFFFF) - 0x800), -200, 200);
 }
 
 /**
@@ -527,12 +530,10 @@ void __gimbal_uplift_custom_ctrl(void)
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
   if (GET_KEY(KEY_V))
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.00024f);
-  //__uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
-  if (CC_handler.get_cc_data_flag)
-  {
-    __uplift_move2_subctrl((cc_joint_angle[6] - uplift_custom_controller_D) * uplift_custom_controller_K + UL_MIN_ENCODE, 0x01);
-    CC_handler.get_cc_data_flag = 0;
-  }
+ 
+    //__uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
+   // __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, int16_deadline(((((int16_t)cc_joint_angle[6] >> 16) & 0xFFFF) - 0x800), -200, 200) * 0.000024f);
+  
 
 }
 

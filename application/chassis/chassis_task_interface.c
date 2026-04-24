@@ -33,9 +33,9 @@
 // joint mapping parameter
 
 // controller sensity(degree per loop)
-#define VX_CTRL_SEN 4.23f*8/6
-#define VY_CTRL_SEN 4.23f*8 / 6
-#define WZ_CTRL_SEN 9.0f * 7 / 6
+#define VX_CTRL_SEN 5.64f
+#define VY_CTRL_SEN 5.64f
+#define WZ_CTRL_SEN 10.5f
 
 #define VX_ADD_SPEED_SEN 13.3f
 #define VY_ADD_SPEED_SEN 13.3f
@@ -68,6 +68,8 @@ void chassis_power_control(void);
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
 /*获取电机状态*/
+#define cc_joint_angle_s (Custom_Ctrl_get_rx_pack_ptr()->CC_val_i)
+
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
 #define __SET_MOTOR_INSTANCE(index, instance_ptr) (HANDLER_PTR->motor_instance[index] = ((void *)instance_ptr))
 #define __GET_STRUCT_MODE() (HANDLER_PTR->ctrl_mode)
@@ -148,7 +150,7 @@ void chassis_power_control(void);
 #define __GET_PROCESS_PERCENTAGE(PROCESS_TIME) (__GET_TICKS_TIME() / PROCESS_TIME)
 #define __IS_MODE_SWITCHED() (1 == HANDLER_PTR->mode_switch)
 
-void chassis_task_init()
+    void chassis_task_init()
 {
   /*基础初始化*/
   __HALT_TICKS_COUNTING();
@@ -214,6 +216,8 @@ void chassis_task_get_feedback()
   )
   ...
   */
+  CC_handler.CC_data[1] = int16_deadline((((int16_t)cc_joint_angle_s[0] >> 16 & 0xFFFF) - 0x800), -200, 200);
+  CC_handler.CC_data[2] = int16_deadline((((int16_t)cc_joint_angle_s[1] & 0xFFFF) - 0x800), -200, 200);
 }
 
 /**
@@ -392,35 +396,44 @@ void __chassis_idle_ctrl()
 void __chassis_rc_ctrl()
 {
   /*设置输入速度(not real)*/
- 
-  HANDLER_PTR->vx = -RC_CTRL_PTR->rc.ch[3] * 8 / 6 * VX_CTRL_SEN;
-  HANDLER_PTR->vy = -RC_CTRL_PTR->rc.ch[2] * 8 / 6 * VY_CTRL_SEN;
-  HANDLER_PTR->wz = -RC_CTRL_PTR->rc.ch[0] * 7 / 6 * WZ_CTRL_SEN;
-
+    HANDLER_PTR->vx = -RC_CTRL_PTR->rc.ch[3] * 8 / 6 * VX_CTRL_SEN;
+    HANDLER_PTR->vy = -RC_CTRL_PTR->rc.ch[2] * 8 / 6 * VY_CTRL_SEN;
+    HANDLER_PTR->wz = -RC_CTRL_PTR->rc.ch[0] * 7 / 6 * WZ_CTRL_SEN;
   // if (!remote_data.trigger)
   // {
   //   HANDLER_PTR->vx = -GET_CH_VALUE(2) * 9 / 6 * VX_CTRL_SEN;
   //   HANDLER_PTR->vy = -GET_CH_VALUE(3) * 9 / 6 * VY_CTRL_SEN;
   //   HANDLER_PTR->wz = -GET_CH_VALUE(0) * 9 / 6 * WZ_CTRL_SEN;
 
-        __SET_MOTOR_SPEED(DJI_LF, -HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
-        __SET_MOTOR_SPEED(DJI_RF, HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
-        __SET_MOTOR_SPEED(DJI_RB, HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
-        __SET_MOTOR_SPEED(DJI_LB, -HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+    __SET_MOTOR_SPEED(DJI_LF, -HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+    __SET_MOTOR_SPEED(DJI_RF, HANDLER_PTR->vx - HANDLER_PTR->vy + (CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+    __SET_MOTOR_SPEED(DJI_RB, HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
+    __SET_MOTOR_SPEED(DJI_LB, -HANDLER_PTR->vx + HANDLER_PTR->vy + (-CHASSIS_WZ_SET_SCALE - 1.0f) * MOTOR_DISTANCE_TO_CENTER * HANDLER_PTR->wz);
   }
 
   void __chassis_KeybardMouse_rc_ctrl(void)
   {
-    // vx
-    if (GET_KEY(KEY_W))
+
+    //HANDLER_PTR->vx = int16_deadline((((int16_t)cc_joint_angle[5] >> 16 & 0xFFFF) - 0x800), -200, 200) * 1 / 3;
+    //HANDLER_PTR->vy = int16_deadline((((int16_t)cc_joint_angle[6] & 0xFFFF) - 0x800), -200, 200) * 1 / 3;
+
+    static uint8_t speed_turn_sen = 1;
+
+    if(GET_KEY(KEY_SHIFT))
+      speed_turn_sen = 1 / 2;
+      else
+      speed_turn_sen = 1;
+
+          // vx
+      if (GET_KEY(KEY_W))
     {
       HANDLER_PTR->vx += -VX_ADD_SPEED_SEN;
-      HANDLER_PTR->vx = fp32_constrain(HANDLER_PTR->vx, -660 * VX_CTRL_SEN*8 / 6, 0);
+      HANDLER_PTR->vx = fp32_constrain(HANDLER_PTR->vx, -660 * VX_CTRL_SEN * 8 / 6 * speed_turn_sen, 0);
     }
     else if (GET_KEY(KEY_S))
     {
       HANDLER_PTR->vx += VX_ADD_SPEED_SEN;
-      HANDLER_PTR->vx = fp32_constrain(HANDLER_PTR->vx, 0, 660 * VX_CTRL_SEN * 8 / 6);
+      HANDLER_PTR->vx = fp32_constrain(HANDLER_PTR->vx, 0, 660 * VX_CTRL_SEN * 8 / 6 * speed_turn_sen);
     }
     else
       HANDLER_PTR->vx += -sign(HANDLER_PTR->vx) * VX_ADD_SPEED_SEN;
@@ -430,12 +443,12 @@ void __chassis_rc_ctrl()
     if (GET_KEY(KEY_A))
     {
       HANDLER_PTR->vy += VY_ADD_SPEED_SEN;
-      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, 0, 660 * VY_CTRL_SEN * 2/3);
+      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, 0, 660 * VY_CTRL_SEN * 2 / 3 * speed_turn_sen);
     }
     else if (GET_KEY(KEY_D))
     {
       HANDLER_PTR->vy += -VY_ADD_SPEED_SEN;
-      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, -660 * VY_CTRL_SEN * 2/3, 0);
+      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, -660 * VY_CTRL_SEN * 2 / 3 * speed_turn_sen, 0);
     }
     else
       HANDLER_PTR->vy += -sign(HANDLER_PTR->vy) * VY_ADD_SPEED_SEN;
@@ -445,7 +458,7 @@ void __chassis_rc_ctrl()
     if (remote_data.mouse_x != 0)
     {
       HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN , 660 * WZ_CTRL_SEN );
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * speed_turn_sen, 660 * WZ_CTRL_SEN * speed_turn_sen);
     }
     else if (GET_KEY(KEY_Q))
     {

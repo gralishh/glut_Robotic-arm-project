@@ -71,7 +71,7 @@ void referee_unpack_fifo_data(void)
 
   if(data_seq_length)
   {
-    if(rx_length>=REF_PROTOCOL_CMD_SIZE               +data_seq_length+REF_PROTOCOL_CRC16_SIZE)
+    if(rx_length>=REF_PROTOCOL_CMD_SIZE + data_seq_length+REF_PROTOCOL_CRC16_SIZE)
     {
       USART10_Recv(referee_unpack_obj.protocol_packet+REF_PROTOCOL_HEADER_SIZE,REF_PROTOCOL_CMD_SIZE+data_seq_length+REF_PROTOCOL_CRC16_SIZE);
       if ( verify_CRC16_check_sum(referee_unpack_obj.protocol_packet, REF_HEADER_CRC_CMDID_LEN + data_seq_length) )
