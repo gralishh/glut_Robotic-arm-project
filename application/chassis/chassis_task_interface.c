@@ -68,7 +68,6 @@ void chassis_power_control(void);
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
 /*获取电机状态*/
-#define cc_joint_angle_s (Custom_Ctrl_get_rx_pack_ptr()->CC_val_i)
 
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
 #define __SET_MOTOR_INSTANCE(index, instance_ptr) (HANDLER_PTR->motor_instance[index] = ((void *)instance_ptr))
@@ -216,8 +215,6 @@ void chassis_task_get_feedback()
   )
   ...
   */
-  CC_handler.CC_data[1] = int16_deadline((((int16_t)cc_joint_angle_s[0] >> 16 & 0xFFFF) - 0x800), -200, 200);
-  CC_handler.CC_data[2] = int16_deadline((((int16_t)cc_joint_angle_s[1] & 0xFFFF) - 0x800), -200, 200);
 }
 
 /**
@@ -413,16 +410,24 @@ void __chassis_rc_ctrl()
 
   void __chassis_KeybardMouse_rc_ctrl(void)
   {
+    static fp32 speed_turn_sen = 1;
+    // static uint8_t chasiss_mode_switch = 0;
 
-    //HANDLER_PTR->vx = int16_deadline((((int16_t)cc_joint_angle[5] >> 16 & 0xFFFF) - 0x800), -200, 200) * 1 / 3;
-    //HANDLER_PTR->vy = int16_deadline((((int16_t)cc_joint_angle[6] & 0xFFFF) - 0x800), -200, 200) * 1 / 3;
+    // if (GET_KEY(KEY_R))
+    //   chasiss_mode_switch = !chasiss_mode_switch;
 
-    static uint8_t speed_turn_sen = 1;
+    if (CC_handler.CC_data[0]!=0 || CC_handler.CC_data[1]!=0)
+    {
+      HANDLER_PTR->vx = -CC_handler.CC_data[0]*1/3;
+      HANDLER_PTR->vy = CC_handler.CC_data[1]*1/3;
+    }
+
+
 
     if(GET_KEY(KEY_SHIFT))
-      speed_turn_sen = 1 / 2;
+      speed_turn_sen = 1.0f;
       else
-      speed_turn_sen = 1;
+      speed_turn_sen = 0.5f;
 
           // vx
       if (GET_KEY(KEY_W))
@@ -458,7 +463,7 @@ void __chassis_rc_ctrl()
     if (remote_data.mouse_x != 0)
     {
       HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * speed_turn_sen, 660 * WZ_CTRL_SEN * speed_turn_sen);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN  *1/2, 660 * WZ_CTRL_SEN  *1/2);
     }
     else if (GET_KEY(KEY_Q))
     {

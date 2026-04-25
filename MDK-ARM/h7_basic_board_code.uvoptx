@@ -298,7 +298,7 @@
         <Ww>
           <count>27</count>
           <WinNumber>1</WinNumber>
-          <ItemText>CC_handler</ItemText>
+          <ItemText>CC_handler,0x0A</ItemText>
         </Ww>
         <Ww>
           <count>28</count>
@@ -328,17 +328,7 @@
         <Ww>
           <count>33</count>
           <WinNumber>1</WinNumber>
-          <ItemText>chasiss_custom_controller_param_X,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>34</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>chasiss_custom_controller_param_Y,0x0A</ItemText>
-        </Ww>
-        <Ww>
-          <count>35</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>uplift_custom_controller_param,0x0A</ItemText>
+          <ItemText>idle_flag</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

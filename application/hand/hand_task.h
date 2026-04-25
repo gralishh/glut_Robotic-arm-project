@@ -83,7 +83,7 @@ typedef struct
 } HAND_TASK_HANDLER_TYPE;
 extern HAND_TASK_HANDLER_TYPE hand_task_handler; /*unique structure*/
 extern HAND_TASK_HANDLER_TYPE *hand_task_handler_ptr;
-
+extern uint8_t idle_flag;
 void hand_task(void *argument);
 
 #endif

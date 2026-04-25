@@ -51,7 +51,7 @@ typedef enum
 #define GSM_STEP4_J2_ANGLE_LEFT 1.579f
 #define GSM_STEP4_J1_ANGLE_LEFT 3.14f
 
-#define GSM_STEP5_G_ANGLE 0.7f
+#define GSM_STEP5_G_ANGLE 0.62f
 
 #define GSM_STEP6_HEIGHT 180.0f
 //#define GGM_CPLT_HEIGHT 30
@@ -67,7 +67,7 @@ typedef enum
   SM_complete,
 } save_mine_t;
 #define SM_STEP1_HEIGHT 179.5f
-#define SM_STEP1_G_ANGLE 0.65f
+#define SM_STEP1_G_ANGLE 0.62f
 #define SM_STEP1_J5_ANGLE 0.0f
 #define SM_STEP1_J4_ANGLE 93.0f
 #define SM_STEP1_J3_ANGLE 1.564f
@@ -95,9 +95,9 @@ typedef enum
   BTD_complete,
 } back_to_default_t;
 
-#define BTD_STEP1_G_ANGLE 0.69f
+#define BTD_STEP1_G_ANGLE 0.62f
 #define BTD_STEP1_J5_ANGLE 0.0f
-#define BTD_STEP1_J4_ANGLE 0.0f
+#define BTD_STEP1_J4_ANGLE 10.0f
 #define BTD_STEP1_J3_ANGLE 0.0f
 
 #define BTD_STEP2_HEIGHT 6.0f

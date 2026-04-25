@@ -88,10 +88,7 @@ extern Joint_Motor_t DM_Motor_gripper;
 /*global variable*/
 // static fp32 J1_D = 0;
 // static fp32 J3_D = 0;
-
-/*custom controller remap(custom controller -> joint_angle)*/
-float custom_controller_K[5] = {-1, 1, -1, 185 / 3.14, 1};
-float custom_controller_D[5] = {0.5506f, 2.8117f, 3.6662f, 1.4986f, 2.7442f};
+ uint8_t idle_flag = 0;
 
 static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
@@ -137,9 +134,7 @@ static void __hand_rc2_ctrl(void);
  * macro name format:
  *  __<GET/SET>_<MOTOR/JOINT>_<ITEM>(index[,value])
  */
-/*自定义控制器*/
-#define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->CC_val_f)
-#define cc_joint_angle_G (Custom_Ctrl_get_rx_pack_ptr()->CC_val_i)
+
 
 /*获取电机状态*/
 #define __GET_MOTOR_INSTANCE(index) (HANDLER_PTR->motor_instance[index])
@@ -234,7 +229,6 @@ static void __hand_rc2_ctrl(void);
           set_movement(steady_move);                          \
           movement.mine_place = deir;                         \
           aviod_triggered_again = 1;                          \
-          idle_flag = 1;                                      \
         }                                                     \
       }                                                       \
     }                                                         \
@@ -313,12 +307,7 @@ void hand_task_get_feedback()
   ...
   */
 
-  CC_handler.joint_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
-  CC_handler.joint_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] + HANDLER_PTR->min_joint_angle[1]);
-  CC_handler.joint_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
-  CC_handler.joint_angle[3] = -(cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
-  CC_handler.joint_angle[4] = -(cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
-  CC_handler.CC_data[0] = ((((int16_t)cc_joint_angle_G[0] & 0xFFFF) - 0x154) * ((HANDLER_PTR->max_joint_angle[5] - HANDLER_PTR->min_joint_angle[5]) / (0xEC9 - 0x154)));
+
 }
 
 /**
@@ -327,9 +316,8 @@ void hand_task_get_feedback()
  */
 void hand_task_mode_flush()
 {
-  static uint8_t idle_flag = 0;
-  static uint8_t last_mode = HAND_MODE_NONFORCE;
-  last_mode = HANDLER_PTR->ctrl_mode;
+  // static uint8_t last_mode = HAND_MODE_NONFORCE;
+  // last_mode = HANDLER_PTR->ctrl_mode;
 
   // 新控
   //   switch(GET_SWITCH())
@@ -402,7 +390,6 @@ void hand_task_mode_flush()
       movement.height_step_complete = 0;
       movement.mine_place = NON_DEIR;
       movement.movement_step = 0;
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
       // movement.hand_move_out_flag = 1;
     }
     if (get_movement() == BTD)
@@ -418,14 +405,17 @@ void hand_task_mode_flush()
     {
       __SET_STRUCT_MODE(HAND_MODE_GSM_CTRL);
     }
+    
   }
+  if(GET_KEY(KEY_R))
+  __J4_init();
 
-  if ( GET_KEY(KEY_F) && last_mode == HAND_MODE_CUSTOM_CTRL) // 机械臂保持不动
-  {
-    idle_flag = (idle_flag+1) % 2;
-  }
+  if ( GET_KEY(KEY_F)) // 机械臂保持不动
+    idle_flag =0;
+  
   if (idle_flag == 1)
     __SET_STRUCT_MODE(HAND_MODE_IDLE);
+ 
 
     // else
     // {
@@ -438,10 +428,10 @@ void hand_task_mode_flush()
     //    __SET_STRUCT_MODE(HAND_MODE_IDLE);
     //  }
 
-    if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
-    {
-      __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
-    }
+if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
+{
+  __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
+}
 
   // if (HANDLER_PTR->ctrl_mode == last_mode)
   //   HANDLER_PTR->mode_switch = 0;
@@ -602,7 +592,7 @@ void basic_motor_init(void)
   __SET_JOINT_LIMIT(HAND_J3, -3.14f * 2, 3.14f * 2); // 正反90度，使用上位机更设置过零点
   __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);          // map from -351.25~3 to -162~0
   __SET_JOINT_LIMIT(HAND_J5, -3.14f, 3.14f);         //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, 0.03f, 0.7f);            // 测试得出固定角度
+  __SET_JOINT_LIMIT(HAND_G, 0.03f, 0.636f);            // 测试得出固定角度
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
@@ -1008,14 +998,14 @@ void __hand_custom_ctrl(void)
 {
   // if (CC_handler.get_cc_data_flag)
   // {
-    __hand_move2_subctrl(
-        (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0],
-        -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] + HANDLER_PTR->min_joint_angle[1]),
-        (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2],
-        -(cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3],
-        -(cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4],
-        ((((int16_t)cc_joint_angle_G[0] & 0xFFFF) - 0x154) * ((HANDLER_PTR->max_joint_angle[5] - HANDLER_PTR->min_joint_angle[5]) / (0xEC9 - 0x154))),
-        J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
+  __hand_move2_subctrl(
+      CC_handler.joint_angle[0],
+      CC_handler.joint_angle[1],
+      CC_handler.joint_angle[2],
+      CC_handler.joint_angle[3],
+      CC_handler.joint_angle[4],
+      CC_handler.G_angle,
+      J1_EN | J2_EN | J3_EN | J4_EN | J5_EN | JG_EN);
   //   CC_handler.get_cc_data_flag = 0;
   // }
   // else
@@ -1031,12 +1021,13 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, 
   }
   if (EN & J5_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J5, J5, 0.08f, 0.01f, 0.0023f, 0.001f);
+    //__hand_motor_go_setting_angle(HAND_J5, J5, 0.08f, 0.01f, 0.0023f, 0.001f);
+    __SET_JOINT_ANGLE(HAND_J5, J5);
   }
 
   if (EN & J4_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J4, J4, 0.5f, 0.2f, 0.023f, 0.02f);
+    __hand_motor_go_setting_angle(HAND_J4, J4, 2.5f, 1.2f, 0.032f, 0.02f);
   }
 
   if (EN & J3_EN)
@@ -1046,7 +1037,7 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, 
 
   if (EN & J2_EN)
   {
-    //__hand_motor_go_setting_angle(HAND_J2, J2, 0.08f, 0.01f, 0.0023f, 0.001f);
+    //__hand_motor_go_setting_angle(HAND_J2, J2, 0.08f, 0.01f, 0.023f, 0.01f);
     __SET_JOINT_ANGLE(HAND_J2, J2);
   }
 

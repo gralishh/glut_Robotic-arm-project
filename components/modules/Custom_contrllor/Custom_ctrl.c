@@ -4,6 +4,9 @@
 #include "cmsis_os.h"
 #include "detect_task.h"
 
+#include "hand_task.h"
+#include "user_lib.h"
+
 // 注意，先等自定义控制器数据稳定再进入自定义模式，否则可能直接输出未经计算的偏移量
 // 或者写点标志位避免这种情况
 
@@ -17,6 +20,15 @@
 /**/
 #define IS_HEADER(byte) (byte == HEADER)
 #define IS_CTRL_HEADER(byte1, byte2) ((byte1 == CTRL_HEADER1) && (byte2 == CTRL_HEADER2))
+
+/*自定义控制器*/
+#define cc_joint_angle (Custom_Ctrl_get_rx_pack_ptr()->CC_val_f)
+#define cc_int_data (Custom_Ctrl_get_rx_pack_ptr()->CC_val_i)
+
+/*custom controller remap(custom controller -> joint_angle)*/
+//hand_param
+float custom_controller_K[5] = {-1, 1, -1, 185 / 3.14, 1};
+float custom_controller_D[5] = {0.5506f, 2.8117f, 3.6662f, 1.4986f, 2.7442f};
 
 /*crc检测*/
 static uint16_t get_crc16_check_sum(uint8_t *p_msg, uint16_t len, uint16_t crc16);
@@ -43,9 +55,22 @@ void Custom_Ctrl_unpack(void)
   USART1_Recv(RX_BUF, sizeof(frame_header_t) + sizeof(uint16_t));
   if (((data_t *)RX_BUF)->cmd_id == 0x0302)
     USART1_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 6 + sizeof(uint8_t) * 4 + sizeof(uint16_t)); // 没有进行校验，后续补上
+  Custom_Ctrl_data_process();
   CC_handler.get_cc_data_flag = 1;
 }
 
+void Custom_Ctrl_data_process(void)
+{
+  CC_handler.joint_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
+  CC_handler.joint_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] + hand_task_handler_ptr->min_joint_angle[1]);
+  CC_handler.joint_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
+  CC_handler.joint_angle[3] = -(cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
+  CC_handler.joint_angle[4] = -(cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
+  CC_handler.G_angle = ((((uint32_t)cc_int_data[0] & 0xFFFF) - 0xFA) * ((hand_task_handler_ptr->max_joint_angle[5] - hand_task_handler_ptr->min_joint_angle[5]) / (0xEC4 - 0xFA)));
+  CC_handler.CC_data[2] = int16_deadline(((((uint32_t)cc_int_data[1] >> 16) & 0xFFFF) - 0x91F), -400, 400);
+  CC_handler.CC_data[0] = int16_deadline((((uint32_t)cc_int_data[0] >> 16 & 0xFFFF) - 0x800), -200, 200);
+  CC_handler.CC_data[1] = int16_deadline((((uint32_t)cc_int_data[1] & 0xFFFF) - 0x800), -200, 200);
+}
 /**
  * @brief 初始化数值
  */
@@ -75,6 +100,7 @@ void Custom_Ctrl_Task(void *para)
         UART7_Recv(RX_BUF, sizeof(frame_header_t) + sizeof(uint16_t));
         if (((data_t *)RX_BUF)->cmd_id == 0x0302)
           UART7_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 5 + sizeof(uint32_t) * 2 + sizeof(uint16_t)); // 没有进行校验，后续补上
+        Custom_Ctrl_data_process();
         CC_handler.get_cc_data_flag = 1;
       }
     }

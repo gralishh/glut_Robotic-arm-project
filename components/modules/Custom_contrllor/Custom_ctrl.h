@@ -47,7 +47,7 @@ typedef __packed struct
 	uint16_t cmd_id;
 	key_t   key;
 	float CC_val_f[5];
-  int32_t CC_val_i[2];
+  uint32_t CC_val_i[2];
   //uint8_t reserve[4];
 	uint16_t crc16;
 } data_t; 
@@ -57,7 +57,8 @@ typedef data_t CUSTOM_CTRL_RX_PACK;
 typedef struct{
   CUSTOM_CTRL_RX_PACK rx_pack;
   fp32 joint_angle[5];
-  int16_t CC_data[4];
+  int16_t CC_data[3];
+  fp32 G_angle;
   int8_t get_cc_data_flag;
 } CUSTOM_CTRL_T;
 
@@ -112,6 +113,7 @@ extern CUSTOM_CTRL_T CC_handler;
 CUSTOM_CTRL_T* Custom_Ctrl_get_ptr(void);
 data_t* Custom_Ctrl_get_rx_pack_ptr(void);
 void Custom_Ctrl_unpack(void);
-void Custom_Ctrl_Task(void* para);
+void Custom_Ctrl_data_process(void);
+void Custom_Ctrl_Task(void *para);
 
 #endif
