@@ -314,6 +314,24 @@ void gimbal_task_mode_flush()
     __SET_STRUCT_MODE(GIMBAL_MODE_NONFORCE);
   }
 
+  {
+    static uint16_t press_count = 0;
+    static uint8_t aviod_triggered_again = 0;
+    if (GET_KEY(KEY_SHIFT) && GET_KEY(KEY_R))
+    {
+      if (!aviod_triggered_again)
+      {
+        press_count++;
+        if (press_count >= 500)
+        Gimbal_up_init();
+      }
+    }
+    else
+    {
+      press_count = 0;
+      aviod_triggered_again = 0;
+    }
+  }
   // /*PUMP*/
   // {
   //   static uint8_t press_loop_cnt = 0;
@@ -528,10 +546,10 @@ void __gimbal_uplift_custom_ctrl(void)
   // else if (middle_pos > UL_MAX_ENCODE)
   //   middle_pos = UL_MAX_ENCODE;
 
-  if (GET_KEY(KEY_V))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.00024f);
   if (GET_KEY(KEY_C))
-    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.00024f);
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, -660 * 0.0002f);
+  if (GET_KEY(KEY_V))
+    __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.0002f);
  
     //__uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
   __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, CC_handler.CC_data[2] * 0.000046f);

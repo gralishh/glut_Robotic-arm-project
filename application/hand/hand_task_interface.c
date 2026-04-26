@@ -629,14 +629,14 @@ void __J2_init(void)
 {
   while (!__hand_J2_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J2, 1.66, 0.00042f, 0.00023f);
+  __DM_go_setting_angle(HAND_J2, 1.66, 0.00078f, 0.00043f);
 }
 
 void __J3_init(void)
 {
   while (!__hand_J3_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J3, 0, 0.00042f, 0.00023f);
+  __DM_go_setting_angle(HAND_J3, 0, 0.00078f, 0.00043f);
 }
 
 void __J4_init(void)
@@ -658,7 +658,7 @@ void __J5_init(void)
 {
   while (!__hand_J5_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J5, 0, 0.00023f, 0.00008f);
+  __DM_go_setting_angle(HAND_J5, 0, 0.00042f, 0.00023f);
 }
 void __gripper_init(void)
 {

@@ -418,8 +418,8 @@ void __chassis_rc_ctrl()
 
     if (CC_handler.CC_data[0]!=0 || CC_handler.CC_data[1]!=0)
     {
-      HANDLER_PTR->vx = -CC_handler.CC_data[0]*1/3;
-      HANDLER_PTR->vy = CC_handler.CC_data[1]*1/3;
+      HANDLER_PTR->vx = -CC_handler.CC_data[0]*1/2;
+      HANDLER_PTR->vy = CC_handler.CC_data[1]*1/2;
     }
 
 

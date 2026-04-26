@@ -54,7 +54,7 @@ void Custom_Ctrl_unpack(void)
 {
   USART1_Recv(RX_BUF, sizeof(frame_header_t) + sizeof(uint16_t));
   if (((data_t *)RX_BUF)->cmd_id == 0x0302)
-    USART1_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 6 + sizeof(uint8_t) * 4 + sizeof(uint16_t)); // 没有进行校验，后续补上
+    USART1_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 5 + sizeof(uint32_t) * 2 + sizeof(uint16_t)); // 没有进行校验，后续补上
   Custom_Ctrl_data_process();
   CC_handler.get_cc_data_flag = 1;
 }
@@ -66,10 +66,10 @@ void Custom_Ctrl_data_process(void)
   CC_handler.joint_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
   CC_handler.joint_angle[3] = -(cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
   CC_handler.joint_angle[4] = -(cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
-  CC_handler.G_angle = ((((uint32_t)cc_int_data[0] & 0xFFFF) - 0xFA) * ((hand_task_handler_ptr->max_joint_angle[5] - hand_task_handler_ptr->min_joint_angle[5]) / (0xEC4 - 0xFA)));
-  CC_handler.CC_data[2] = int16_deadline(((((uint32_t)cc_int_data[1] >> 16) & 0xFFFF) - 0x91F), -400, 400);
-  CC_handler.CC_data[0] = int16_deadline((((uint32_t)cc_int_data[0] >> 16 & 0xFFFF) - 0x800), -200, 200);
-  CC_handler.CC_data[1] = int16_deadline((((uint32_t)cc_int_data[1] & 0xFFFF) - 0x800), -200, 200);
+  CC_handler.G_angle = ((((uint32_t)cc_int_data[0] & 0xFFFF) - 0xC8) * ((hand_task_handler_ptr->max_joint_angle[5] - hand_task_handler_ptr->min_joint_angle[5]) / (0xEC4 - 0x15E)));
+  CC_handler.CC_data[2] = int16_deadline(((((uint32_t)cc_int_data[1] >> 16) & 0xFFFF) - 0x91F), -300, 300);
+  CC_handler.CC_data[0] = int16_deadline((((uint32_t)cc_int_data[0] >> 16 & 0xFFFF) - 0x800), -150, 150);
+  CC_handler.CC_data[1] = int16_deadline((((uint32_t)cc_int_data[1] & 0xFFFF) - 0x800), -150, 150);
 }
 /**
  * @brief 初始化数值
@@ -86,32 +86,9 @@ void Data_init(data_t *data_init)
 void Custom_Ctrl_Task(void *para)
 {
   static uint32_t usart1_length = 0x00;
-  static uint32_t uart7_length = 0x00; //
 
   while (1)
   {
-
-    uart7_length = UART7_GetDataCount(); // 临时
-
-    if (IS_HEADER(UART7_At(0)))
-    {
-      if (uart7_length >= PACK_LENGTH)
-      {
-        UART7_Recv(RX_BUF, sizeof(frame_header_t) + sizeof(uint16_t));
-        if (((data_t *)RX_BUF)->cmd_id == 0x0302)
-          UART7_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 5 + sizeof(uint32_t) * 2 + sizeof(uint16_t)); // 没有进行校验，后续补上
-        Custom_Ctrl_data_process();
-        CC_handler.get_cc_data_flag = 1;
-      }
-    }
-    else if (uart7_length > 3000)
-    {
-      UART7_Drop(uart7_length);
-    }
-    else
-    {
-      UART7_Drop(1);
-    } // 零时
 
     usart1_length = USART1_GetDataCount(); // 得出数据的长度，包括帧头、帧尾、ID和有用的数据
 
