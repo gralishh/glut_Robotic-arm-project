@@ -67,7 +67,7 @@ void Custom_Ctrl_data_process(void)
   CC_handler.joint_angle[3] = -(cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
   CC_handler.joint_angle[4] = -(cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
   CC_handler.G_angle = ((((uint32_t)cc_int_data[0] & 0xFFFF) - 0xC8) * ((hand_task_handler_ptr->max_joint_angle[5] - hand_task_handler_ptr->min_joint_angle[5]) / (0xEC4 - 0x15E)));
-  CC_handler.CC_data[2] = int16_deadline(((((uint32_t)cc_int_data[1] >> 16) & 0xFFFF) - 0x91F), -300, 300);
+  CC_handler.CC_data[2] = int16_deadline(((((uint32_t)cc_int_data[1] >> 16) & 0xFFFF) - 0x800), -200, 200);
   CC_handler.CC_data[0] = int16_deadline((((uint32_t)cc_int_data[0] >> 16 & 0xFFFF) - 0x800), -150, 150);
   CC_handler.CC_data[1] = int16_deadline((((uint32_t)cc_int_data[1] & 0xFFFF) - 0x800), -150, 150);
 }

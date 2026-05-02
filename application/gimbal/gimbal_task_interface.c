@@ -552,7 +552,7 @@ void __gimbal_uplift_custom_ctrl(void)
     __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, 660 * 0.0002f);
  
     //__uplift_move2_subctrl(middle_pos + (UL_MAX_ENCODE - UL_MIN_ENCODE) / 2 * (cc_joint_angle[4] - 0.5f), 0x01);
-  __ADD_JOINT_ANGLE(GIMBAL_UPLIFT, CC_handler.CC_data[2] * 0.000046f);
+  //__ADD_JOINT_ANGLE(GIMBAL_UPLIFT, CC_handler.CC_data[2] * 0.000024f);
 }
 
 void __gimbal_any_ctrl(void) // 可设置为舵机运动

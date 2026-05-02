@@ -411,25 +411,32 @@ void __chassis_rc_ctrl()
   void __chassis_KeybardMouse_rc_ctrl(void)
   {
     static fp32 speed_turn_sen = 1;
-    // static uint8_t chasiss_mode_switch = 0;
+    static uint8_t chasiss_mode_switch = 0;
 
-    // if (GET_KEY(KEY_R))
-    //   chasiss_mode_switch = !chasiss_mode_switch;
+    if (GET_KEY(KEY_R))
+      chasiss_mode_switch = 1;
+          // chasiss_mode_switch = !chasiss_mode_switch;
 
-    if (CC_handler.CC_data[0]!=0 || CC_handler.CC_data[1]!=0)
-    {
-      HANDLER_PTR->vx = -CC_handler.CC_data[0]*1/2;
-      HANDLER_PTR->vy = CC_handler.CC_data[1]*1/2;
-    }
+      if (CC_handler.CC_data[0] != 0 || CC_handler.CC_data[1] != 0)
+      {
+        HANDLER_PTR->vx = -CC_handler.CC_data[1] * 1 / 5;
+        HANDLER_PTR->vy = CC_handler.CC_data[0] * 1 / 5;
+      }
 
+    
+      
 
-
-    if(GET_KEY(KEY_SHIFT))
-      speed_turn_sen = 1.0f;
-      else
+      if (GET_KEY(KEY_SHIFT))
+      {
+        chasiss_mode_switch = 0;
+        speed_turn_sen = 1.0f;
+      }
+      else if (chasiss_mode_switch)
+        speed_turn_sen = 0.10f;
+        else
       speed_turn_sen = 0.5f;
 
-          // vx
+      // vx
       if (GET_KEY(KEY_W))
     {
       HANDLER_PTR->vx += -VX_ADD_SPEED_SEN;
@@ -448,12 +455,12 @@ void __chassis_rc_ctrl()
     if (GET_KEY(KEY_A))
     {
       HANDLER_PTR->vy += VY_ADD_SPEED_SEN;
-      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, 0, 660 * VY_CTRL_SEN * 2 / 3 * speed_turn_sen);
+      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, 0, 660 * VY_CTRL_SEN * 4 / 3 * speed_turn_sen);
     }
     else if (GET_KEY(KEY_D))
     {
       HANDLER_PTR->vy += -VY_ADD_SPEED_SEN;
-      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, -660 * VY_CTRL_SEN * 2 / 3 * speed_turn_sen, 0);
+      HANDLER_PTR->vy = fp32_constrain(HANDLER_PTR->vy, -660 * VY_CTRL_SEN * 4 / 3 * speed_turn_sen, 0);
     }
     else
       HANDLER_PTR->vy += -sign(HANDLER_PTR->vy) * VY_ADD_SPEED_SEN;
@@ -462,18 +469,22 @@ void __chassis_rc_ctrl()
     // wz
     if (remote_data.mouse_x != 0)
     {
+      if (!chasiss_mode_switch)
+      {
       HANDLER_PTR->wz += -remote_data.mouse_x * WZ_CTRL_SEN;
       HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN  *1/2, 660 * WZ_CTRL_SEN  *1/2);
+      }
+
     }
     else if (GET_KEY(KEY_Q))
     {
       HANDLER_PTR->wz += WZ_ADD_SPEED_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, 0, 660 * WZ_CTRL_SEN * 1/2);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, 0, 660 * WZ_CTRL_SEN );
     }
     else if (GET_KEY(KEY_E))
     {
       HANDLER_PTR->wz += -WZ_ADD_SPEED_SEN;
-      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN * 1/2, 0);
+      HANDLER_PTR->wz = fp32_constrain(HANDLER_PTR->wz, -660 * WZ_CTRL_SEN , 0);
     }
     else
        HANDLER_PTR->wz += -sign(HANDLER_PTR->wz) * WZ_ADD_SPEED_SEN;

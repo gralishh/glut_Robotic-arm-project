@@ -407,8 +407,26 @@ void hand_task_mode_flush()
     }
     
   }
-  if(GET_KEY(KEY_R))
-  __J4_init();
+
+  {
+    static uint16_t press_count = 0;
+    static uint8_t aviod_triggered_again = 0;
+    if (GET_KEY(KEY_CTRL) && GET_KEY(KEY_R))
+    {
+      if (!aviod_triggered_again)
+      {
+        press_count++;
+        if (press_count >= 500)
+        __J4_init();
+
+      }
+    }
+    else
+    {
+      press_count = 0;
+      aviod_triggered_again = 0;
+    }
+  }
 
   if ( GET_KEY(KEY_F)) // 机械臂保持不动
     idle_flag =0;
@@ -1139,7 +1157,7 @@ void __hand_move_GSM(void)
 {
   if (get_step() == GSM_uplift_to_higher)
   {
-    if (is_angle_around(GSM_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
+    if (is_angle_around(GSM_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.03f) &&
         is_angle_around(GSM_STEP1_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
         is_angle_around(GSM_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 3.5f) &&
         is_angle_around(GSM_STEP1_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.1f)) // 如果到达目标位置
@@ -1232,7 +1250,7 @@ void __hand_move_GSM(void)
   if (get_step() == GSM_hand_gri_close)
   {
     if (
-        is_angle_around(GSM_STEP5_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f))
+        is_angle_around(GSM_STEP5_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.03f))
       next_step();
     else
       __hand_move2_subctrl(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, GSM_STEP5_G_ANGLE, JG_EN);
@@ -1243,7 +1261,7 @@ void __hand_move_BTD(void)
 {
   if (get_step() == BTD_hand_to_pos)
   {
-    if (is_angle_around(BTD_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
+    if (is_angle_around(BTD_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.03f) &&
         is_angle_around(BTD_STEP1_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
         is_angle_around(BTD_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 3.5f) &&
         is_angle_around(BTD_STEP1_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.08f)) // 如果到达目标位置
@@ -1254,7 +1272,7 @@ void __hand_move_BTD(void)
   if (get_step() == BTD_uplift_to_pos)
   {
     if (
-        is_angle_around(BTD_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
+        is_angle_around(BTD_STEP2_J2_ANGLE, __GET_JOINT_ANGLE(HAND_J2), 0.06f) &&
         is_angle_around(BTD_STEP2_J1_ANGLE, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
       movement.hand_step_complete = 1;
 
@@ -1275,7 +1293,7 @@ void __hand_move_OCSM(void)
 {
   if (get_step() == SM_uplift_to_pos)
   {
-    if (is_angle_around(SM_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.1f) &&
+    if (is_angle_around(SM_STEP1_G_ANGLE, __GET_JOINT_ANGLE(HAND_G), 0.03f) &&
         is_angle_around(SM_STEP1_J5_ANGLE, __GET_JOINT_ANGLE(HAND_J5), 0.1f) &&
         is_angle_around(SM_STEP1_J4_ANGLE, __GET_JOINT_ANGLE(HAND_J4), 3.5f) &&
         is_angle_around(SM_STEP1_J3_ANGLE, __GET_JOINT_ANGLE(HAND_J3), 0.08f)) // 如果到达目标位置
