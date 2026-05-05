@@ -47,6 +47,15 @@ inline data_t *Custom_Ctrl_get_rx_pack_ptr(void)
   return &(CC_handler.rx_pack);
 }
 
+// crc16校验
+//  static unsigned char CliendTxBuffer[50];
+//   memcpy(
+//       CliendTxBuffer + 5,
+//       (uint8_t *)&data_s->cmd_id,
+//       sizeof(data_t) - sizeof(frame_header_t) // 数据部分和cmd_id占用12字节
+//   );
+//  Verify_CRC16_Check_Sum(CliendTxBuffer, sizeof(data_t));
+
 /**
  * @brief 解包数据
  */
@@ -54,22 +63,26 @@ void Custom_Ctrl_unpack(void)
 {
   USART1_Recv(RX_BUF, sizeof(frame_header_t) + sizeof(uint16_t));
   if (((data_t *)RX_BUF)->cmd_id == 0x0302)
-    USART1_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 5 + sizeof(uint32_t) * 2 + sizeof(uint16_t)); // 没有进行校验，后续补上
+    USART1_Recv((void *)&(((data_t *)RX_BUF)->key), sizeof(float) * 5 + sizeof(uint32_t) * 2 + sizeof(uint16_t)); // 没有crc//实则图传已经校验过了加不加都行
   Custom_Ctrl_data_process();
-  CC_handler.get_cc_data_flag = 1;
+  CC_handler.get_cc_data_flag = 1; // 暂不用
 }
 
 void Custom_Ctrl_data_process(void)
 {
+  // if (CC_handler.get_cc_data_flag)
+  // {
   CC_handler.joint_angle[0] = (cc_joint_angle[0] - custom_controller_D[0]) * custom_controller_K[0];
   CC_handler.joint_angle[1] = -((cc_joint_angle[1] - custom_controller_D[1]) * custom_controller_K[1] + hand_task_handler_ptr->min_joint_angle[1]);
   CC_handler.joint_angle[2] = (cc_joint_angle[2] - custom_controller_D[2]) * custom_controller_K[2];
   CC_handler.joint_angle[3] = -(cc_joint_angle[3] - custom_controller_D[3]) * custom_controller_K[3];
   CC_handler.joint_angle[4] = -(cc_joint_angle[4] - custom_controller_D[4]) * custom_controller_K[4];
-  CC_handler.G_angle = ((((uint32_t)cc_int_data[0] & 0xFFFF) - 0xC8) * ((hand_task_handler_ptr->max_joint_angle[5] - hand_task_handler_ptr->min_joint_angle[5]) / (0xEC4 - 0x15E)));
+  CC_handler.G_angle = ((((uint32_t)cc_int_data[0] & 0xFFFF) - 0xC8) * ((hand_task_handler_ptr->max_joint_angle[5] - hand_task_handler_ptr->min_joint_angle[5]) / (0xE74 - 0x2DF)));
   CC_handler.CC_data[2] = int16_deadline(((((uint32_t)cc_int_data[1] >> 16) & 0xFFFF) - 0x800), -200, 200);
   CC_handler.CC_data[0] = int16_deadline((((uint32_t)cc_int_data[0] >> 16 & 0xFFFF) - 0x800), -150, 150);
   CC_handler.CC_data[1] = int16_deadline((((uint32_t)cc_int_data[1] & 0xFFFF) - 0x800), -150, 150);
+  //   CC_handler.get_cc_data_flag = 0;
+  // }
 }
 /**
  * @brief 初始化数值

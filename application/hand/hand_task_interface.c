@@ -599,18 +599,18 @@ void basic_motor_init(void)
   DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
   // DJI_Motor_set_angle_limit();
   // DJI_Motor_set_speed_limit();
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.002, 0, 5500, 5500);
+  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.004, 0, 5500, 5500);
   DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
   DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
 
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
-  __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.14f);
+  __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.1f);
   __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f);       //-128.5714~128.5714
   __SET_JOINT_LIMIT(HAND_J3, -3.14f * 2, 3.14f * 2); // 正反90度，使用上位机更设置过零点
   __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);          // map from -351.25~3 to -162~0
   __SET_JOINT_LIMIT(HAND_J5, -3.14f, 3.14f);         //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, 0.03f, 0.636f);            // 测试得出固定角度
+  __SET_JOINT_LIMIT(HAND_G, 0.1f, 0.636f);            // 测试得出固定角度
 
   __CLEAR_MOTOR_OFFLINE(AK_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
@@ -1192,7 +1192,10 @@ void __hand_move_GSM(void)
       if (
           is_angle_around(GSM_STEP2_J2_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J2), 0.08f) &&
           is_angle_around(GSM_STEP2_J1_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J1), 0.06f))
+      {
+        osDelay(1000); // 等待j1稳定
         next_step();
+      }
       else
         __hand_move2_subctrl(GSM_STEP2_J1_ANGLE_LEFT, GSM_STEP2_J2_ANGLE_LEFT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
     }
@@ -1316,8 +1319,10 @@ void __hand_move_OCSM(void)
       if (
           is_angle_around(SM_STEP2_J2_ANGLE_RIGHT, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
           is_angle_around(SM_STEP2_J1_ANGLE_RIGHT, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
+      {
+        osDelay(1000); // 等待j1稳定
         next_step();
-
+      }
       else
         __hand_move2_subctrl(SM_STEP2_J1_ANGLE_RIGHT, SM_STEP2_J2_ANGLE_RIGHT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
     }
@@ -1326,8 +1331,10 @@ void __hand_move_OCSM(void)
       if (
           is_angle_around(SM_STEP2_J2_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J2), 0.1f) &&
           is_angle_around(SM_STEP2_J1_ANGLE_LEFT, __GET_JOINT_ANGLE(HAND_J1), 0.06f)) // 如果到达目标位置
+      {
+        osDelay(1000); // 等待j1稳定
         next_step();
-
+      }
       else
         __hand_move2_subctrl(SM_STEP2_J1_ANGLE_LEFT, SM_STEP2_J2_ANGLE_LEFT, 0.0f, 0.0f, 0.0f, 0.0f, J1_EN | J2_EN);
     }

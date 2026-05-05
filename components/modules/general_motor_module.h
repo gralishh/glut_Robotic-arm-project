@@ -125,7 +125,7 @@ typedef enum
       switch (ctrl_state)                                                                     \
       {                                                                                       \
       case POS_LOOP:                                                                          \
-        AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t *)instance_ptr, angle, 11500, 9500);  \
+        AK_joint_motor_pos_speed_ctrl((AK_Joint_Motor_t *)instance_ptr, angle, 24000, 28000); \
         break;                                                                                \
       case LOCK:                                                                              \
         AK_joint_motor_lock_ctrl((AK_Joint_Motor_t *)instance_ptr);                           \
