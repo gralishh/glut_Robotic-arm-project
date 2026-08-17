@@ -36,7 +36,6 @@
 #include "catcher_task.h"
 #include "detect_task.h" 
 #include "referee_usart_task.h"
-#include "usart_measure_task.h"/*??????*/
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
 #include "Custom_ctrl.h"
@@ -77,18 +76,12 @@ TIM_HandleTypeDef htim12;
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart7;
 UART_HandleTypeDef huart1;
-UART_HandleTypeDef huart2;
-UART_HandleTypeDef huart3;
 UART_HandleTypeDef huart10;
 DMA_HandleTypeDef hdma_uart5_rx;
 DMA_HandleTypeDef hdma_uart7_rx;
 DMA_HandleTypeDef hdma_uart7_tx;
 DMA_HandleTypeDef hdma_usart1_rx;
 DMA_HandleTypeDef hdma_usart1_tx;
-DMA_HandleTypeDef hdma_usart2_rx;
-DMA_HandleTypeDef hdma_usart2_tx;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
 DMA_HandleTypeDef hdma_usart10_rx;
 DMA_HandleTypeDef hdma_usart10_tx;
 
@@ -106,13 +99,6 @@ const osThreadAttr_t ChassisTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
-/* Definitions for USART2_measure */
-osThreadId_t USART2_measureHandle;
-const osThreadAttr_t USART2_measure_attributes = {
-  .name = "USART2_measure",
-  .stack_size = 512 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
 /* Definitions for GimbalTask */
 osThreadId_t GimbalTaskHandle;
 const osThreadAttr_t GimbalTask_attributes = {
@@ -125,13 +111,6 @@ osThreadId_t HandTaskHandle;
 const osThreadAttr_t HandTask_attributes = {
   .name = "HandTask",
   .stack_size = 1024 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for USART3_measure */
-osThreadId_t USART3_measureHandle;
-const osThreadAttr_t USART3_measure_attributes = {
-  .name = "USART3_measure",
-  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CustomCtrlTask */
@@ -191,18 +170,14 @@ static void MX_FDCAN1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_UART7_Init(void);
 static void MX_USART10_UART_Init(void);
-static void MX_USART3_UART_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_FDCAN2_Init(void);
 static void MX_FDCAN3_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM12_Init(void);
 void StartDefaultTask(void *argument);
 void __chassis_task(void *argument);
-void __usart2_measure_task(void *argument);
 void __gimbal_task(void *argument);
 void __hand_task(void *argument);
-void __usart3_measure_task(void *argument);
 void __Custom_Ctrl_Task(void *argument);
 void __catcher_task(void *argument);
 void __referee_task(void *argument);
@@ -262,8 +237,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_UART7_Init();
   MX_USART10_UART_Init();
-  MX_USART3_UART_Init();
-  MX_USART2_UART_Init();
   MX_FDCAN2_Init();
   MX_FDCAN3_Init();
   MX_TIM2_Init();
@@ -276,8 +249,6 @@ int main(void)
   usart1_init();
   uart7_init();
   usart10_init();
-  usart2_init();
-  usart3_init();
   DJI_CANBus_init_all();
   ui_init_g();
   WS2812_Ctrl(0,0,0);
@@ -322,17 +293,11 @@ int main(void)
   /* creation of ChassisTask */
   ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
-  /* creation of USART2_measure */
-  USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
-
   /* creation of GimbalTask */
   GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
-
-  /* creation of USART3_measure */
-  USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
 
   /* creation of CustomCtrlTask */
   CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
@@ -1060,102 +1025,6 @@ static void MX_USART1_UART_Init(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART2_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART2_Init 0 */
-
-  /* USER CODE END USART2_Init 0 */
-
-  /* USER CODE BEGIN USART2_Init 1 */
-
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 4000000;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart2.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart2.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart2.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_RS485Ex_Init(&huart2, UART_DE_POLARITY_HIGH, 0, 0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetTxFifoThreshold(&huart2, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetRxFifoThreshold(&huart2, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_DisableFifoMode(&huart2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART2_Init 2 */
-
-  /* USER CODE END USART2_Init 2 */
-
-}
-
-/**
-  * @brief USART3 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USART3_UART_Init(void)
-{
-
-  /* USER CODE BEGIN USART3_Init 0 */
-
-  /* USER CODE END USART3_Init 0 */
-
-  /* USER CODE BEGIN USART3_Init 1 */
-
-  /* USER CODE END USART3_Init 1 */
-  huart3.Instance = USART3;
-  huart3.Init.BaudRate = 4000000;
-  huart3.Init.WordLength = UART_WORDLENGTH_8B;
-  huart3.Init.StopBits = UART_STOPBITS_1;
-  huart3.Init.Parity = UART_PARITY_NONE;
-  huart3.Init.Mode = UART_MODE_TX_RX;
-  huart3.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart3.Init.OverSampling = UART_OVERSAMPLING_16;
-  huart3.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart3.Init.ClockPrescaler = UART_PRESCALER_DIV1;
-  huart3.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
-  if (HAL_UART_Init(&huart3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetTxFifoThreshold(&huart3, UART_TXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_SetRxFifoThreshold(&huart3, UART_RXFIFO_THRESHOLD_1_8) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_UARTEx_DisableFifoMode(&huart3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USART3_Init 2 */
-
-  /* USER CODE END USART3_Init 2 */
-
-}
-
-/**
   * @brief USART10 Initialization Function
   * @param None
   * @retval None
@@ -1345,25 +1214,6 @@ void __chassis_task(void *argument)
   /* USER CODE END __chassis_task */
 }
 
-/* USER CODE BEGIN Header___usart2_measure_task */
-/**
-* @brief Function implementing the USART2_measure thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header___usart2_measure_task */
-void __usart2_measure_task(void *argument)
-{
-  /* USER CODE BEGIN __usart2_measure_task */
-  usart2_measure_task(argument);
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END __usart2_measure_task */
-}
-
 /* USER CODE BEGIN Header___gimbal_task */
 /**
 * @brief Function implementing the GimbalTask thread.
@@ -1400,25 +1250,6 @@ void __hand_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __hand_task */
-}
-
-/* USER CODE BEGIN Header___usart3_measure_task */
-/**
-* @brief Function implementing the USART3_measure thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header___usart3_measure_task */
-void __usart3_measure_task(void *argument)
-{
-  /* USER CODE BEGIN __usart3_measure_task */
-  usart3_measure_task(argument);
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END __usart3_measure_task */
 }
 
 /* USER CODE BEGIN Header___Custom_Ctrl_Task */

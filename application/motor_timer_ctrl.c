@@ -5,7 +5,6 @@
 //#include "gimbal_task.h"
 #include "cmsis_os2.h"
 #include "timers.h"
-#include "M8010_motor.h"
 #include "DJI_motor_canbus.h"
 #include "dm4310_drv.h"
 #include "AK_series.h"
@@ -55,7 +54,6 @@ void motor_timer_ctrl_callback(void)
   }
 
   /*****standalone_motor_ctrl*****/
-  //__M8010_motor_control_hook();
 
   //延时控制发送频率
   static uint32_t last_time_j2 = 0;

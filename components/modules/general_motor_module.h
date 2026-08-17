@@ -19,7 +19,6 @@ typedef enum
 {
   NON_MOTOR = 0x00,
   DJI_MOTOR,
-  M8010_MOTOR,
   M4310_MOTOR,
   AK_MOTOR,
 } Motor_Type_e;
@@ -34,11 +33,6 @@ typedef enum
           (current_ptr),                                                                        \
           (speed_ptr),                                                                          \
           (angle_ptr));                                                                         \
-      break;                                                                                    \
-    case M8010_MOTOR:                                                                           \
-      *current_ptr = ((M8010_motor_t *)instance_ptr)->recv_data.T;                              \
-      *speed_ptr = ((M8010_motor_t *)instance_ptr)->recv_data.W;                                \
-      *angle_ptr = ((M8010_motor_t *)instance_ptr)->recv_data.Pos;                              \
       break;                                                                                    \
     case M4310_MOTOR:                                                                           \
       *current_ptr = ((Joint_Motor_t *)instance_ptr)->para.tor;                                 \
@@ -80,24 +74,6 @@ typedef enum
         break;                                                                                \
       default:                                                                                \
         DJI_Motor_set_nonforce((DJI_Motor_Ctrl_t *)instance_ptr);                             \
-        break;                                                                                \
-      }                                                                                       \
-      break;                                                                                  \
-    case M8010_MOTOR:                                                                         \
-      switch (ctrl_state)                                                                     \
-      {                                                                                       \
-      case POS_LOOP:                                                                          \
-        M8010_motor_set_angle((M8010_motor_t *)instance_ptr, angle);                          \
-        break;                                                                                \
-      case LOCK:                                                                              \
-        M8010_motor_lock((M8010_motor_t *)instance_ptr);                                      \
-        break;                                                                                \
-      case NON_FORCE:                                                                         \
-        M8010_motor_nonforce((M8010_motor_t *)instance_ptr);                                  \
-        break;                                                                                \
-      case OFFLINE:                                                                           \
-      default:                                                                                \
-        M8010_motor_nonforce((M8010_motor_t *)instance_ptr);                                  \
         break;                                                                                \
       }                                                                                       \
       break;                                                                                  \
@@ -147,7 +123,6 @@ typedef enum
 
 #include "DJI_motor.h"
 #include "dm4310_drv.h"
-#include "M8010_motor.h"
 #include "AK_series.h"
 
 #endif

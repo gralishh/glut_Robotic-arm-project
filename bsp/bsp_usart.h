@@ -54,31 +54,4 @@ void USART10_ERR_HOOK(void);
 void USART10_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
 
 
-/*USART2(RS485通信)*/
-void usart2_init(void);
-unsigned int USART2_Send(uint8_t *data, unsigned short len);
-unsigned int USART2_Recv(unsigned char *data, unsigned short len);
-unsigned char USART2_At( unsigned short offset);
-void USART2_Drop( unsigned short LenToDrop);
-unsigned int USART2_GetDataCount( void );
-void USART2_Free(void);
-
-void USART2_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
-void USART2_ERR_HOOK(void);
-void USART2_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
-
-
-/*USART3(RS485通信)*/
-void usart3_init(void);
-unsigned int USART3_Send(uint8_t *data, unsigned short len);
-unsigned int USART3_Recv(unsigned char *data, unsigned short len);
-unsigned char USART3_At( unsigned short offset);
-void USART3_Drop( unsigned short LenToDrop);
-unsigned int USART3_GetDataCount( void );
-void USART3_Free(void);
-
-void USART3_IDLERX_HOOK(UART_HandleTypeDef *huart,uint16_t Size);
-void USART3_ERR_HOOK(void);
-void USART3_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma);
-
 #endif 
