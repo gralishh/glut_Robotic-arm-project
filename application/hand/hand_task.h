@@ -48,6 +48,17 @@ typedef enum
   HAND_MODE_COUNT,
 } HAND_CTRL_MODE;
 
+//新夹爪状态机
+typedef enum
+{
+  HAND_CLAW_IDLE,
+  HAND_CLAW_OPENING,   // PE13 正在输出 200ms 高电平
+  HAND_CLAW_CLOSING    // PE9 正在输出 200ms 高电平，用于轮询函数非阻塞式延时
+} hand_claw_state_t;
+
+//新夹爪参数
+
+
 typedef struct
 {
   /*instance array*/

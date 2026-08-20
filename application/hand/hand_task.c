@@ -12,6 +12,7 @@ void hand_task(void *argument)
   osDelay(1000);
   while(1)
   {
+		
     hand_task_get_feedback();
     hand_task_mode_flush();
     hand_task_set_output();

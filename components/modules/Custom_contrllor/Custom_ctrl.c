@@ -26,9 +26,9 @@
 #define cc_int_data (Custom_Ctrl_get_rx_pack_ptr()->CC_val_i)
 
 /*custom controller remap(custom controller -> joint_angle)*/
-//hand_param
-float custom_controller_K[5] = {-1, 1, -1, 185 / 3.14, 1};
-float custom_controller_D[5] = {0.5506f, 2.8117f, 3.6662f, 1.4986f, 2.7442f};
+// hand_param
+float custom_controller_K[5] = {-1, (2.289f + 2.261f) / (6.936f - 2.903f), -1, 185 / 3.14f, 1};
+float custom_controller_D[5] = {0.5506f, 2.903f, 3.6662f, 1.4986f, 2.7442f};
 
 /*crc¼ì²â*/
 static uint16_t get_crc16_check_sum(uint8_t *p_msg, uint16_t len, uint16_t crc16);

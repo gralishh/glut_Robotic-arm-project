@@ -51,15 +51,15 @@ typedef enum{
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-/*OUTÎªÎüÆøÆø±Ã£¬INÎª³öÆøÆø±Ã*/
+/*OUTÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½INÎªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½*/
 //#define PUMP1_PULL() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_SET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
 //#define PUMP1_PUSH() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_SET)
 //#define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET);HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
 
-#define PUMP1_ON() HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_SET)
-#define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
-#define PUMP2_ON() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_SET)
-#define PUMP2_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET)
+// #define PUMP1_ON() HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_SET)
+// #define PUMP1_OFF() HAL_GPIO_WritePin(PUMP1_IN_GPIO_Port,PUMP1_IN_Pin,GPIO_PIN_RESET)
+// #define PUMP2_ON() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_SET)
+// #define PUMP2_OFF() HAL_GPIO_WritePin(PUMP1_OUT_GPIO_Port,PUMP1_OUT_Pin,GPIO_PIN_RESET)
 /* USER CODE END EM */
 
 void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
@@ -74,10 +74,9 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define POWER_5V_EN_Pin GPIO_PIN_15
 #define POWER_5V_EN_GPIO_Port GPIOC
-#define PUMP1_IN_Pin GPIO_PIN_9
-#define PUMP1_IN_GPIO_Port GPIOE
-#define PUMP1_OUT_Pin GPIO_PIN_13
-#define PUMP1_OUT_GPIO_Port GPIOE
+#define CLAW_CLOSE_PIN_Pin GPIO_PIN_9
+#define CLAW_OPEN_PIN_Pin GPIO_PIN_13
+#define CLAW_PIN_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

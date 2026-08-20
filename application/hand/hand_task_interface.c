@@ -127,6 +127,14 @@ static void __hand_move_OCSM(void);
 
 static void __hand_rc2_ctrl(void);
 
+static hand_claw_init(void)
+//新夹爪参数
+static hand_claw_state_t hand_claw_state = HAND_CLAW_IDLE;//默认夹爪空闲
+static uint16_t hand_claw_tick = 0;
+static uint8_t last_claw_open_sta = 0;//记录上次是否已控制夹爪闭合，防止多次闭合夹爪
+static uint8_t last_claw_close_sta = 0;
+
+
 // static void hand_pitch_reset(void);
 
 /*general handler method*/
@@ -306,8 +314,16 @@ void hand_task_get_feedback()
   )
   ...
   */
-
-
+//HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_RESET);
+//  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
+  // HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+	// HAL_Delay(500);
+	// HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_RESET);
+	// HAL_Delay(10000);
+  // HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET); 
+	// HAL_Delay(500);
+	// HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_RESET);
+	// HAL_Delay(10000);
 }
 
 /**
@@ -627,6 +643,21 @@ void basic_motor_init(void)
     StallDetectEnable(index, 1);
   }
 }
+
+// 新夹爪初始化
+ void hand_claw_init(void)
+{
+    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                      CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
+                      GPIO_PIN_RESET);              //默认都不控制夹爪
+
+    hand_claw_state = HAND_CLAW_IDLE;
+    hand_claw_tick = 0;
+
+    last_claw_open_sta = 0;
+    last_claw_close_sta = 0;
+}
+
 void __J1_init(void)
 {
   __hand_J1_init(1);

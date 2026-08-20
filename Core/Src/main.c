@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "ws2812.h"
 #include "bsp_pwm.h"
-#include "remote_control.h" /*??ÓÚ????*/
+#include "remote_control.h" /*??ï¿½ï¿½????*/
 #include "can_bsp.h"
 #include "bsp_usart.h"
 #include "timers.h"
@@ -99,6 +99,13 @@ const osThreadAttr_t ChassisTask_attributes = {
   .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
+/* Definitions for USART2_measure */
+osThreadId_t USART2_measureHandle;
+const osThreadAttr_t USART2_measure_attributes = {
+  .name = "USART2_measure",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
 /* Definitions for GimbalTask */
 osThreadId_t GimbalTaskHandle;
 const osThreadAttr_t GimbalTask_attributes = {
@@ -111,6 +118,13 @@ osThreadId_t HandTaskHandle;
 const osThreadAttr_t HandTask_attributes = {
   .name = "HandTask",
   .stack_size = 1024 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for USART3_measure */
+osThreadId_t USART3_measureHandle;
+const osThreadAttr_t USART3_measure_attributes = {
+  .name = "USART3_measure",
+  .stack_size = 128 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CustomCtrlTask */
@@ -176,8 +190,10 @@ static void MX_TIM2_Init(void);
 static void MX_TIM12_Init(void);
 void StartDefaultTask(void *argument);
 void __chassis_task(void *argument);
+void __usart2_measure_task(void *argument);
 void __gimbal_task(void *argument);
 void __hand_task(void *argument);
+void __usart3_measure_task(void *argument);
 void __Custom_Ctrl_Task(void *argument);
 void __catcher_task(void *argument);
 void __referee_task(void *argument);
@@ -253,8 +269,18 @@ int main(void)
   ui_init_g();
   WS2812_Ctrl(0,0,0);
 
+  /* TEMP TEST: drive PD5/PD6 high to verify these pins output high level */
+//  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_SET);
+//	HAL_Delay(100);
+//	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_9, GPIO_PIN_RESET);
+//	HAL_Delay(2000);
+//  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_SET);
+//	HAL_Delay(100);
+//	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_13, GPIO_PIN_RESET);
+//	HAL_Delay(2000);
   //Vofa_Init(&vofa_handler,VOFA_MODE_SKIP);
-  HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
+ 
+HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   HAL_Delay(3000);/*delay for initalization of motor*/
   /* USER CODE END 2 */
 
@@ -293,11 +319,17 @@ int main(void)
   /* creation of ChassisTask */
   ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
+  /* creation of USART2_measure */
+  USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
+
   /* creation of GimbalTask */
   GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
+
+  /* creation of USART3_measure */
+  USART3_measureHandle = osThreadNew(__usart3_measure_task, NULL, &USART3_measure_attributes);
 
   /* creation of CustomCtrlTask */
   CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
@@ -330,6 +362,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    
   }
   /* USER CODE END 3 */
 }
@@ -1080,7 +1113,6 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
-  __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
   /* DMA1_Stream0_IRQn interrupt configuration */
@@ -1104,18 +1136,6 @@ static void MX_DMA_Init(void)
   /* DMA1_Stream7_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA1_Stream7_IRQn);
-  /* DMA2_Stream0_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-  /* DMA2_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
-  /* DMA2_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-  /* DMA2_Stream4_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream4_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream4_IRQn);
 
 }
 
@@ -1142,7 +1162,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port, POWER_5V_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, PUMP1_IN_Pin|PUMP1_OUT_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, CLAW_CLOSE_PIN_Pin|CLAW_OPEN_PIN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : POWER_5V_EN_Pin */
   GPIO_InitStruct.Pin = POWER_5V_EN_Pin;
@@ -1151,8 +1171,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(POWER_5V_EN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PUMP1_IN_Pin PUMP1_OUT_Pin */
-  GPIO_InitStruct.Pin = PUMP1_IN_Pin|PUMP1_OUT_Pin;
+  /*Configure GPIO pins : CLAW_CLOSE_PIN_Pin CLAW_OPEN_PIN_Pin */
+  GPIO_InitStruct.Pin = CLAW_CLOSE_PIN_Pin|CLAW_OPEN_PIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1214,6 +1234,24 @@ void __chassis_task(void *argument)
   /* USER CODE END __chassis_task */
 }
 
+/* USER CODE BEGIN Header___usart2_measure_task */
+/**
+* @brief Function implementing the USART2_measure thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___usart2_measure_task */
+void __usart2_measure_task(void *argument)
+{
+  /* USER CODE BEGIN __usart2_measure_task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __usart2_measure_task */
+}
+
 /* USER CODE BEGIN Header___gimbal_task */
 /**
 * @brief Function implementing the GimbalTask thread.
@@ -1250,6 +1288,24 @@ void __hand_task(void *argument)
     osDelay(1);
   }
   /* USER CODE END __hand_task */
+}
+
+/* USER CODE BEGIN Header___usart3_measure_task */
+/**
+* @brief Function implementing the USART3_measure thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header___usart3_measure_task */
+void __usart3_measure_task(void *argument)
+{
+  /* USER CODE BEGIN __usart3_measure_task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END __usart3_measure_task */
 }
 
 /* USER CODE BEGIN Header___Custom_Ctrl_Task */
