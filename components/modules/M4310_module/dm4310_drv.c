@@ -2,10 +2,13 @@
 
 #include "arm_math.h"
 
+extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 
+Joint_Motor_t DM_Motor_J1 = {0};
 Joint_Motor_t DM_Motor_J2 = {0};
 Joint_Motor_t DM_Motor_J3 = {0};
+Joint_Motor_t DM_Motor_J4 = {0};
 Joint_Motor_t DM_Motor_J5 = {0};
 Joint_Motor_t DM_Motor_gripper = {0};
 
@@ -286,12 +289,16 @@ void dm_set_pos(Joint_Motor_t *motor_ptr, float angle)
 		motor_ptr->enable = 1;
 	}
 	if (motor_ptr->para.id == 0x01)
-		pos_speed_ctrl(motor_ptr, angle, 1.4);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1.4
 	else if (motor_ptr->para.id == 0x02)
-		pos_speed_ctrl(motor_ptr, angle, 1.4);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);
 	else if (motor_ptr->para.id == 0x03)
-		pos_speed_ctrl(motor_ptr, angle, 1);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
 	else if (motor_ptr->para.id == 0x04)
-		pos_speed_ctrl(motor_ptr, angle, 1);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+	else if (motor_ptr->para.id == 0x05)
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+	else if (motor_ptr->para.id == 0x06)
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
 
 }

@@ -35,6 +35,7 @@
 #define RC_CTRL_PTR (get_remote_control_point())
 
     /*extern*/
+		extern FDCAN_HandleTypeDef hfdcan1;
     extern FDCAN_HandleTypeDef hfdcan2;
 
 /*ABS*/
@@ -43,16 +44,27 @@
 #define HAND_CTRL_CAN
 // joint mapping parameter
 // #define J1_MAP_K   0.167 /*for m8010*/
-#define J1_MAP_K (3.14f / 185.0f)
-#define J1_MAP_D 0
+#define J1_MAP_K -0.841f//J1已改
+#define J1_MAP_D -0.0434f
+
 #define J2_MAP_K 1.0f
 #define J2_MAP_D 0
+
+#define J3_MAP_K 1.0f
+#define J3_MAP_D 0
+
+#define J4_MAP_K 1.0f
+#define J4_MAP_D 0
+
+#define J5_MAP_K -0.6710f//J5已更改
+#define J5_MAP_D 1.6349f
+
 #define GR_MAP_K 1.0f
 #define GR_MAP_D 0
 // #define J3_MAP_K (-3.14f / 42.4f) /*old value(-1.0f/19.2f)*/
 // #define J3_MAP_D (-1.668)
-#define J4_MAP_K (180.0f / -457.0f)
-#define J4_MAP_D (1.18f)
+// #define J4_MAP_K (180.0f / -457.0f)
+// #define J4_MAP_D (1.18f)
 #define dm_g_max -2.515f
 #define dm_g_min -2.856f
 // #define PITCH_MAP_K (PI / 2 / (135.0f - 50.0f))
@@ -74,12 +86,12 @@
 #define JG_EN (0x01 << 5)
 
 /*global motor handler*/
-extern AK_Joint_Motor_t AK70_10_motor;
+extern Joint_Motor_t DM_Motor_J1;
 extern Joint_Motor_t DM_Motor_J2;
 extern Joint_Motor_t DM_Motor_J3;
-DJI_Motor_Ctrl_t DJI_Motor_J4;
+extern Joint_Motor_t DM_Motor_J4;
 extern Joint_Motor_t DM_Motor_J5;
-extern Joint_Motor_t DM_Motor_gripper;
+extern Joint_Motor_t DM_Motor_gripper;//暂时定gripper为机械臂J6
 
 // extern M8010_motor_t joint1_motor;
 // DJI_Motor_Ctrl_t DJI_Motor_headendL;
@@ -113,11 +125,11 @@ static void __J5_init(void);
 static void __gripper_init(void);
 
 static void __DM_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_value, float l_value);
-static uint8_t __hand_J1_init(uint8_t reset);
+static uint8_t __hand_J1_init(void);
 // static uint8_t __hand_J1_init(void);
 static uint8_t __hand_J2_init(void);
 static uint8_t __hand_J3_init(void);
-static uint8_t __hand_J4_init(uint8_t reset);
+static uint8_t __hand_J4_init(void);
 static uint8_t __hand_J5_init(void);
 static uint8_t __hand_gripper_init(void);
 
@@ -250,17 +262,17 @@ void hand_task_init()
   basic_motor_init();
   osDelay(100);
   // 机械臂初始化
-  __gripper_init();
-  osDelay(50);
-  __J5_init();
-  osDelay(50);
-  __J4_init();
-  osDelay(50);
-  __J3_init();
-  osDelay(50);
-  __J2_init();
-  osDelay(50);
-  __J1_init();
+   __gripper_init();
+   osDelay(50);
+    __J5_init();
+    osDelay(50);
+    __J4_init();
+    osDelay(50);
+    __J3_init();
+    osDelay(50);
+   __J2_init();
+   osDelay(50);
+   __J1_init();
 }
 
 /**
@@ -285,29 +297,14 @@ void hand_task_get_feedback()
   }
 
   /*joint angle map*/
-  //__GET_JOINT_ANGLE(HAND_J1)=J1_MAP_K*__GET_MOTOR_ANGLE(M8010_J1) +J1_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(AK_J1) + J1_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(DM_J1) + J1_MAP_D;
   __GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J3) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J2_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DJI_2006_J4) + J4_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J5) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J2_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J3) = J3_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J3_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DM_J4) + J4_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J5) = J5_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J5_MAP_D;
   __GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
 
-  // __GET_JOINT_ANGLE(HAND_PITCH) = HANDLER_PTR->joint_angle[HAND_PITCH];
-  // __GET_JOINT_ANGLE(HAND_ROLL) = HANDLER_PTR->joint_angle[HAND_ROLL];
-
-  // 角度换算
-  //  已知电机角度 theta_L 和 theta_R 时，计算关节角度：
-  //  __GET_JOINT_ANGLE(HAND_PITCH) = PITCH_MAP_D + 0.5f * PITCH_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) - __GET_MOTOR_ANGLE(DJI_HE_L));
-  //  __GET_JOINT_ANGLE(HAND_ROLL) = ROLL_MAP_D + 0.5f * ROLL_MAP_K * (__GET_MOTOR_ANGLE(DJI_HE_R) + __GET_MOTOR_ANGLE(DJI_HE_L));
-  /*
-  __GET_JOINT_ANGLE(index,
-    ...
-  )
-  ...
-  */
-
-
+  
 }
 
 /**
@@ -349,7 +346,9 @@ void hand_task_mode_flush()
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
     if (switch_is_up(get_remote_control_point()->rc.s[0]))
-      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      //__SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
@@ -428,11 +427,11 @@ void hand_task_mode_flush()
     }
   }
 
-  if ( GET_KEY(KEY_F)) // 机械臂保持不动
-    idle_flag =0;
+  // if ( GET_KEY(KEY_F)) // 机械臂保持不动
+  //   idle_flag =0;
   
-  if (idle_flag == 1)
-    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+  // if (idle_flag == 1)
+  //   __SET_STRUCT_MODE(HAND_MODE_IDLE);
  
 
     // else
@@ -446,10 +445,10 @@ void hand_task_mode_flush()
     //    __SET_STRUCT_MODE(HAND_MODE_IDLE);
     //  }
 
-if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
-{
-  __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
-}
+// if (toe_is_error(DBUSTOE) && toe_is_error(CAMERA_TOE))
+// {
+//   __SET_STRUCT_MODE(HAND_MODE_NONFORCE);
+// }
 
   // if (HANDLER_PTR->ctrl_mode == last_mode)
   //   HANDLER_PTR->mode_switch = 0;
@@ -479,18 +478,7 @@ void hand_task_set_output()
   case HAND_MODE_RC2_CTRL:
     __hand_rc2_ctrl();
     break;
-  case HAND_MODE_BTD_CTRL:
-    __hand_move_BTD();
-    break;
-  case HAND_MODE_CUSTOM_CTRL:
-    __hand_custom_ctrl();
-    break;
-  case HAND_MODE_GSM_CTRL:
-    __hand_move_GSM();
-    break;
-  case HAND_MODE_SM_CTRL:
-    __hand_move_OCSM();
-    break;
+
   // case HAND_MODE_RESET_CTRL:
   //   __hand_move_reset();
   //  break;
@@ -514,27 +502,20 @@ void hand_task_output()
   uint16_t index;
 
   /*joint map to motor state*/
-  // if(__GET_MOTOR_CTRL_MODE(M8010_J1)==POS_LOOP)
-  //   __SET_MOTOR_ANGLE(M8010_J1,(HANDLER_PTR->joint_angle[HAND_J1]-J1_MAP_D)/J1_MAP_K);
-  if (__GET_MOTOR_CTRL_MODE(AK_J1) == POS_LOOP)
-    __SET_MOTOR_ANGLE(AK_J1, (HANDLER_PTR->joint_angle[HAND_J1] - J1_MAP_D) / J1_MAP_K);
+  
+  if (__GET_MOTOR_CTRL_MODE(DM_J1) == POS_LOOP)
+    __SET_MOTOR_ANGLE(DM_J1, (HANDLER_PTR->joint_angle[HAND_J1] - J1_MAP_D) / J1_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J2) == POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J2, (HANDLER_PTR->joint_angle[HAND_J2] - J2_MAP_D) / J2_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J3) == POS_LOOP)
-    __SET_MOTOR_ANGLE(DM_J3, (HANDLER_PTR->joint_angle[HAND_J3] - J2_MAP_D) / J2_MAP_K);
-  if (__GET_MOTOR_CTRL_MODE(DJI_2006_J4) == POS_LOOP)
-    __SET_MOTOR_ANGLE(DJI_2006_J4, (HANDLER_PTR->joint_angle[HAND_J4] - J4_MAP_D) / J4_MAP_K);
+    __SET_MOTOR_ANGLE(DM_J3, (HANDLER_PTR->joint_angle[HAND_J3] - J3_MAP_D) / J3_MAP_K);
+  if (__GET_MOTOR_CTRL_MODE(DM_J4) == POS_LOOP)
+    __SET_MOTOR_ANGLE(DM_J4, (HANDLER_PTR->joint_angle[HAND_J4] - J4_MAP_D) / J4_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J5) == POS_LOOP)
-    __SET_MOTOR_ANGLE(DM_J5, (HANDLER_PTR->joint_angle[HAND_J5] - J2_MAP_D) / J2_MAP_K);
+    __SET_MOTOR_ANGLE(DM_J5, (HANDLER_PTR->joint_angle[HAND_J5] - J5_MAP_D) / J5_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(dm_gripper) == POS_LOOP)
     __SET_MOTOR_ANGLE(dm_gripper, (HANDLER_PTR->joint_angle[HAND_G] - GR_MAP_D) / GR_MAP_K);
-  // if (__GET_MOTOR_CTRL_MODE(DJI_HE_L) == POS_LOOP)
-  //   __SET_MOTOR_ANGLE(DJI_HE_L, -(HANDLER_PTR->joint_angle[HAND_PITCH] - PITCH_MAP_D) / PITCH_MAP_K +
-  //                                   (HANDLER_PTR->joint_angle[HAND_ROLL] - ROLL_MAP_D) / ROLL_MAP_K);
-  // if (__GET_MOTOR_CTRL_MODE(DJI_HE_R) == POS_LOOP)
-  //   __SET_MOTOR_ANGLE(DJI_HE_R, (HANDLER_PTR->joint_angle[HAND_PITCH] - PITCH_MAP_D) / PITCH_MAP_K +
-  //                                   (HANDLER_PTR->joint_angle[HAND_ROLL] - ROLL_MAP_D) / ROLL_MAP_K);
-
+  
   // osDelay(5);//防止挂载过多发送通信堵塞
   /*motor output*/
   for (index = 0; index < HAND_MOTOR_COUNT; index++)
@@ -556,11 +537,17 @@ void basic_motor_init(void)
   //__SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
   //  M8010_motor_init(&joint1_motor,3,0.76,0.088);
 
-  // J1[AK]
-  __SET_MOTOR_INSTANCE(AK_J1, &AK70_10_motor);
-  __SET_MOTOR_TYPE(AK_J1, AK_MOTOR);
-  AK_joint_motor_init(&AK70_10_motor, 93);
-  AK_joint_motor_enable(&AK70_10_motor);
+  // // J1[AK]
+  // __SET_MOTOR_INSTANCE(AK_J1, &AK70_10_motor);
+  // __SET_MOTOR_TYPE(AK_J1, AK_MOTOR);
+  // AK_joint_motor_init(&AK70_10_motor, 93);
+  // AK_joint_motor_enable(&AK70_10_motor);
+
+  // J1
+  __SET_MOTOR_INSTANCE(DM_J1, &DM_Motor_J1);
+  __SET_MOTOR_TYPE(DM_J1, M4310_MOTOR);
+  joint_motor_init(&DM_Motor_J1, 1, POS_MODE, 0.55, 1.2);
+
 
   // J2
   __SET_MOTOR_INSTANCE(DM_J2, &DM_Motor_J2);
@@ -570,7 +557,7 @@ void basic_motor_init(void)
   // J3
   __SET_MOTOR_INSTANCE(DM_J3, &DM_Motor_J3);
   __SET_MOTOR_TYPE(DM_J3, M4310_MOTOR);
-  joint_motor_init(&DM_Motor_J3, 1, POS_MODE, 0.55, 1.2);
+  joint_motor_init(&DM_Motor_J3, 3, POS_MODE, 0.55, 1.2);
 
   // // 之前j3的3508
   // __SET_MOTOR_INSTANCE(DJI_2006_J4, &DJI_Motor_J4);
@@ -583,42 +570,49 @@ void basic_motor_init(void)
   // // DJI_Motor_set_sum_angle(&DJI_Motor_J3);
   // DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
 
+  // J4
+  __SET_MOTOR_INSTANCE(DM_J4, &DM_Motor_J4);
+  __SET_MOTOR_TYPE(DM_J4, M4310_MOTOR);
+  joint_motor_init(&DM_Motor_J4, 6, POS_MODE, 0.55, 1.2);
+  
   // J5
   __SET_MOTOR_INSTANCE(DM_J5, &DM_Motor_J5);
   __SET_MOTOR_TYPE(DM_J5, M4310_MOTOR);
-  joint_motor_init(&DM_Motor_J5, 3, POS_MODE, 1.0, 1.0);
+  joint_motor_init(&DM_Motor_J5, 5, POS_MODE, 1.0, 1.0);
 
   // gripper
   __SET_MOTOR_INSTANCE(dm_gripper, &DM_Motor_gripper);
   __SET_MOTOR_TYPE(dm_gripper, M4310_MOTOR);
   joint_motor_init(&DM_Motor_gripper, 4, POS_MODE, 1.3, 1.0);
 
-  // j4
-  __SET_MOTOR_INSTANCE(DJI_2006_J4, &DJI_Motor_J4);
-  __SET_MOTOR_TYPE(DJI_2006_J4, DJI_MOTOR);
-  DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
-  // DJI_Motor_set_angle_limit();
-  // DJI_Motor_set_speed_limit();
-  DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.004, 0, 5500, 5500);
-  DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
-  DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
+  // // j4
+  // __SET_MOTOR_INSTANCE(DJI_2006_J4, &DJI_Motor_J4);
+  // __SET_MOTOR_TYPE(DJI_2006_J4, DJI_MOTOR);
+  // DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
+  // // DJI_Motor_set_angle_limit();
+  // // DJI_Motor_set_speed_limit();
+  // DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.004, 0, 5500, 5500);
+  // DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
+  // DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
 
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
-  __SET_JOINT_LIMIT(HAND_J1, 0.0f, 3.1f);
-  __SET_JOINT_LIMIT(HAND_J2, -2.261f, 2.289f);       //-128.5714~128.5714
-  __SET_JOINT_LIMIT(HAND_J3, -3.14f * 2, 3.14f * 2); // 正反90度，使用上位机更设置过零点
-  __SET_JOINT_LIMIT(HAND_J4, 0.0f, 180.0f);          // map from -351.25~3 to -162~0
-  __SET_JOINT_LIMIT(HAND_J5, -3.14f, 3.14f);         //-180~180(0.35为中心点)
-  __SET_JOINT_LIMIT(HAND_G, 0.1f, 0.636f);            // 测试得出固定角度
+ //先小范围测试
+  __SET_JOINT_LIMIT(HAND_J1, -1.57f, 1.57f);
+  __SET_JOINT_LIMIT(HAND_J2, -2.0f,-0.613f );       
+  __SET_JOINT_LIMIT(HAND_J3, -6.0f, -2.93f); 
+  __SET_JOINT_LIMIT(HAND_J4, -5.0f, 4.0f);          
+  __SET_JOINT_LIMIT(HAND_J5, -1.57f, 1.57f);         
+  __SET_JOINT_LIMIT(HAND_G, -3.14f, 3.14f);            
 
-  __CLEAR_MOTOR_OFFLINE(AK_J1);
+  __CLEAR_MOTOR_OFFLINE(DM_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
   __CLEAR_MOTOR_OFFLINE(DM_J3);
-  __CLEAR_MOTOR_OFFLINE(DJI_2006_J4);
+  __CLEAR_MOTOR_OFFLINE(DM_J4);
   __CLEAR_MOTOR_OFFLINE(DM_J5);
   __CLEAR_MOTOR_OFFLINE(dm_gripper);
 
+  DJI_CANBus_enable_bus(&DJI_CAN1_Bus_ctrl);
   DJI_CANBus_enable_bus(&DJI_CAN2_Bus_ctrl);
   hand_task_get_feedback();
 
@@ -627,50 +621,52 @@ void basic_motor_init(void)
     StallDetectEnable(index, 1);
   }
 }
+// void __J1_init(void)
+// {
+//   __hand_J1_init(1);
+//   do
+//   {
+//     hand_task_get_feedback();
+//     osDelay(1);
+//   } while (!__hand_J1_init(0));
+
+//   osDelay(10);
+//   hand_task_get_feedback();
+//   __hand_nonforce();
+//   WS2812_Ctrl(30, 100, 50);
+//   // buzzer_off();
+// }
+
 void __J1_init(void)
 {
-  __hand_J1_init(1);
-  do
-  {
+  while (!__hand_J1_init())
     hand_task_get_feedback();
-    osDelay(1);
-  } while (!__hand_J1_init(0));
-
-  osDelay(10);
-  hand_task_get_feedback();
-  __hand_nonforce();
-  WS2812_Ctrl(30, 100, 50);
-  // buzzer_off();
+  __DM_go_setting_angle(HAND_J1, 0, 0.00078f, 0.00043f);
 }
+
 
 void __J2_init(void)
 {
   while (!__hand_J2_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J2, 1.66, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J2, -1, 0.00078f, 0.00043f);
 }
 
 void __J3_init(void)
 {
   while (!__hand_J3_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J3, 0, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J3, -4, 0.00078f, 0.00043f);
 }
 
 void __J4_init(void)
 {
-  __hand_J4_init(1);
-  while (!__hand_J4_init(0))
-  {
-    hand_task_output();
-    osDelay(1);
+  while (!__hand_J4_init())
     hand_task_get_feedback();
-    __hand_nonforce();
-  }
-  hand_task_get_feedback();
-  __hand_nonforce();
-  hand_task_output();
+  __DM_go_setting_angle(HAND_J4, -4.85f, 2.0f, 0.00043f);
 }
+
+
 
 void __J5_init(void)
 {
@@ -682,6 +678,7 @@ void __gripper_init(void)
 {
   while (!__hand_gripper_init())
     hand_task_get_feedback();
+ __DM_go_setting_angle(HAND_G, 0, 0.00042f, 0.00023f);
 }
 
 void __DM_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_value, float l_value)
@@ -707,74 +704,19 @@ void __DM_go_setting_angle(HAND_JOINT_INDEX index, float angle_value, float h_va
   hand_task_output();
 }
 
-uint8_t __hand_J1_init(uint8_t reset)
-{
 
-  static uint8_t send_init_delay_count = 0;
-  static float last_joint_angle = 0.0;
-  static uint8_t to_limit_flag = 0;
+uint8_t __hand_J1_init(void)
+{ // if (DM_Motor_J2.para.state == 0x00)
 
-  if (reset)
+  if (toe_is_error(TOE_J1) || DM_Motor_J1.para.state == 0x00)
   {
-    send_init_delay_count = 0;
-    last_joint_angle = 0.0f;
-    to_limit_flag = 0;
-    // AK_joint_motor_current_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -10);
-    osDelay(50);
+    __SET_MOTOR_CTRL_MODE(HAND_J1, NON_FORCE);
+    disable_motor_mode(&hfdcan1, 1, POS_MODE);
+    osDelay(5);
+    enable_motor_mode(&hfdcan1, 1, POS_MODE);
     return 0;
   }
-
-  if (toe_is_error(TOE_J1))
-    return 0;
-
-  if (!to_limit_flag)
-  {
-    if (send_init_delay_count < 200)
-    {
-      send_init_delay_count++;
-      AK_joint_motor_current_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -13);
-      return 0;
-    }
-    else if (ABS(last_joint_angle - __GET_MOTOR_ANGLE(AK_J1)) > 0.03f && to_limit_flag != 1)
-    {
-
-      AK_joint_motor_current_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -11);
-      osDelay(5);
-      last_joint_angle = __GET_MOTOR_ANGLE(HAND_J1);
-      return 0;
-    }
-    else
-    {
-      // AK_joint_motor_speed_ctrl(__GET_MOTOR_INSTANCE(AK_J1), -20);
-      to_limit_flag = 1;
-      send_init_delay_count = 0;
-      return 0;
-    }
-  }
-
-  if (to_limit_flag)
-  {
-    if ((0.0f != __GET_JOINT_ANGLE(HAND_J1) || toe_is_error(TOE_J1))) /*等待J1控制板初始化*/
-    {
-      //__hand_idle_ctrl();/*J1电机需要给一个信号才发反馈*/
-      //__hand_nonforce();/*防止移动*/
-      /*上述注释代码不会产生任何移动*/
-
-      __SET_MOTOR_CTRL_MODE(HAND_J1, NON_FORCE);
-      if (send_init_delay_count == 0)
-      {
-        AK_joint_motor_set_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
-        // AK_joint_motor_set_forever_zero_pos(__GET_MOTOR_INSTANCE(AK_J1));
-        send_init_delay_count = 10;
-        osDelay(3);
-      }
-      AK_joint_motor_nonforce_ctrl(__GET_MOTOR_INSTANCE(AK_J1));
-      send_init_delay_count--;
-      return 0;
-    }
-    return 1;
-  }
-  return 0;
+  return 1;
 }
 
 uint8_t __hand_J2_init(void)
@@ -783,9 +725,9 @@ uint8_t __hand_J2_init(void)
   if (toe_is_error(TOE_J2) || DM_Motor_J2.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J2, NON_FORCE);
-    disable_motor_mode(&hfdcan2, 2, POS_MODE);
+    disable_motor_mode(&hfdcan1, 2, POS_MODE);
     osDelay(5);
-    enable_motor_mode(&hfdcan2, 2, POS_MODE);
+    enable_motor_mode(&hfdcan1, 2, POS_MODE);
     return 0;
   }
   return 1;
@@ -795,55 +737,26 @@ uint8_t __hand_J3_init(void)
   if (toe_is_error(TOE_J3) || DM_Motor_J3.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J3, NON_FORCE);
-    disable_motor_mode(&hfdcan2, 1, POS_MODE);
+    disable_motor_mode(&hfdcan1, 3, POS_MODE);
     osDelay(5);
-    enable_motor_mode(&hfdcan2, 1, POS_MODE);
+    enable_motor_mode(&hfdcan1, 3, POS_MODE);
     return 0;
   }
   return 1;
 }
-uint8_t __hand_J4_init(uint8_t reset)
-{
-  static int loop_count = 0;
-  static float last__angle = 0.0f;
-  static uint8_t init_complete_flag = 0;
 
-  if (reset)
+uint8_t __hand_J4_init(void)
+{ // if (DM_Motor_J2.para.state == 0x00)
+
+  if (toe_is_error(TOE_J4) || DM_Motor_J4.para.state == 0x00)
   {
-    init_complete_flag = 0;
-    loop_count = 0;
-    last__angle = 0.0f;
+    __SET_MOTOR_CTRL_MODE(HAND_J4, NON_FORCE);
+    disable_motor_mode(&hfdcan2, 6, POS_MODE);
+    osDelay(5);
+    enable_motor_mode(&hfdcan2, 6, POS_MODE);
     return 0;
   }
-  if (toe_is_error(TOE_J4))
-    return 0;
-
-  if (init_complete_flag == 0)
-  {
-
-    osDelay(50);
-
-    if (loop_count < 100)
-    {
-      DJI_Motor_clear_offline_flag(__GET_MOTOR_INSTANCE(DJI_2006_J4));
-      __SET_MOTOR_CURRENT(DJI_2006_J4, 2100);
-      loop_count++;
-    }
-    else if (ABS(last__angle - __GET_MOTOR_ANGLE(DJI_2006_J4)) > 0.17f && init_complete_flag != 1)
-    {
-      last__angle = __GET_MOTOR_ANGLE(DJI_2006_J4);
-      __SET_MOTOR_CURRENT(DJI_2006_J4, 1400);
-    }
-    else
-    {
-      init_complete_flag = 1;
-      __SET_MOTOR_CURRENT(DJI_2006_J4, 0);
-      DJI_Motor_clear_circle_count(__GET_MOTOR_INSTANCE(DJI_2006_J4));
-      hand_task_get_feedback();
-      return 1;
-    }
-  }
-  return 0;
+  return 1;
 }
 
 uint8_t __hand_J5_init(void)
@@ -851,9 +764,9 @@ uint8_t __hand_J5_init(void)
   if (toe_is_error(TOE_J5) || DM_Motor_J5.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J5, NON_FORCE);
-    disable_motor_mode(&hfdcan2, 3, POS_MODE);
+    disable_motor_mode(&hfdcan2, 5, POS_MODE);
     osDelay(5);
-    enable_motor_mode(&hfdcan2, 3, POS_MODE);
+    enable_motor_mode(&hfdcan2, 5, POS_MODE);
     return 0;
   }
   return 1;
@@ -967,7 +880,7 @@ uint8_t __hand_motor_refresh_online(int index)
       return 1;
     else
       return 0;
-  case DJI_2006_J4:
+  case DM_J4:
     __J4_init();
     return 1;
   case DM_J3:
@@ -980,7 +893,7 @@ uint8_t __hand_motor_refresh_online(int index)
       return 1;
     else
       return 0;
-  case AK_J1:
+  case DM_J1:
     __J1_init();
     return 1;
   default:

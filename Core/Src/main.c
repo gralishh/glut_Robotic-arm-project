@@ -24,7 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "ws2812.h"
 #include "bsp_pwm.h"
-#include "remote_control.h" /*??ÓÚ????*/
+#include "remote_control.h" /*??ï¿½ï¿½????*/
 #include "can_bsp.h"
 #include "bsp_usart.h"
 #include "timers.h"
@@ -291,10 +291,10 @@ int main(void)
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of GimbalTask */
-  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+  //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
@@ -303,13 +303,13 @@ int main(void)
   CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
 
   /* creation of CatcherTask */
-  CatcherTaskHandle = osThreadNew(__catcher_task, NULL, &CatcherTask_attributes);
+  //CatcherTaskHandle = osThreadNew(__catcher_task, NULL, &CatcherTask_attributes);
 
   /* creation of referee_task */
-  referee_taskHandle = osThreadNew(__referee_task, NULL, &referee_task_attributes);
+  //referee_taskHandle = osThreadNew(__referee_task, NULL, &referee_task_attributes);
 
   /* creation of VofaTask */
-  VofaTaskHandle = osThreadNew(__vofa_uart_task, NULL, &VofaTask_attributes);
+  //VofaTaskHandle = osThreadNew(__vofa_uart_task, NULL, &VofaTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
