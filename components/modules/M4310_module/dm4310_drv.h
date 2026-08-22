@@ -67,6 +67,8 @@ extern void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, fl
 extern void mit_nonforce_ctrl(Joint_Motor_t* motor_ptr);
 extern void pos_speed_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel);
 extern void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float _vel);
+extern void speed_ctrl_output(Joint_Motor_t *motor_ptr, float vel);
+
 
 void mit_ctrl_pos_speed(Joint_Motor_t* motor_ptr,float pos,float vel);
 void mit_ctrl_lock(Joint_Motor_t* motor_ptr);

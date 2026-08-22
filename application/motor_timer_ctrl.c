@@ -11,7 +11,7 @@
 #include "servo.h"
 
 #include "detect_task.h"
-
+      
 /*can*/
 extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;

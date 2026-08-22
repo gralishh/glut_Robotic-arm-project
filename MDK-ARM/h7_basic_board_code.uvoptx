@@ -140,6 +140,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
+          <Name>?</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -339,15 +340,22 @@
           <WinNumber>1</WinNumber>
           <ItemText>DM_Motor_J2</ItemText>
         </Ww>
-      </WatchWindow1>
-      <MemoryWindow1>
-        <Mm>
+        <Ww>
+          <count>36</count>
           <WinNumber>1</WinNumber>
-          <SubType>1</SubType>
-          <ItemText>0x2401A008</ItemText>
-          <AccSizeX>0</AccSizeX>
-        </Mm>
-      </MemoryWindow1>
+          <ItemText>DM_Motor_J4</ItemText>
+        </Ww>
+        <Ww>
+          <count>37</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>cnt</ItemText>
+        </Ww>
+        <Ww>
+          <count>38</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\h7_basic_board_code\../components/modules/M4310_module/dm4310_drv.c\DM_Motor_J4</ItemText>
+        </Ww>
+      </WatchWindow1>
       <MemoryWindow4>
         <Mm>
           <WinNumber>4</WinNumber>

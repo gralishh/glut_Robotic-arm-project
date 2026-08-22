@@ -145,6 +145,8 @@ static void __hand_move_OCSM(void);
 
 static void __hand_rc2_ctrl(void);
 
+static float shortest_angle_error(float target, float current);
+
 // static void hand_pitch_reset(void);
 
 /*general handler method*/
@@ -257,7 +259,18 @@ static void __hand_rc2_ctrl(void);
     }                                                         \
   }
 
-void hand_task_init()
+ float shortest_angle_error(float target, float current)
+{
+    float error = target - current;
+
+    if (error >  PI) error -= 2.0f * PI;
+    if (error < -PI) error += 2.0f * PI;
+
+    return error;
+}
+
+
+  void hand_task_init()
 {
   osDelay(1000);
 
@@ -270,9 +283,9 @@ void hand_task_init()
   // 机械臂初始化
   //  __gripper_init();
   //  osDelay(50);
-  //   __J5_init();
+    // __J5_init();
   //   osDelay(50);
-    __J4_init();
+   // __J4_init();
   //   osDelay(50);
   //   __J3_init();
   //   osDelay(50);
@@ -676,7 +689,10 @@ void __J3_init(void)
 void __J4_init(void)
 {
   while (!__hand_J4_init())
+  {
     hand_task_get_feedback();
+    osDelay(2);
+  }
   __DM_go_setting_angle(HAND_J4, 2, 0.2f, 0.00043f);//-4.85f
 }
 
@@ -684,11 +700,24 @@ void __J4_init(void)
 
 void __J5_init(void)
 {
+    float motor_now;
+    float motor_nominal;
+    float motor_target;
+    float joint_target;
+  
   while (!__hand_J5_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J5, 0, 0.00042f, 0.00023f);
+  
+   motor_now = __GET_MOTOR_ANGLE(DM_J5);
+   motor_nominal = (0.0f - J5_MAP_D) / J5_MAP_K;
+   motor_target = motor_now +
+                   shortest_angle_error(motor_nominal, motor_now);
+
+   joint_target = J5_MAP_K * motor_target + J5_MAP_D;
+
+    __DM_go_setting_angle(HAND_J5,joint_target  , 0.00042f, 0.00023f);
 }
-void __gripper_init(void)
+void __gripper_init(void) 
 {
   while (!__hand_gripper_init())
     hand_task_get_feedback();
@@ -780,12 +809,14 @@ uint8_t __hand_J4_init(void)
   static float    last_pos = 0.0f;
   static float    last_vel = 0.0f;
   static uint32_t cnt = 0;
+  static float now = 0.0f;
   if (toe_is_error(TOE_J4) || DM_Motor_J4.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J4, NON_FORCE);
     disable_motor_mode(&hfdcan2, 6, POS_MODE);
     osDelay(5);
     enable_motor_mode(&hfdcan2, 6, POS_MODE);
+    //enable_motor_mode(&hfdcan2, 6, SPEED_MODE);
     cnt = 0;
     phase = 0;
     
@@ -798,26 +829,30 @@ uint8_t __hand_J4_init(void)
   switch (phase)
   {
   case 0:
-  
+    // disable_motor_mode(&hfdcan2, 6, POS_MODE);
+    // enable_motor_mode(&hfdcan2, 6,SPEED_MODE);
     enable_motor_mode(&hfdcan2, 6,POS_MODE);
+    now = DM_Motor_J4.para.pos;
     last_pos = DM_Motor_J4.para.pos;
     cnt = 0;
     phase=1;
     return 0;
-  
+    
   case 1:
   {
-     float now = DM_Motor_J4.para.pos;
-      float target = now +2 ;
+     float current = DM_Motor_J4.para.pos;
+      float target = now +13.5 ;
        //mit_ctrl(&DM_Motor_J4, now, 0.0f, 0.0f, 0.0f, J4_Find_TORQUE);
         dm_set_pos(&DM_Motor_J4, target);
+        //speed_ctrl(&hfdcan2,6,0.5);
+        // speed_ctrl_output(&DM_Motor_J4,0.5);
 
        if (ABS(DM_Motor_J4.para.tor)>J4_tor_Limit&&
-               ABS(now - last_pos) < POS_Delta_THR) 
+               ABS(current - last_pos) < POS_Delta_THR) 
             //ABS(DM_Motor_J4.para.vel) < J4_vel_Limit 
         {
             cnt++;
-             
+              
         }
         else
         {
@@ -825,7 +860,7 @@ uint8_t __hand_J4_init(void)
               
         }
 
-        last_pos = now;
+        last_pos = current;
 
   if ( cnt >= 25)
         {
@@ -836,8 +871,14 @@ uint8_t __hand_J4_init(void)
 }
 
   case 2:
-  J4_zero_pos = DM_Motor_J4.para.pos;      // 此刻就是机械零点
-        //enable_motor_mode(&hfdcan2, 6, POS_MODE);
+       
+      // speed_ctrl_output(&DM_Motor_J4,0);
+        //speed_ctrl(&hfdcan2, 6, 0.0f); 
+        J4_zero_pos = DM_Motor_J4.para.pos;      // 此刻就是机械零点
+        
+        // disable_motor_mode(&hfdcan2, 6, SPEED_MODE);
+        enable_motor_mode(&hfdcan2, 6, POS_MODE);
+        
         hand_task_get_feedback();                // 刷新反馈，让当前角度映射成 0
         phase = 3;
         return 0;
