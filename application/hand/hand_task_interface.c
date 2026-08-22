@@ -53,8 +53,8 @@
 #define J3_MAP_K 1.0f
 #define J3_MAP_D 0
 
-#define J4_MAP_K 1.0f
-#define J4_MAP_D 0
+#define J4_MAP_K 0.438f  //J4已改
+#define J4_MAP_D 2.236f
 
 #define J5_MAP_K -0.6710f//J5已更改
 #define J5_MAP_D 1.6349f
@@ -84,6 +84,12 @@
 #define J4_EN (0x01 << 3)
 #define J5_EN (0x01 << 4)
 #define JG_EN (0x01 << 5)
+
+#define POS_Delta_THR 0.3   //J4位置变化量阈值
+#define J4_vel_Limit  0.17  //J4速度临界值
+#define J4_tor_Limit 1.5  //J4力矩临界值
+#define J4_Find_TORQUE  0.5  //寻零点时的扭矩
+static float J4_zero_pos = 0.0f;   // 机械零点对应的电机原始位置
 
 /*global motor handler*/
 extern Joint_Motor_t DM_Motor_J1;
@@ -262,17 +268,17 @@ void hand_task_init()
   basic_motor_init();
   osDelay(100);
   // 机械臂初始化
-   __gripper_init();
-   osDelay(50);
-    __J5_init();
-    osDelay(50);
+  //  __gripper_init();
+  //  osDelay(50);
+  //   __J5_init();
+  //   osDelay(50);
     __J4_init();
-    osDelay(50);
-    __J3_init();
-    osDelay(50);
-   __J2_init();
-   osDelay(50);
-   __J1_init();
+  //   osDelay(50);
+  //   __J3_init();
+  //   osDelay(50);
+  //  __J2_init();
+  //  osDelay(50);
+  //  __J1_init();
 }
 
 /**
@@ -300,11 +306,18 @@ void hand_task_get_feedback()
   __GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(DM_J1) + J1_MAP_D;
   __GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
   __GET_JOINT_ANGLE(HAND_J3) = J3_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J3_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DM_J4) + J4_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K *( __GET_MOTOR_ANGLE(DM_J4)- J4_zero_pos) + J4_MAP_D;
   __GET_JOINT_ANGLE(HAND_J5) = J5_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J5_MAP_D;
   __GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
 
-  
+  // HAL_GPIO_WritePin(GPIOE,GPIO_PIN_13,GPIO_PIN_SET);
+	// HAL_Delay(700);
+	// HAL_GPIO_WritePin(GPIOE,GPIO_PIN_13,GPIO_PIN_RESET);
+	// HAL_Delay(5000);
+	// HAL_GPIO_WritePin(GPIOE,GPIO_PIN_9,GPIO_PIN_SET);
+	// HAL_Delay(700);
+	// HAL_GPIO_WritePin(GPIOE,GPIO_PIN_9,GPIO_PIN_RESET);
+	// HAL_Delay(5000);
 }
 
 /**
@@ -503,6 +516,7 @@ void hand_task_output()
 
   /*joint map to motor state*/
   
+
   if (__GET_MOTOR_CTRL_MODE(DM_J1) == POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J1, (HANDLER_PTR->joint_angle[HAND_J1] - J1_MAP_D) / J1_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J2) == POS_LOOP)
@@ -510,7 +524,7 @@ void hand_task_output()
   if (__GET_MOTOR_CTRL_MODE(DM_J3) == POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J3, (HANDLER_PTR->joint_angle[HAND_J3] - J3_MAP_D) / J3_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J4) == POS_LOOP)
-    __SET_MOTOR_ANGLE(DM_J4, (HANDLER_PTR->joint_angle[HAND_J4] - J4_MAP_D) / J4_MAP_K);
+    __SET_MOTOR_ANGLE(DM_J4, J4_zero_pos +(HANDLER_PTR->joint_angle[HAND_J4] - J4_MAP_D) / J4_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J5) == POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J5, (HANDLER_PTR->joint_angle[HAND_J5] - J5_MAP_D) / J5_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(dm_gripper) == POS_LOOP)
@@ -601,7 +615,7 @@ void basic_motor_init(void)
   __SET_JOINT_LIMIT(HAND_J1, -1.57f, 1.57f);
   __SET_JOINT_LIMIT(HAND_J2, -2.0f,-0.613f );       
   __SET_JOINT_LIMIT(HAND_J3, -6.0f, -2.93f); 
-  __SET_JOINT_LIMIT(HAND_J4, -5.0f, 4.0f);          
+  __SET_JOINT_LIMIT(HAND_J4, 0, 4.0f);          //机械限位角度为0——5.76（330度）
   __SET_JOINT_LIMIT(HAND_J5, -1.57f, 1.57f);         
   __SET_JOINT_LIMIT(HAND_G, -3.14f, 3.14f);            
 
@@ -663,7 +677,7 @@ void __J4_init(void)
 {
   while (!__hand_J4_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J4, -4.85f, 2.0f, 0.00043f);
+  __DM_go_setting_angle(HAND_J4, 2, 0.2f, 0.00043f);//-4.85f
 }
 
 
@@ -745,19 +759,95 @@ uint8_t __hand_J3_init(void)
   return 1;
 }
 
+//  uint8_t __hand_J4_init(void)
+//  { // if (DM_Motor_J2.para.state == 0x00)
+
+//    if (toe_is_error(TOE_J4) || DM_Motor_J4.para.state == 0x00)
+//    {
+//      __SET_MOTOR_CTRL_MODE(HAND_J4, NON_FORCE);
+//     disable_motor_mode(&hfdcan2, 6, POS_MODE);
+//     osDelay(5);
+//      enable_motor_mode(&hfdcan2, 6, POS_MODE);
+//      return 0;
+//    }
+//    return 1;
+//  }
+
 uint8_t __hand_J4_init(void)
 { // if (DM_Motor_J2.para.state == 0x00)
 
+  static uint8_t  phase = 0; 
+  static float    last_pos = 0.0f;
+  static float    last_vel = 0.0f;
+  static uint32_t cnt = 0;
   if (toe_is_error(TOE_J4) || DM_Motor_J4.para.state == 0x00)
   {
     __SET_MOTOR_CTRL_MODE(HAND_J4, NON_FORCE);
     disable_motor_mode(&hfdcan2, 6, POS_MODE);
     osDelay(5);
     enable_motor_mode(&hfdcan2, 6, POS_MODE);
+    cnt = 0;
+    phase = 0;
+    
     return 0;
-  }
-  return 1;
+
 }
+
+  hand_task_get_feedback();
+
+  switch (phase)
+  {
+  case 0:
+  
+    enable_motor_mode(&hfdcan2, 6,POS_MODE);
+    last_pos = DM_Motor_J4.para.pos;
+    cnt = 0;
+    phase=1;
+    return 0;
+  
+  case 1:
+  {
+     float now = DM_Motor_J4.para.pos;
+      float target = now +2 ;
+       //mit_ctrl(&DM_Motor_J4, now, 0.0f, 0.0f, 0.0f, J4_Find_TORQUE);
+        dm_set_pos(&DM_Motor_J4, target);
+
+       if (ABS(DM_Motor_J4.para.tor)>J4_tor_Limit&&
+               ABS(now - last_pos) < POS_Delta_THR) 
+            //ABS(DM_Motor_J4.para.vel) < J4_vel_Limit 
+        {
+            cnt++;
+             
+        }
+        else
+        {
+            cnt = 0;
+              
+        }
+
+        last_pos = now;
+
+  if ( cnt >= 25)
+        {
+            phase = 2;
+        }
+  return 0;
+
+}
+
+  case 2:
+  J4_zero_pos = DM_Motor_J4.para.pos;      // 此刻就是机械零点
+        //enable_motor_mode(&hfdcan2, 6, POS_MODE);
+        hand_task_get_feedback();                // 刷新反馈，让当前角度映射成 0
+        phase = 3;
+        return 0;
+
+  case 3:
+    default:
+        return 1;   
+  }
+}
+
 
 uint8_t __hand_J5_init(void)
 {
@@ -864,6 +954,8 @@ void __detect_hand_motor_offline(void)
     //     count++;
     //  }
   }
+
+  return 1;
 }
 
 uint8_t __hand_motor_refresh_online(int index)
