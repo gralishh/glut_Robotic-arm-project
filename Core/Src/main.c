@@ -215,7 +215,7 @@ void __RM_UI_Timer(void *argument);
   * @retval int
   */
 int main(void)
-{
+ {
   /* USER CODE BEGIN 1 */
   for(int aaaa = 1000000 ; aaaa > 0 ; aaaa--)
 	{

@@ -53,24 +53,18 @@
 #define J3_MAP_K 1.0f
 #define J3_MAP_D 0
 
-#define J4_MAP_K 0.438f  //J4已改
-#define J4_MAP_D 2.236f
+#define J4_MAP_K  0.438f       // 0.438f  //J4已改
+#define J4_MAP_D  2.88f         //2.236f
 
-#define J5_MAP_K -0.6710f//J5已更改
-#define J5_MAP_D 1.6349f
+#define J5_MAP_K  -0.671f       //-0.6710f//J5已更改
+#define J5_MAP_D  0            //1.6349f
 
 #define GR_MAP_K 1.0f
 #define GR_MAP_D 0
-// #define J3_MAP_K (-3.14f / 42.4f) /*old value(-1.0f/19.2f)*/
-// #define J3_MAP_D (-1.668)
-// #define J4_MAP_K (180.0f / -457.0f)
-// #define J4_MAP_D (1.18f)
+
 #define dm_g_max -2.515f
 #define dm_g_min -2.856f
-// #define PITCH_MAP_K (PI / 2 / (135.0f - 50.0f))
-// #define PITCH_MAP_D (-50 * PITCH_MAP_K)
-// #define ROLL_MAP_K (PITCH_MAP_K / 2)
-// #define ROLL_MAP_D 0
+
 // controller sensity(degree per loop)
 #define J1_CTRL_SEN 0
 #define J2_CTRL_SEN 0
@@ -99,9 +93,6 @@ extern Joint_Motor_t DM_Motor_J4;
 extern Joint_Motor_t DM_Motor_J5;
 extern Joint_Motor_t DM_Motor_gripper;//暂时定gripper为机械臂J6
 
-// extern M8010_motor_t joint1_motor;
-// DJI_Motor_Ctrl_t DJI_Motor_headendL;
-// DJI_Motor_Ctrl_t DJI_Motor_headendR;
 
 /*global variable*/
 // static fp32 J1_D = 0;
@@ -289,16 +280,16 @@ static float shortest_angle_error(float target, float current);
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
-  hand_claw_init();
-
+  //hand_claw_init();
+  //set_motor_zero(&hfdcan2, 5, POS_MODE);
   basic_motor_init();
   osDelay(100);
   // 机械臂初始化
-  // __gripper_init();
+   __gripper_init();
   // osDelay(50);
-  // __J5_init();
+   __J5_init();
   // osDelay(50);
-  // __J4_init();
+   __J4_init();
   // osDelay(50);
   // __J3_init();
   // osDelay(50);
@@ -332,7 +323,7 @@ void hand_task_get_feedback()
   __GET_JOINT_ANGLE(HAND_J1) = J1_MAP_K * __GET_MOTOR_ANGLE(DM_J1) + J1_MAP_D;
   __GET_JOINT_ANGLE(HAND_J2) = J2_MAP_K * __GET_MOTOR_ANGLE(DM_J2) + J2_MAP_D;
   __GET_JOINT_ANGLE(HAND_J3) = J3_MAP_K * __GET_MOTOR_ANGLE(DM_J3) + J3_MAP_D;
-  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K *( __GET_MOTOR_ANGLE(DM_J4)- J4_zero_pos) + J4_MAP_D;
+  __GET_JOINT_ANGLE(HAND_J4) = J4_MAP_K * __GET_MOTOR_ANGLE(DM_J4) + J4_MAP_D;
   __GET_JOINT_ANGLE(HAND_J5) = J5_MAP_K * __GET_MOTOR_ANGLE(DM_J5) + J5_MAP_D;
   __GET_JOINT_ANGLE(HAND_G) = GR_MAP_K * __GET_MOTOR_ANGLE(dm_gripper) + GR_MAP_D;
 
@@ -550,7 +541,7 @@ void hand_task_output()
   if (__GET_MOTOR_CTRL_MODE(DM_J3) == POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J3, (HANDLER_PTR->joint_angle[HAND_J3] - J3_MAP_D) / J3_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J4) == POS_LOOP)
-    __SET_MOTOR_ANGLE(DM_J4, J4_zero_pos +(HANDLER_PTR->joint_angle[HAND_J4] - J4_MAP_D) / J4_MAP_K);
+    __SET_MOTOR_ANGLE(DM_J4, (HANDLER_PTR->joint_angle[HAND_J4] - J4_MAP_D) / J4_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(DM_J5) == POS_LOOP)
     __SET_MOTOR_ANGLE(DM_J5, (HANDLER_PTR->joint_angle[HAND_J5] - J5_MAP_D) / J5_MAP_K);
   if (__GET_MOTOR_CTRL_MODE(dm_gripper) == POS_LOOP)
@@ -572,16 +563,6 @@ void hand_task_output()
 void basic_motor_init(void)
 {
   // 电机初始化
-  //  J1[M8010]
-  //__SET_MOTOR_INSTANCE(M8010_J1,&joint1_motor);
-  //__SET_MOTOR_TYPE(M8010_J1,M8010_MOTOR);
-  //  M8010_motor_init(&joint1_motor,3,0.76,0.088);
-
-  // // J1[AK]
-  // __SET_MOTOR_INSTANCE(AK_J1, &AK70_10_motor);
-  // __SET_MOTOR_TYPE(AK_J1, AK_MOTOR);
-  // AK_joint_motor_init(&AK70_10_motor, 93);
-  // AK_joint_motor_enable(&AK70_10_motor);
 
   // J1
   __SET_MOTOR_INSTANCE(DM_J1, &DM_Motor_J1);
@@ -599,17 +580,6 @@ void basic_motor_init(void)
   __SET_MOTOR_TYPE(DM_J3, M4310_MOTOR);
   joint_motor_init(&DM_Motor_J3, 3, POS_MODE, 0.55, 1.2);
 
-  // // 之前j3的3508
-  // __SET_MOTOR_INSTANCE(DJI_2006_J4, &DJI_Motor_J4);
-  // __SET_MOTOR_TYPE(DJI_2006_J4, DJI_MOTOR);
-  // DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x204);
-  // // DJI_Motor_set_angle_limit()
-  // // DJI_Motor_set_speed_limit()
-  // DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 22, 0.000, 0.05, 6000.000, 800);
-  // DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 55, 0.0, 0.0, 200, 100);
-  // // DJI_Motor_set_sum_angle(&DJI_Motor_J3);
-  // DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
-
   // J4
   __SET_MOTOR_INSTANCE(DM_J4, &DM_Motor_J4);
   __SET_MOTOR_TYPE(DM_J4, M4310_MOTOR);
@@ -625,23 +595,14 @@ void basic_motor_init(void)
   __SET_MOTOR_TYPE(dm_gripper, M4310_MOTOR);
   joint_motor_init(&DM_Motor_gripper, 4, POS_MODE, 1.3, 1.0);
 
-  // // j4
-  // __SET_MOTOR_INSTANCE(DJI_2006_J4, &DJI_Motor_J4);
-  // __SET_MOTOR_TYPE(DJI_2006_J4, DJI_MOTOR);
-  // DJI_Motor_init(&DJI_Motor_J4, &DJI_CAN2_Bus_ctrl, M2006, 0x201);
-  // // DJI_Motor_set_angle_limit();
-  // // DJI_Motor_set_speed_limit();
-  // DJI_Motor_Speed_PID_init(&DJI_Motor_J4, PID_POSITION, 15.3, 0.004, 0, 5500, 5500);
-  // DJI_Motor_Pos_PID_init(&DJI_Motor_J4, PID_POSITION, 31.5, 0, 0, 2000, 1000);
-  // DJI_Motor_set_multiple_circle_angle(&DJI_Motor_J4);
-
+  
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
  //先小范围测试
   __SET_JOINT_LIMIT(HAND_J1, -1.57f, 1.57f);
   __SET_JOINT_LIMIT(HAND_J2, -2.0f,-0.613f );       
   __SET_JOINT_LIMIT(HAND_J3, -6.0f, -2.93f); 
-  __SET_JOINT_LIMIT(HAND_J4, 0, 4.0f);          //机械限位角度为0——5.76（330度）
+  __SET_JOINT_LIMIT(HAND_J4, -2.93f, 2.85f);          //机械限位角度为-2.88——2.88（330度）
   __SET_JOINT_LIMIT(HAND_J5, -1.57f, 1.57f);         
   __SET_JOINT_LIMIT(HAND_G, -3.14f, 3.14f);            
 
@@ -769,7 +730,7 @@ void __J4_init(void)
     hand_task_get_feedback();
     osDelay(2);
   }
-  __DM_go_setting_angle(HAND_J4, 2, 0.2f, 0.00043f);//-4.85f
+  __DM_go_setting_angle(HAND_J4, 0, 0.2f, 0.00043f);//-4.85f
 }
 
 
@@ -791,7 +752,7 @@ void __J5_init(void)
 
    joint_target = J5_MAP_K * motor_target + J5_MAP_D;
 
-    __DM_go_setting_angle(HAND_J5,joint_target  , 0.00042f, 0.00023f);
+    __DM_go_setting_angle(HAND_J5,joint_target  , 0.003f, 0.001f);
 }
 void __gripper_init(void) 
 {
@@ -950,8 +911,12 @@ uint8_t __hand_J4_init(void)
        
       // speed_ctrl_output(&DM_Motor_J4,0);
         //speed_ctrl(&hfdcan2, 6, 0.0f); 
-        J4_zero_pos = DM_Motor_J4.para.pos;      // 此刻就是机械零点
         
+          //又用偏移量来补偿电机零点，电机与关节本身就有偏移量，不如直接给电机重新设零点
+        //J4_zero_pos = DM_Motor_J4.para.pos;      // 此刻就是机械零点
+        
+        set_motor_zero(&hfdcan2, 6, POS_MODE);
+
         // disable_motor_mode(&hfdcan2, 6, SPEED_MODE);
         enable_motor_mode(&hfdcan2, 6, POS_MODE);
         
@@ -1023,7 +988,7 @@ void __hand_rc_ctrl(void)
   __ADD_JOINT_ANGLE(HAND_J1, -RC_CTRL_PTR->rc.ch[0] * 0.0000007f);
   __ADD_JOINT_ANGLE(HAND_J2, -RC_CTRL_PTR->rc.ch[1] * 0.0000015f);
   __ADD_JOINT_ANGLE(HAND_J3, -RC_CTRL_PTR->rc.ch[2] * 0.0000007f);
-  __ADD_JOINT_ANGLE(HAND_J4, -RC_CTRL_PTR->rc.ch[3] * 0.000060f);
+  __ADD_JOINT_ANGLE(HAND_J4, -RC_CTRL_PTR->rc.ch[3] * 0.00001f);
 
   //  __ADD_JOINT_ANGLE(HAND_PITCH, GET_CH_VALUE(1)*0.0001f*PITCH_MAP_K);
   //  __ADD_JOINT_ANGLE(HAND_ROLL , GET_CH_VALUE(2)*0.0001f*ROLL_MAP_K);
@@ -1034,7 +999,7 @@ void __hand_rc_ctrl(void)
 void __hand_rc2_ctrl(void)
 {
   __ADD_JOINT_ANGLE(HAND_J5, -RC_CTRL_PTR->rc.ch[0] * 0.0000015f);
-  __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[1] * 0.0000002f);
+  __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[1] * 0.000002f);
 
     int16_t claw_ch = RC_CTRL_PTR->rc.ch[4];
 

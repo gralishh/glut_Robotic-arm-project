@@ -139,6 +139,27 @@ void disable_motor_mode(hcan_t *hcan, uint16_t motor_id, uint16_t mode_id)
 	fdcanx_send_data(hcan, id, data, 8);
 }
 
+/*
+保存位置零点：该命令会将当前输出轴的位置设定成零点，并将位置给定值设置成 0（实测好用）
+*/
+void set_motor_zero(hcan_t *hcan, uint16_t motor_id, uint16_t mode_id)
+{
+	uint8_t data[8];
+	uint16_t id = motor_id + mode_id;
+
+	data[0] = 0xFF;
+	data[1] = 0xFF;
+	data[2] = 0xFF;
+	data[3] = 0xFF;
+	data[4] = 0xFF;
+	data[5] = 0xFF;
+	data[6] = 0xFF;
+	data[7] = 0xFE;
+
+	fdcanx_send_data(hcan, id, data, 8);
+}
+
+
 /**
 ************************************************************************
 * @brief:      	mit_ctrl: MIT模式下的电机控制函数
@@ -327,11 +348,11 @@ void dm_set_pos(Joint_Motor_t *motor_ptr, float angle)
 	else if (motor_ptr->para.id == 0x02)
 		pos_speed_ctrl(motor_ptr, angle, 0.5);
 	else if (motor_ptr->para.id == 0x03)
-		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1  
 	else if (motor_ptr->para.id == 0x04)
-		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+		pos_speed_ctrl(motor_ptr, angle, 3);//1
 	else if (motor_ptr->para.id == 0x05)
-		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+		pos_speed_ctrl(motor_ptr, angle, 3);//1
 	else if (motor_ptr->para.id == 0x06)
 		pos_speed_ctrl(motor_ptr, angle, 3);//1
 
