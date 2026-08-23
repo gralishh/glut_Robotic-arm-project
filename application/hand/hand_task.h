@@ -52,8 +52,8 @@ typedef enum
 typedef enum
 {
   HAND_CLAW_IDLE,
-  HAND_CLAW_OPENING,   // PE13 正在输出 200ms 高电平
-  HAND_CLAW_CLOSING    // PE9 正在输出 200ms 高电平，用于轮询函数非阻塞式延时
+  HAND_CLAW_OPENING,   // PE13 正在输出 700ms 高电平
+  HAND_CLAW_CLOSING    // PE9 正在输出 700ms 高电平，用于轮询函数非阻塞式延时
 } hand_claw_state_t;
 
 //新夹爪参数

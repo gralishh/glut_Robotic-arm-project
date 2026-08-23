@@ -74,8 +74,8 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define POWER_5V_EN_Pin GPIO_PIN_15
 #define POWER_5V_EN_GPIO_Port GPIOC
-#define CLAW_CLOSE_PIN_Pin GPIO_PIN_9
-#define CLAW_OPEN_PIN_Pin GPIO_PIN_13
+#define CLAW_CLOSE_PIN GPIO_PIN_9
+#define CLAW_OPEN_PIN GPIO_PIN_13
 #define CLAW_PIN_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */

@@ -127,7 +127,11 @@ static void __hand_move_OCSM(void);
 
 static void __hand_rc2_ctrl(void);
 
-static hand_claw_init(void)
+static void hand_claw_init(void);
+static void hand_claw_open(void);   // 触发张开：PE13 高 700ms
+static void hand_claw_close(void);  // 触发闭合：PE9 高 700ms
+ void hand_claw_poll(void);   // 1ms 调用一次，负责到时拉低引脚
+
 //新夹爪参数
 static hand_claw_state_t hand_claw_state = HAND_CLAW_IDLE;//默认夹爪空闲
 static uint16_t hand_claw_tick = 0;
@@ -255,20 +259,22 @@ void hand_task_init()
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
+  hand_claw_init();
+
   basic_motor_init();
   osDelay(100);
   // 机械臂初始化
-  __gripper_init();
-  osDelay(50);
-  __J5_init();
-  osDelay(50);
-  __J4_init();
-  osDelay(50);
-  __J3_init();
-  osDelay(50);
-  __J2_init();
-  osDelay(50);
-  __J1_init();
+  // __gripper_init();
+  // osDelay(50);
+  // __J5_init();
+  // osDelay(50);
+  // __J4_init();
+  // osDelay(50);
+  // __J3_init();
+  // osDelay(50);
+  // __J2_init();
+  // osDelay(50);
+  // __J1_init();
 }
 
 /**
@@ -658,6 +664,70 @@ void basic_motor_init(void)
     last_claw_close_sta = 0;
 }
 
+static void hand_claw_open(void)
+{
+    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                      CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
+                      GPIO_PIN_RESET);
+
+    /* PE13 输出高电平，进入张开状态 */
+    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                      CLAW_OPEN_PIN,
+                      GPIO_PIN_SET);
+
+    hand_claw_state = HAND_CLAW_OPENING;
+    hand_claw_tick = 0;
+}
+
+static void hand_claw_close(void)
+{
+    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                      CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
+                      GPIO_PIN_RESET);
+
+    /* PE9 输出高电平，进入闭合状态 */
+    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                      CLAW_CLOSE_PIN,
+                      GPIO_PIN_SET);
+
+    hand_claw_state = HAND_CLAW_CLOSING;
+    hand_claw_tick = 0;
+}
+void hand_claw_poll(void)
+{
+    if (hand_claw_state == HAND_CLAW_IDLE)
+    {
+        return;
+    }
+
+    hand_claw_tick++;
+
+    if (hand_claw_state == HAND_CLAW_OPENING)
+    {
+        if (hand_claw_tick >= 700)
+        {
+            HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                              CLAW_OPEN_PIN,
+                              GPIO_PIN_RESET);
+
+            hand_claw_state = HAND_CLAW_IDLE;
+            hand_claw_tick = 0;
+        }
+    }
+    else if (hand_claw_state == HAND_CLAW_CLOSING)
+    {
+        if (hand_claw_tick >= 700)
+        {
+            HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                              CLAW_CLOSE_PIN,
+                              GPIO_PIN_RESET);
+
+            hand_claw_state = HAND_CLAW_IDLE;
+            hand_claw_tick = 0;
+        }
+    }
+}
+
 void __J1_init(void)
 {
   __hand_J1_init(1);
@@ -946,6 +1016,26 @@ void __hand_rc2_ctrl(void)
 {
   __ADD_JOINT_ANGLE(HAND_J5, -RC_CTRL_PTR->rc.ch[0] * 0.0000015f);
   __ADD_JOINT_ANGLE(HAND_G, -RC_CTRL_PTR->rc.ch[1] * 0.0000002f);
+
+    int16_t claw_ch = RC_CTRL_PTR->rc.ch[4];
+
+    uint8_t open_now  = (claw_ch >  500);   // 向左拨，张开
+    uint8_t close_now = (claw_ch < -500);   // 向右拨，闭合
+
+    if (open_now && !last_claw_open_sta)
+    {
+        hand_claw_open();
+    } 
+
+    if (close_now && !last_claw_close_sta)
+    {
+        hand_claw_close();
+    }
+
+    last_claw_open_sta  = open_now;
+    last_claw_close_sta = close_now;
+
+
 }
 
 // 检测应当在模块层实现但由于检测是通过detect任务实现故放在应用层

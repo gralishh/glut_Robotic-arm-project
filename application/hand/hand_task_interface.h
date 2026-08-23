@@ -6,6 +6,7 @@ void hand_task_get_feedback(void);
 void hand_task_mode_flush(void);
 void hand_task_set_output(void);
 void hand_task_output(void);
+void hand_claw_poll(void);
 
 /*根据每个模式定义*/
 //void __first_mode_ctrl_func(void);

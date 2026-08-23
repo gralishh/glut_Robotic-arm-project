@@ -1162,7 +1162,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port, POWER_5V_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOE, CLAW_CLOSE_PIN_Pin|CLAW_OPEN_PIN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOE, CLAW_CLOSE_PIN|CLAW_OPEN_PIN, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : POWER_5V_EN_Pin */
   GPIO_InitStruct.Pin = POWER_5V_EN_Pin;
@@ -1171,8 +1171,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(POWER_5V_EN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : CLAW_CLOSE_PIN_Pin CLAW_OPEN_PIN_Pin */
-  GPIO_InitStruct.Pin = CLAW_CLOSE_PIN_Pin|CLAW_OPEN_PIN_Pin;
+  /*Configure GPIO pins : CLAW_CLOSE_PIN CLAW_OPEN_PIN */
+  GPIO_InitStruct.Pin = CLAW_CLOSE_PIN|CLAW_OPEN_PIN;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
