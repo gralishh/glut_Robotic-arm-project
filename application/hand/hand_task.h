@@ -23,10 +23,12 @@ typedef enum
 typedef enum
 {
   //  M8010_J1,
-  AK_J1,
+  //AK_J1,
+  DM_J1,
   DM_J2,
   DM_J3,
-  DJI_2006_J4,
+  DM_J4,
+  //DJI_2006_J4,
   DM_J5,
   dm_gripper,
   // DJI_HE_L,

@@ -90,79 +90,56 @@ const motor_measure_t *get_Chassis_Motor_Measure_Point(uint8_t i)
 void CAN_RX_hook(FDCAN_HandleTypeDef *CANx, FDCAN_RxHeaderTypeDef *rx_header, uint8_t *rx_message)
 {
 
-  if (CANx == &hfdcan2)
+  if (CANx == &hfdcan1)
   {
 
      switch (rx_header->Identifier)
      {
-       // j1
-     case 0x295d: // 0x295d为扩展id
-       __AK_joint_motor_feedback_hook(&AK70_10_motor, rx_message);
+       //j1
+    case 0x11:
+       dm4310_fbdata(&DM_Motor_J1, rx_message, FDCAN_DLC_BYTES_8);
        DetectHook(TOE_J1);
        break;
-       // j2
+    
+    // j2
      case 0x22:
        dm4310_fbdata(&DM_Motor_J2, rx_message, FDCAN_DLC_BYTES_8);
        DetectHook(TOE_J2);
        break;
        // j3
-     case 0x233:
+     case 0x33:
        dm4310_fbdata(&DM_Motor_J3, rx_message, FDCAN_DLC_BYTES_8);
        DetectHook(TOE_J3);
        break;
-       // gripper
-     case 0x444:
-     dm4310_fbdata(&DM_Motor_gripper, rx_message, FDCAN_DLC_BYTES_8);
-     DetectHook(TOE_G);
-     break;
-     //j5
-    case 0x33:
-     dm4310_fbdata(&DM_Motor_J5, rx_message, FDCAN_DLC_BYTES_8);
-     DetectHook(TOE_J5);
-     break;
-
-
-    case 0x201:
-      // j4
-      __DJI_CANBus_feedback_update(&DJI_CAN2_Bus_ctrl, rx_message, rx_header->Identifier);
-      DetectHook(TOE_J4);
-      break;
-           // case 0x204:
-           //     DetectHook(TOE_J3);
-           //   break;
-           //    case 0x208:
-           //      DetectHook(TOE_HE_R);
-           // break;
-    default:
-      break; /*do nothing*/
-    }
-  }
-  else if (CANx == &hfdcan1)
-  {
-    __DJI_CANBus_feedback_update(&DJI_CAN1_Bus_ctrl, rx_message, rx_header->Identifier);
+     }
+     }
+else if (CANx == &hfdcan2)
+{
+  
     switch (rx_header->Identifier)
     {
-    case CAN_3508_M1_ID:
-    case CAN_3508_M2_ID:
-    case CAN_3508_M3_ID:
-    case CAN_3508_M4_ID:
-    {
-      static uint8_t i = 0;
-      // 处理电机ID号
-      i = rx_header->Identifier - CAN_3508_M1_ID;
+      //j4
+      case 0x66:
+       dm4310_fbdata(&DM_Motor_J4, rx_message, FDCAN_DLC_BYTES_8);
+       DetectHook(TOE_J4);
+       break;
 
-      get_motor_measure(&motor_chassis[i], rx_message);
+       //j5
+       case 0x55:
+       dm4310_fbdata(&DM_Motor_J5, rx_message, FDCAN_DLC_BYTES_8);
+       DetectHook(TOE_J5);
+       break;
 
-      DetectHook(TOE_3508_M1_ID + i);
-      break;
-    }
-    case 0x205:
-      DetectHook(TOE_UPLIFT);
-      break;
-    default:
-      break;
-    }
-  }
+       //j6
+       case 0x44:
+       dm4310_fbdata(&DM_Motor_gripper, rx_message, FDCAN_DLC_BYTES_8);
+       DetectHook(TOE_G);
+       break;
+
+     }
+}
+
+    
   else // CAN3
   {
     __External_ecd_can_feedback_hook(rx_header->Identifier, rx_message);

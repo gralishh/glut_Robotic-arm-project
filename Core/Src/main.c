@@ -317,13 +317,13 @@ HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of ChassisTask */
-  ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
+  //ChassisTaskHandle = osThreadNew(__chassis_task, NULL, &ChassisTask_attributes);
 
   /* creation of USART2_measure */
   USART2_measureHandle = osThreadNew(__usart2_measure_task, NULL, &USART2_measure_attributes);
 
   /* creation of GimbalTask */
-  GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
+  //GimbalTaskHandle = osThreadNew(__gimbal_task, NULL, &GimbalTask_attributes);
 
   /* creation of HandTask */
   HandTaskHandle = osThreadNew(__hand_task, NULL, &HandTask_attributes);
@@ -335,13 +335,13 @@ HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
   CustomCtrlTaskHandle = osThreadNew(__Custom_Ctrl_Task, NULL, &CustomCtrlTask_attributes);
 
   /* creation of CatcherTask */
-  CatcherTaskHandle = osThreadNew(__catcher_task, NULL, &CatcherTask_attributes);
+  //CatcherTaskHandle = osThreadNew(__catcher_task, NULL, &CatcherTask_attributes);
 
   /* creation of referee_task */
-  referee_taskHandle = osThreadNew(__referee_task, NULL, &referee_task_attributes);
+  //referee_taskHandle = osThreadNew(__referee_task, NULL, &referee_task_attributes);
 
   /* creation of VofaTask */
-  VofaTaskHandle = osThreadNew(__vofa_uart_task, NULL, &VofaTask_attributes);
+  //VofaTaskHandle = osThreadNew(__vofa_uart_task, NULL, &VofaTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

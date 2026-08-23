@@ -11,8 +11,9 @@
 #include "servo.h"
 
 #include "detect_task.h"
-
+      
 /*can*/
+extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 extern FDCAN_HandleTypeDef hfdcan3;
 /*specific motor handler*/
@@ -56,7 +57,7 @@ void motor_timer_ctrl_callback(void)
   /*****standalone_motor_ctrl*****/
 
   //延时控制发送频率
-  static uint32_t last_time_j2 = 0;
+    static uint32_t last_time_j2 = 0;
      static uint32_t last_time_j3 = 0;
      static uint32_t last_time_j5 = 0;
      static uint32_t last_time_gripper = 0;
@@ -66,14 +67,24 @@ void motor_timer_ctrl_callback(void)
     uint32_t current_time = HAL_GetTick();
 //达妙电机为同步通信发送等于接收频率，不能发送太快
     // 达妙电机：每3ms发送一次
-    if(current_time - last_time_j2 >= 2) {
-        __dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J2);
-        last_time_j2 = current_time;
+    if(current_time - last_time_j1 >= 2) {
+        __dm4310_mit_output_ctrl(&hfdcan1, &DM_Motor_J1);
+        last_time_j1 = current_time;
     }
+    
+     if(current_time - last_time_j2 >= 2) {
+         __dm4310_mit_output_ctrl(&hfdcan1, &DM_Motor_J2);
+         last_time_j2 = current_time;
+     }
 
     if(current_time - last_time_j3 >= 3) {
-        __dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J3);
+        __dm4310_mit_output_ctrl(&hfdcan1, &DM_Motor_J3);
         last_time_j3 = current_time;
+    }
+
+    if(current_time - last_time_j4 >= 2) {
+        __dm4310_mit_output_ctrl(&hfdcan2, &DM_Motor_J4);
+        last_time_j4 = current_time;
     }
 
     if(current_time - last_time_j5 >= 3) {
@@ -86,17 +97,17 @@ void motor_timer_ctrl_callback(void)
         last_time_gripper = current_time;
     }
 
-    // AK电机：每1ms发送一次
-    if(current_time - last_time_j1 >= 2) {
-        __AK_joint_motor_ctrl_hook(&AK70_10_motor, &hfdcan2);
-        last_time_j1 = current_time;
-    }
+    // // AK电机：每1ms发送一次
+    // if(current_time - last_time_j1 >= 2) {
+    //     __AK_joint_motor_ctrl_hook(&AK70_10_motor, &hfdcan2);
+    //     last_time_j1 = current_time;
+    // }
 
-    // DJI电机：每1ms发送一次
-    if(current_time - last_time_j4 >= 1) {
-        __DJI_CANBus_ctrl_loop(&DJI_CAN2_Bus_ctrl);
-        last_time_j4 = current_time;
-    }
+    // // DJI电机：每1ms发送一次
+    // if(current_time - last_time_j4 >= 1) {
+    //     __DJI_CANBus_ctrl_loop(&DJI_CAN2_Bus_ctrl);
+    //     last_time_j4 = current_time;
+    // }
 
     // 其他总线：每1ms发送一次
     static uint32_t last_time_others = 0;

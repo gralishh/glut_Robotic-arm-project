@@ -2,10 +2,13 @@
 
 #include "arm_math.h"
 
+extern FDCAN_HandleTypeDef hfdcan1;
 extern FDCAN_HandleTypeDef hfdcan2;
 
+Joint_Motor_t DM_Motor_J1 = {0};
 Joint_Motor_t DM_Motor_J2 = {0};
 Joint_Motor_t DM_Motor_J3 = {0};
+Joint_Motor_t DM_Motor_J4 = {0};
 Joint_Motor_t DM_Motor_J5 = {0};
 Joint_Motor_t DM_Motor_gripper = {0};
 
@@ -246,6 +249,31 @@ void speed_ctrl(hcan_t *hcan, uint16_t motor_id, float vel)
 	fdcanx_send_data(hcan, id, data, 4);
 }
 
+/*
+speed_ctrl()中没有将id写入motor_ptr中,在motor_timer_ctrl中会一直发送初始id，
+则speed_ctrl失效，故写一函数能将id写入motor_ptr
+*/
+void speed_ctrl_output(Joint_Motor_t *motor_ptr, float vel)
+{
+  uint8_t *vbuf = (uint8_t *)&vel;
+  uint8_t *data = motor_ptr->output;
+    
+  motor_ptr->output_id = motor_ptr->para.id + SPEED_MODE;
+
+
+	data[0] = *vbuf;
+	data[1] = *(vbuf + 1);
+	data[2] = *(vbuf + 2);
+	data[3] = *(vbuf + 3);
+
+	data[4] = 0;
+	data[5] = 0;
+	data[6] = 0;
+	data[7] = 0;
+
+	
+}
+
 void __dm4310_mit_output_ctrl(hcan_t *hcan, Joint_Motor_t *motor_ptr)
 {
 	if (!(motor_ptr->enable))
@@ -253,6 +281,15 @@ void __dm4310_mit_output_ctrl(hcan_t *hcan, Joint_Motor_t *motor_ptr)
 
 	uint16_t id = motor_ptr->output_id;
 	fdcanx_send_data(hcan, id, motor_ptr->output, 8);
+
+	// if (id == (motor_ptr->para.id + SPEED_MODE))	//使函数在位置模式或速度模式下都能正常发送数据
+    // {
+    //     fdcanx_send_data(hcan, id, motor_ptr->output, 4);   // 速度模式 4 字节
+    // }
+    // else
+    // {
+    //     fdcanx_send_data(hcan, id, motor_ptr->output, 8);   // POS/MIT 8 字节
+    // }
 }
 
 void DM_Motor_Offline_Handler(Joint_Motor_t *motor_ptr)
@@ -286,12 +323,16 @@ void dm_set_pos(Joint_Motor_t *motor_ptr, float angle)
 		motor_ptr->enable = 1;
 	}
 	if (motor_ptr->para.id == 0x01)
-		pos_speed_ctrl(motor_ptr, angle, 1.4);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1.4
 	else if (motor_ptr->para.id == 0x02)
-		pos_speed_ctrl(motor_ptr, angle, 1.4);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);
 	else if (motor_ptr->para.id == 0x03)
-		pos_speed_ctrl(motor_ptr, angle, 1);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
 	else if (motor_ptr->para.id == 0x04)
-		pos_speed_ctrl(motor_ptr, angle, 1);
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+	else if (motor_ptr->para.id == 0x05)
+		pos_speed_ctrl(motor_ptr, angle, 0.5);//1
+	else if (motor_ptr->para.id == 0x06)
+		pos_speed_ctrl(motor_ptr, angle, 3);//1
 
 }

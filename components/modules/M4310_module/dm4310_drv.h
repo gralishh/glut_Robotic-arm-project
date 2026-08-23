@@ -51,8 +51,10 @@ typedef struct
 
 typedef FDCAN_HandleTypeDef hcan_t;
 /*preset_motor_handler*/
+extern Joint_Motor_t DM_Motor_J1;
 extern Joint_Motor_t DM_Motor_J2;
 extern Joint_Motor_t DM_Motor_J3;
+extern Joint_Motor_t DM_Motor_J4;
 extern Joint_Motor_t DM_Motor_J5;
 extern Joint_Motor_t DM_Motor_gripper;
 extern void dm4310_fbdata(Joint_Motor_t *motor, uint8_t *rx_data, uint32_t data_len);
@@ -65,6 +67,8 @@ extern void mit_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel,float kp, fl
 extern void mit_nonforce_ctrl(Joint_Motor_t* motor_ptr);
 extern void pos_speed_ctrl(Joint_Motor_t* motor_ptr, float pos, float vel);
 extern void speed_ctrl(hcan_t* hcan,uint16_t motor_id, float _vel);
+extern void speed_ctrl_output(Joint_Motor_t *motor_ptr, float vel);
+
 
 void mit_ctrl_pos_speed(Joint_Motor_t* motor_ptr,float pos,float vel);
 void mit_ctrl_lock(Joint_Motor_t* motor_ptr);
