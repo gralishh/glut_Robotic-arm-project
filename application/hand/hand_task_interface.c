@@ -130,6 +130,8 @@ static uint8_t __hand_J4_init(void);
 static uint8_t __hand_J5_init(void);
 static uint8_t __hand_gripper_init(void);
 
+static void Hand_go_to_start (void);
+
 static void __hand_move_BTD(void);
 static void __hand_move_GSM(void);
 static void __hand_move_OCSM(void);
@@ -970,6 +972,18 @@ uint8_t __hand_gripper_init(void)
     return 0;
   }
   return 1;
+}
+
+//注意回上电起始位置时各个关节的运动顺序（保证各个关节不会干涉）
+void Hand_go_to_start (void)      
+{
+__DM_go_setting_angle(HAND_G, 0, 0.00042f, 0.00023f);
+__DM_go_setting_angle(HAND_J5,-0.712f  , 0.003f, 0.001f);//重点测试J5运动与其他的干涉
+__DM_go_setting_angle(HAND_J4, 0, 0.2f, 0.00043f);
+__DM_go_setting_angle(HAND_J3, -2.93f, 0.00078f, 0.00043f);
+__DM_go_setting_angle(HAND_J2, 0, 0.00078f, 0.00043f);
+__DM_go_setting_angle(HAND_J1, 0, 0.00078f, 0.00043f);
+
 }
 
 void __hand_nonforce()
