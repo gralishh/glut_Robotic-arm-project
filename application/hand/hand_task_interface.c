@@ -146,7 +146,8 @@ static hand_claw_state_t hand_claw_state = HAND_CLAW_IDLE;//默认夹爪空闲
 static uint16_t hand_claw_tick = 0;
 static uint8_t last_claw_open_sta = 0;//记录上次是否已控制夹爪闭合，防止多次闭合夹爪
 static uint8_t last_claw_close_sta = 0;
-
+static claw_position_state_t claw_position_state = CLAW_POS_START;//标志上一个状态：上电默认为起始状态（未知）
+                                                                  //后续可添加让机械臂回到起始位置的函数（还要考虑一些问题）    
 static float shortest_angle_error(float target, float current);
 
 // static void hand_pitch_reset(void);
@@ -280,22 +281,22 @@ static float shortest_angle_error(float target, float current);
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
-  //hand_claw_init();
+  hand_claw_init();
   //set_motor_zero(&hfdcan2, 5, POS_MODE);
   basic_motor_init();
   osDelay(100);
   // 机械臂初始化
-   __gripper_init();
-  // osDelay(50);
-   __J5_init();
-  // osDelay(50);
-   __J4_init();
-  // osDelay(50);
-  // __J3_init();
-  // osDelay(50);
-  // __J2_init();
-  // osDelay(50);
-  // __J1_init();
+  __J5_init();
+    osDelay(50);
+    __gripper_init();
+    osDelay(50);
+    __J4_init();
+   osDelay(50);
+    __J3_init();
+    osDelay(50);
+   __J2_init();
+   osDelay(50);
+   __J1_init();
 }
 
 /**
@@ -600,7 +601,7 @@ void basic_motor_init(void)
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
  //先小范围测试
   __SET_JOINT_LIMIT(HAND_J1, -1.57f, 1.57f);
-  __SET_JOINT_LIMIT(HAND_J2, -2.0f,-0.613f );       
+  __SET_JOINT_LIMIT(HAND_J2, -2.4f,0.0f );       
   __SET_JOINT_LIMIT(HAND_J3, -6.0f, -2.93f); 
   __SET_JOINT_LIMIT(HAND_J4, -2.93f, 2.85f);          //机械限位角度为-2.88——2.88（330度）
   __SET_JOINT_LIMIT(HAND_J5, -1.57f, 1.57f);         
@@ -639,7 +640,13 @@ void basic_motor_init(void)
 
 static void hand_claw_open(void)
 {
-    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+    if (claw_position_state == CLAW_POS_OPEN)
+    {
+        return;   // 已经打开，就不能再次打开
+    }
+  
+  
+  HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
                       CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
                       GPIO_PIN_RESET);
 
@@ -650,11 +657,18 @@ static void hand_claw_open(void)
 
     hand_claw_state = HAND_CLAW_OPENING;
     hand_claw_tick = 0;
+
+    claw_position_state = CLAW_POS_OPEN;
 }
 
 static void hand_claw_close(void)
 {
-    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+    if (claw_position_state == CLAW_POS_CLOSED)
+    {
+        return;   // 已经闭合，就不能再次闭合
+    }
+  
+  HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
                       CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
                       GPIO_PIN_RESET);
 
@@ -665,6 +679,8 @@ static void hand_claw_close(void)
 
     hand_claw_state = HAND_CLAW_CLOSING;
     hand_claw_tick = 0;
+
+    claw_position_state = CLAW_POS_CLOSED;
 }
 void hand_claw_poll(void)
 {
@@ -713,7 +729,7 @@ void __J2_init(void)
 {
   while (!__hand_J2_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J2, -1, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J2, -0.5, 0.00078f, 0.00043f);
 }
 
 void __J3_init(void)
