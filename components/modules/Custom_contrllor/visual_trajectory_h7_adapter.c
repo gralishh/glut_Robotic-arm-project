@@ -34,7 +34,7 @@ static uint32_t h7_now_ms(void *user)
 static void h7_uart_transmit(void *user, const uint8_t *data, size_t length)
 {
     (void)user;
-    (void)USART1_Send((uint8_t *)data, (unsigned short)length);
+    (void)USART10_Send((uint8_t *)data, (unsigned short)length);
 }
 
 static bool h7_read_feedback(
@@ -212,11 +212,11 @@ void Visual_Trajectory_H7_Task(void *argument)
         bool permitted =
             (hand_task_handler_ptr->ctrl_mode == HAND_MODE_CUSTOM_CTRL) &&
             !h7_driver_fault_active(NULL);
-        unsigned int available = USART1_GetDataCount();
+        unsigned int available = USART10_GetDataCount();
         arm_visual_control_set_ready(&trajectory_control, permitted);
         if (available > sizeof(rx_data)) available = sizeof(rx_data);
         if (available != 0u) {
-            unsigned int received = USART1_Recv(rx_data, (unsigned short)available);
+            unsigned int received = USART10_Recv(rx_data, (unsigned short)available);
             arm_visual_control_feed(&trajectory_control, rx_data, received);
         }
         arm_visual_control_tick(&trajectory_control);
