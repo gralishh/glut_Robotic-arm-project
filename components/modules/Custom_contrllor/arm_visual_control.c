@@ -269,52 +269,68 @@ static void interpolate_segment(
     }
 }
 
-static bool sampled_trajectory_is_safe(const arm_visual_control_t *control)
+static bool sampled_segment_is_safe(
+    const arm_visual_control_t *control,
+    const arm_trajectory_point_t *p0,
+    const arm_trajectory_point_t *p1)
 {
-    uint16_t segment;
     uint8_t sample;
     uint8_t joint;
     double position[ARM_PROTOCOL_JOINT_COUNT];
     double velocity[ARM_PROTOCOL_JOINT_COUNT];
     double acceleration[ARM_PROTOCOL_JOINT_COUNT];
+    uint32_t duration = p1->time_ms - p0->time_ms;
 
-    if (control->received_points < 2u) {
-        return control->received_points == 1u;
+    if (duration == 0u) {
+        return false;
     }
+    for (sample = 0u; sample <= 16u; ++sample) {
+        uint32_t t = p0->time_ms + (uint32_t)(
+            ((uint64_t)duration * sample) / 16u);
+        interpolate_segment(p0, p1, t, position, velocity, acceleration);
 
-    for (segment = 0u; segment + 1u < control->received_points; ++segment) {
-        const arm_trajectory_point_t *p0 = &control->points[segment];
-        const arm_trajectory_point_t *p1 = &control->points[segment + 1u];
-        uint32_t duration = p1->time_ms - p0->time_ms;
-
-        if (duration == 0u) {
-            return false;
-        }
-
-        /* Catch spline overshoot before any motor is enabled. */
-        for (sample = 0u; sample <= 16u; ++sample) {
-            uint32_t t = p0->time_ms + (uint32_t)(
-                ((uint64_t)duration * sample) / 16u);
-            interpolate_segment(p0, p1, t, position, velocity, acceleration);
-
-            for (joint = 0u; joint < ARM_PROTOCOL_JOINT_COUNT; ++joint) {
-                const arm_joint_safety_config_t *limit =
-                    &control->config.joint[joint];
-                if ((position[joint] < limit->min_position_urad) ||
-                    (position[joint] > limit->max_position_urad) ||
-                    ((velocity[joint] < 0.0 ? -velocity[joint] : velocity[joint]) >
-                     limit->max_velocity_urad_s) ||
-                    ((acceleration[joint] < 0.0 ? -acceleration[joint] : acceleration[joint]) >
-                     limit->max_acceleration_urad_s2)) {
-                    return false;
-                }
+        for (joint = 0u; joint < ARM_PROTOCOL_JOINT_COUNT; ++joint) {
+            const arm_joint_safety_config_t *limit =
+                &control->config.joint[joint];
+            if ((position[joint] < limit->min_position_urad) ||
+                (position[joint] > limit->max_position_urad) ||
+                ((velocity[joint] < 0.0 ? -velocity[joint] : velocity[joint]) >
+                 limit->max_velocity_urad_s) ||
+                ((acceleration[joint] < 0.0 ? -acceleration[joint] : acceleration[joint]) >
+                 limit->max_acceleration_urad_s2)) {
+                return false;
             }
         }
     }
     return true;
 }
 
-static bool first_point_matches_feedback(arm_visual_control_t *control)
+static bool sampled_trajectory_is_safe(const arm_visual_control_t *control)
+{
+    uint16_t segment;
+
+    if (control->received_points == 0u) {
+        return false;
+    }
+    if (control->use_execution_start_segment &&
+        !sampled_segment_is_safe(
+            control,
+            &control->execution_start_point,
+            &control->points[0])) {
+        return false;
+    }
+    for (segment = 0u; segment + 1u < control->received_points; ++segment) {
+        if (!sampled_segment_is_safe(
+                control,
+                &control->points[segment],
+                &control->points[segment + 1u])) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool prepare_execution_start(arm_visual_control_t *control)
 {
     uint8_t joint;
     int32_t actual_position[ARM_PROTOCOL_JOINT_COUNT];
@@ -325,10 +341,17 @@ static bool first_point_matches_feedback(arm_visual_control_t *control)
         return false;
     }
 
+    memset(&control->execution_start_point, 0, sizeof(control->execution_start_point));
+    control->execution_start_point.time_ms = 0u;
+    control->use_execution_start_segment = control->points[0].time_ms > 0u;
+
     for (joint = 0u; joint < ARM_PROTOCOL_JOINT_COUNT; ++joint) {
-        if (abs_i64((int64_t)control->points[0].position_urad[joint] -
-                    actual_position[joint]) >
-            control->config.joint[joint].start_tolerance_urad) {
+        control->execution_start_point.position_urad[joint] = actual_position[joint];
+        control->execution_start_point.velocity_urad_s[joint] = 0;
+        if (!control->use_execution_start_segment &&
+            (abs_i64((int64_t)control->points[0].position_urad[joint] -
+                     actual_position[joint]) >
+             control->config.joint[joint].start_tolerance_urad)) {
             control->error_code = ARM_ERROR_START_MISMATCH;
             return false;
         }
@@ -365,6 +388,8 @@ static arm_ack_status_t handle_begin(
     control->stable_since_ms = 0u;
     control->following_error_since_ms = 0u;
     control->error_code = ARM_ERROR_NONE;
+    control->use_execution_start_segment = false;
+    control->last_trajectory_progress_ms = now_ms(control);
     control->trajectory_state = ARM_TRAJECTORY_RECEIVING;
     return ARM_ACK_OK;
 }
@@ -399,10 +424,13 @@ static arm_ack_status_t handle_point(
 
     control->points[index] = point;
     control->received_points++;
+    control->last_trajectory_progress_ms = now_ms(control);
     return ARM_ACK_OK;
 }
 
-static arm_ack_status_t handle_end(arm_visual_control_t *control)
+static arm_ack_status_t handle_end(
+    arm_visual_control_t *control,
+    const arm_protocol_frame_t *frame)
 {
     if (control->trajectory_state != ARM_TRAJECTORY_RECEIVING) {
         return ARM_ACK_BUSY;
@@ -410,17 +438,18 @@ static arm_ack_status_t handle_end(arm_visual_control_t *control)
     if (control->received_points != control->expected_points) {
         return ARM_ACK_MISSING_POINT;
     }
+    if (!prepare_execution_start(control)) {
+        control->trajectory_state = ARM_TRAJECTORY_IDLE;
+        return ARM_ACK_OUT_OF_RANGE;
+    }
     if (!sampled_trajectory_is_safe(control)) {
         control->trajectory_state = ARM_TRAJECTORY_IDLE;
         control->error_code = ARM_ERROR_BAD_TRAJECTORY;
         return ARM_ACK_OUT_OF_RANGE;
     }
-    if (!first_point_matches_feedback(control)) {
-        control->trajectory_state = ARM_TRAJECTORY_IDLE;
-        return ARM_ACK_OUT_OF_RANGE;
-    }
 
     control->execution_start_ms = now_ms(control);
+    control->trajectory_result_sequence = frame->sequence;
     control->current_segment = 0u;
     control->trajectory_state = ARM_TRAJECTORY_EXECUTING;
     control->public_state = ARM_STATE_MOVING;
@@ -452,7 +481,7 @@ static void send_motion_done(
     payload[0] = (uint8_t)result;
     arm_write_u16_le(&payload[1], error_code);
 
-    control->pending_result.sequence = control->tx_sequence++;
+    control->pending_result.sequence = control->trajectory_result_sequence;
     length = arm_protocol_encode(
         ARM_MSG_MOTION_DONE,
         control->pending_result.sequence,
@@ -614,7 +643,7 @@ static void handle_frame(
         status = handle_point(control, frame);
         break;
     case ARM_MSG_TRAJECTORY_END:
-        status = handle_end(control);
+        status = handle_end(control, frame);
         break;
     case ARM_MSG_STOP:
         status = ARM_ACK_OK;
@@ -753,7 +782,9 @@ static bool completion_reached(arm_visual_control_t *control, uint32_t now)
 static void finish_success(arm_visual_control_t *control)
 {
     control->trajectory_state = ARM_TRAJECTORY_IDLE;
-    control->public_state = ARM_STATE_READY;
+    control->public_state = control->ready_permitted
+        ? ARM_STATE_READY
+        : ARM_STATE_NOT_READY;
     control->error_code = ARM_ERROR_NONE;
     send_motion_done(control, ARM_RESULT_SUCCESS, ARM_ERROR_NONE);
 }
@@ -817,11 +848,26 @@ bool arm_visual_control_init(
 
 void arm_visual_control_set_ready(arm_visual_control_t *control, bool ready)
 {
+    bool was_ready;
+
     if (control == NULL) {
         return;
     }
+    was_ready = control->ready_permitted;
     control->ready_permitted = ready;
     if (!ready) {
+        if (was_ready &&
+            (control->trajectory_state == ARM_TRAJECTORY_RECEIVING)) {
+            control->trajectory_state = ARM_TRAJECTORY_IDLE;
+            control->expected_points = 0u;
+            control->received_points = 0u;
+        } else if (was_ready &&
+                   (control->trajectory_state == ARM_TRAJECTORY_EXECUTING)) {
+            start_controlled_stop(
+                control,
+                ARM_RESULT_CANCELLED,
+                ARM_ERROR_NONE);
+        }
         control->public_state = ARM_STATE_NOT_READY;
     } else if ((control->trajectory_state == ARM_TRAJECTORY_IDLE) &&
                (control->error_code == ARM_ERROR_NONE)) {
@@ -1029,9 +1075,8 @@ void arm_visual_control_tick(arm_visual_control_t *control)
     if (control->trajectory_state == ARM_TRAJECTORY_STOPPING) {
         if (control->hooks.controlled_stop_complete(control->hooks_user)) {
             control->trajectory_state = ARM_TRAJECTORY_IDLE;
-            control->public_state =
-                (control->stopping_error_code == ARM_ERROR_NONE)
-                ? ARM_STATE_READY
+            control->public_state = (control->stopping_error_code == ARM_ERROR_NONE)
+                ? (control->ready_permitted ? ARM_STATE_READY : ARM_STATE_NOT_READY)
                 : ARM_STATE_ERROR;
             control->error_code = control->stopping_error_code;
             send_motion_done(
@@ -1045,7 +1090,7 @@ void arm_visual_control_tick(arm_visual_control_t *control)
     if ((control->trajectory_state == ARM_TRAJECTORY_RECEIVING) &&
         elapsed_at_least(
             now,
-            control->last_valid_rx_ms,
+            control->last_trajectory_progress_ms,
             control->config.communication_timeout_ms)) {
         /* No motor has started: discard the partial trajectory safely. */
         control->trajectory_state = ARM_TRAJECTORY_IDLE;
@@ -1071,6 +1116,32 @@ void arm_visual_control_tick(arm_visual_control_t *control)
     }
 
     trajectory_time = now - control->execution_start_ms;
+    if (control->use_execution_start_segment &&
+        (trajectory_time <= control->points[0].time_ms)) {
+        interpolate_segment(
+            &control->execution_start_point,
+            &control->points[0],
+            trajectory_time,
+            position,
+            velocity,
+            acceleration);
+        if (!runtime_target_is_safe(control, position, velocity, acceleration)) {
+            control->error_code = ARM_ERROR_RUNTIME_LIMIT;
+            start_controlled_stop(control, ARM_RESULT_FAILED, control->error_code);
+            return;
+        }
+        for (joint = 0u; joint < ARM_PROTOCOL_JOINT_COUNT; ++joint) {
+            target_position[joint] = round_to_i32(position[joint]);
+            target_velocity[joint] = round_to_i32(velocity[joint]);
+        }
+        if (!following_error_ok(control, target_position, now)) {
+            control->error_code = ARM_ERROR_FOLLOWING;
+            start_controlled_stop(control, ARM_RESULT_FAILED, control->error_code);
+            return;
+        }
+        set_target_from_ros(control, target_position, target_velocity);
+        return;
+    }
     while ((control->current_segment + 1u < control->expected_points) &&
            (trajectory_time > control->points[control->current_segment + 1u].time_ms)) {
         control->current_segment++;

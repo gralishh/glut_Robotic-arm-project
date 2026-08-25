@@ -122,11 +122,15 @@ typedef struct {
     uint16_t received_points;
     uint16_t current_segment;
     arm_trajectory_point_t points[ARM_VISUAL_MAX_TRAJECTORY_POINTS];
+    arm_trajectory_point_t execution_start_point;
+    bool use_execution_start_segment;
+    uint16_t trajectory_result_sequence;
 
     uint32_t execution_start_ms;
     uint32_t stable_since_ms;
     uint32_t following_error_since_ms;
     uint32_t last_valid_rx_ms;
+    uint32_t last_trajectory_progress_ms;
     uint32_t last_state_tx_ms;
 
     arm_motion_result_t stopping_result;

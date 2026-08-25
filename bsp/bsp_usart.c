@@ -35,6 +35,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart,uint16_t Size)
     USART10_IDLERX_HOOK(huart,Size);
 }
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if(huart->Instance==USART1)
+    USART1_TX_CPLT_HOOK(huart->hdmatx);
+}
+
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
   if(huart->Instance==DBUS_UART_OBJ)
@@ -134,7 +140,6 @@ void usart1_init(void)
   /*初始化环形缓冲*/
   CircBuf_Init(&USART1_TxCBuf, USART1_TxCBuf_Arr, MAX_RING_BUF_SIZE);  
   CircBuf_Init(&USART1_RxCBuf, USART1_RxCBuf_Arr, MAX_RING_BUF_SIZE);
-  HAL_DMA_RegisterCallback((&huart1)->hdmarx, HAL_DMA_XFER_CPLT_CB_ID, USART1_TX_CPLT_HOOK);
   __HAL_DMA_ENABLE((&huart1)->hdmarx);
   __HAL_DMA_ENABLE((&huart1)->hdmatx);
 }
@@ -156,14 +161,58 @@ void USART1_ERR_HOOK(void)
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1,USART1_RxBuf0,USART1_BUF_SIZE);
 }
 
+static void USART1_StartNextTx(void)
+{
+  unsigned int index;
+  unsigned int used;
+  uint16_t send_len;
+
+  if(HAL_DMA_STATE_READY != HAL_DMA_GetState(huart1.hdmatx))
+    return;
+
+  used = CircBuf_GetUsedSize(&USART1_TxCBuf);
+  send_len = (uint16_t)MIN(used, sizeof(USART1_TxBuf));
+  if(send_len == 0u)
+    return;
+
+  /* Keep bytes queued until HAL has accepted the DMA transfer. */
+  for(index = 0u; index < send_len; ++index)
+    USART1_TxBuf[index] = CircBuf_At(&USART1_TxCBuf, index);
+  if(HAL_UART_Transmit_DMA(&huart1, USART1_TxBuf, send_len) == HAL_OK)
+    CircBuf_Drop(&USART1_TxCBuf, send_len);
+}
+
 void USART1_TX_CPLT_HOOK(DMA_HandleTypeDef* hdma)
 {
-  TX_CPLT_HOOK(huart1,USART1_TxCBuf,USART1_TxBuf);
+  (void)hdma;
+  USART1_StartNextTx();
 }
 
 unsigned int USART1_Send(uint8_t *data, unsigned short len)
 {
-  TX_TEMPLATE(huart1,USART1_TxCBuf,USART1_TxBuf);
+  unsigned int result;
+  uint32_t interrupt_state;
+
+  if((data == NULL) || (len == 0u))
+    return 0u;
+
+  interrupt_state = __get_PRIMASK();
+  __disable_irq();
+
+  /* A protocol frame must be queued completely or not queued at all. */
+  if(CircBuf_GetAvalaibleSize(&USART1_TxCBuf) < len)
+  {
+    if(interrupt_state == 0u)
+      __enable_irq();
+    return 0u;
+  }
+
+  result = CircBuf_Push(&USART1_TxCBuf, data, len);
+  USART1_StartNextTx();
+
+  if(interrupt_state == 0u)
+    __enable_irq();
+  return result;
 }
 
 unsigned int USART1_Recv(unsigned char *data, unsigned short len)
