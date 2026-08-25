@@ -1162,6 +1162,21 @@
               <FilePath>..\components\modules\Custom_contrllor\Custom_ctrl.c</FilePath>
             </File>
             <File>
+              <FileName>arm_serial_protocol.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\Custom_contrllor\arm_serial_protocol.c</FilePath>
+            </File>
+            <File>
+              <FileName>arm_visual_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\Custom_contrllor\arm_visual_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>visual_trajectory_h7_adapter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\modules\Custom_contrllor\visual_trajectory_h7_adapter.c</FilePath>
+            </File>
+            <File>
               <FileName>DJI_motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\components\modules\DJI_motor_module\DJI_motor.c</FilePath>

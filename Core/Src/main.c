@@ -39,6 +39,7 @@
 #include "motor_timer_ctrl.h"
 #include "DJI_motor_canbus.h"
 #include "Custom_ctrl.h"
+#include "visual_trajectory_h7_adapter.h"
 #include "Vofa.h"
 #include "ui.h"
 #include "vofa_uart_task.h"
@@ -131,7 +132,7 @@ const osThreadAttr_t USART3_measure_attributes = {
 osThreadId_t CustomCtrlTaskHandle;
 const osThreadAttr_t CustomCtrlTask_attributes = {
   .name = "CustomCtrlTask",
-  .stack_size = 256 * 4,
+  .stack_size = 512 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for CatcherTask */
@@ -1025,7 +1026,7 @@ static void MX_USART1_UART_Init(void)
 
   /* USER CODE END USART1_Init 1 */
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 921600;
+  huart1.Init.BaudRate = 115200;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;
@@ -1318,7 +1319,7 @@ void __usart3_measure_task(void *argument)
 void __Custom_Ctrl_Task(void *argument)
 {
   /* USER CODE BEGIN __Custom_Ctrl_Task */
-  Custom_Ctrl_Task(argument);
+  Visual_Trajectory_H7_Task(argument);
   /* Infinite loop */
   for(;;)
   {
