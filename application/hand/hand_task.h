@@ -58,8 +58,13 @@ typedef enum
   HAND_CLAW_CLOSING    // PE9 正在输出 700ms 高电平，用于轮询函数非阻塞式延时
 } hand_claw_state_t;
 
-//新夹爪参数
-
+//依然是夹爪状态机：用来判断夹爪的状态（多次触发同一指令则指令失效）
+typedef enum
+{
+    CLAW_POS_START = 0,//起始状态
+    CLAW_POS_OPEN,
+    CLAW_POS_CLOSED
+} claw_position_state_t;
 
 typedef struct
 {

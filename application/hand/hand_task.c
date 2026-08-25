@@ -10,6 +10,9 @@ void hand_task(void *argument)
 {
   hand_task_init();
   osDelay(1000);
+
+  //hand_claw_close();//上电初始化时让夹爪闭合
+
   while(1)
   {
 		

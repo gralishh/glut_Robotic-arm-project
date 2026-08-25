@@ -130,6 +130,8 @@ static uint8_t __hand_J4_init(void);
 static uint8_t __hand_J5_init(void);
 static uint8_t __hand_gripper_init(void);
 
+static void Hand_go_to_start (void);
+
 static void __hand_move_BTD(void);
 static void __hand_move_GSM(void);
 static void __hand_move_OCSM(void);
@@ -146,7 +148,8 @@ static hand_claw_state_t hand_claw_state = HAND_CLAW_IDLE;//默认夹爪空闲
 static uint16_t hand_claw_tick = 0;
 static uint8_t last_claw_open_sta = 0;//记录上次是否已控制夹爪闭合，防止多次闭合夹爪
 static uint8_t last_claw_close_sta = 0;
-
+static claw_position_state_t claw_position_state = CLAW_POS_START;//标志上一个状态：上电默认为起始状态（未知）
+                                                                  //后续可添加让机械臂回到起始位置的函数（还要考虑一些问题）    
 static float shortest_angle_error(float target, float current);
 
 // static void hand_pitch_reset(void);
@@ -280,22 +283,23 @@ static float shortest_angle_error(float target, float current);
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
-  //hand_claw_init();
+  hand_claw_init();
   //set_motor_zero(&hfdcan2, 5, POS_MODE);
   basic_motor_init();
   osDelay(100);
-  // 机械臂初始化
-   __gripper_init();
-  // osDelay(50);
-   __J5_init();
-  // osDelay(50);
-   __J4_init();
-  // osDelay(50);
-  // __J3_init();
-  // osDelay(50);
-  // __J2_init();
-  // osDelay(50);
-  // __J1_init();
+  //机械臂初始化
+  __J5_init();
+    osDelay(50);
+    __gripper_init();
+    osDelay(50);
+    __J4_init();
+   osDelay(50);
+    __J3_init();
+    osDelay(50);
+   __J2_init();
+   osDelay(50);
+   __J1_init();
+
 }
 
 /**
@@ -392,50 +396,50 @@ void hand_task_mode_flush()
 
   // static uint8_t mode_var = 0; // 没用
   // if (__GET_STRUCT_MODE() == HAND_MODE_IDLE && !GetMatchReady())
-  if (__GET_STRUCT_MODE() == HAND_MODE_CUSTOM_CTRL)
-  {
-    // __BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);//与气泵有关暂时保留
-    // __BUTTON_PRESS_SWITCH_WRAP
+  // if (__GET_STRUCT_MODE() == HAND_MODE_CUSTOM_CTRL)
+  // {
+  //   // __BUTTON_PRESS_SWITCH_WRAP(GET_KEY(KEY_Z),mode_var,1,10,__hand_catch_ground);//与气泵有关暂时保留
+  //   // __BUTTON_PRESS_SWITCH_WRAP
 
-    //  if (remote_data.trigger)//新控的
-    //    __hand_rc_ctrl();
+  //   //  if (remote_data.trigger)//新控的
+  //   //    __hand_rc_ctrl();
 
-    // if (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1]))//使用控调试
-    //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
-    // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
+  //   // if (switch_is_up(get_remote_control_point()->rc.s[0]) && switch_is_mid(get_remote_control_point()->rc.s[1]))//使用控调试
+  //   //   set_movement(ONCE_CLICK_SAVE_MINE); // 里面会把步骤又置为0，所以要拨到挡当然后退出该挡，后续在键盘上为按下按键不会有无法进行下一步的情况
+  //   // 比赛时设置一个按键可以打算所有固定动作(防止在途中卡住)，或者让自定义控制器优先级比这个高当自定义控制时可以打断固定动作
 
-    // 牢骚：对于一键取矿本质是一键存矿的倒转动作，可以设置step++变为step--,但实测发现因为j1电机精度问题夹爪伸进存矿位置有概率伸歪，所有只能再写一套动作
-    // 后来者如果有条件可以把一键存取左右两边四个动作的代码整合到一个函数内（或者将它抽象封装）
-    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_Z), ONCE_CLICK_SAVE_MINE, LEFT);
-    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_X), ONCE_CLICK_SAVE_MINE, RIGHT);
-    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_G), BTD, NON_DEIR);
-    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_Z) && GET_KEY(KEY_CTRL), ONCE_CLICK_GET_MINE, LEFT);
-    __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_X) && GET_KEY(KEY_CTRL), ONCE_CLICK_GET_MINE, RIGHT);
+  //   // 牢骚：对于一键取矿本质是一键存矿的倒转动作，可以设置step++变为step--,但实测发现因为j1电机精度问题夹爪伸进存矿位置有概率伸歪，所有只能再写一套动作
+  //   // 后来者如果有条件可以把一键存取左右两边四个动作的代码整合到一个函数内（或者将它抽象封装）
+  //   __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_Z), ONCE_CLICK_SAVE_MINE, LEFT);
+  //   __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_X), ONCE_CLICK_SAVE_MINE, RIGHT);
+  //   __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_G), BTD, NON_DEIR);
+  //   __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_Z) && GET_KEY(KEY_CTRL), ONCE_CLICK_GET_MINE, LEFT);
+  //   __LONG_PRESS_TRIGGER_FUNCTION(GET_KEY(KEY_X) && GET_KEY(KEY_CTRL), ONCE_CLICK_GET_MINE, RIGHT);
 
-    if (GET_KEY(KEY_B))
-    {
-      set_movement(NON); // 退出固定动作
-      movement.hand_step_complete = 0;
-      movement.height_step_complete = 0;
-      movement.mine_place = NON_DEIR;
-      movement.movement_step = 0;
-      // movement.hand_move_out_flag = 1;
-    }
-    if (get_movement() == BTD)
-    {
-      __SET_STRUCT_MODE(HAND_MODE_BTD_CTRL);
-    }
+  //   if (GET_KEY(KEY_B))
+  //   {
+  //     set_movement(NON); // 退出固定动作
+  //     movement.hand_step_complete = 0;
+  //     movement.height_step_complete = 0;
+  //     movement.mine_place = NON_DEIR;
+  //     movement.movement_step = 0;
+  //     // movement.hand_move_out_flag = 1;
+  //   }
+  //   if (get_movement() == BTD)
+  //   {
+  //     __SET_STRUCT_MODE(HAND_MODE_BTD_CTRL);
+  //   }
 
-    if (get_movement() == ONCE_CLICK_SAVE_MINE)
-    {
-      __SET_STRUCT_MODE(HAND_MODE_SM_CTRL);
-    }
-    if (get_movement() == ONCE_CLICK_GET_MINE)
-    {
-      __SET_STRUCT_MODE(HAND_MODE_GSM_CTRL);
-    }
+  //   if (get_movement() == ONCE_CLICK_SAVE_MINE)
+  //   {
+  //     __SET_STRUCT_MODE(HAND_MODE_SM_CTRL);
+  //   }
+  //   if (get_movement() == ONCE_CLICK_GET_MINE)
+  //   {
+  //     __SET_STRUCT_MODE(HAND_MODE_GSM_CTRL);
+  //   }
     
-  }
+  // }
 
   {
     static uint16_t press_count = 0;
@@ -517,10 +521,10 @@ void hand_task_set_output()
     __hand_nonforce();
   }
 
-  __detect_hand_motor_offline();
+  // __detect_hand_motor_offline();
 
-  __set_motor_offline_flag();
-  __detect_hand_motor_stall();
+  // __set_motor_offline_flag();
+  // __detect_hand_motor_stall();
 }
 
 /**
@@ -558,6 +562,8 @@ void hand_task_output()
                              HANDLER_PTR->motor_speed[index],
                              HANDLER_PTR->motor_angle[index]);
   }
+
+  
 }
 
 void basic_motor_init(void)
@@ -600,7 +606,7 @@ void basic_motor_init(void)
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
  //先小范围测试
   __SET_JOINT_LIMIT(HAND_J1, -1.57f, 1.57f);
-  __SET_JOINT_LIMIT(HAND_J2, -2.0f,-0.613f );       
+  __SET_JOINT_LIMIT(HAND_J2, -2.4f,0.0f );       
   __SET_JOINT_LIMIT(HAND_J3, -6.0f, -2.93f); 
   __SET_JOINT_LIMIT(HAND_J4, -2.93f, 2.85f);          //机械限位角度为-2.88——2.88（330度）
   __SET_JOINT_LIMIT(HAND_J5, -1.57f, 1.57f);         
@@ -630,6 +636,8 @@ void basic_motor_init(void)
                       CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
                       GPIO_PIN_RESET);              //默认都不控制夹爪
 
+    //hand_claw_close();
+    
     hand_claw_state = HAND_CLAW_IDLE;
     hand_claw_tick = 0;
 
@@ -639,6 +647,12 @@ void basic_motor_init(void)
 
 static void hand_claw_open(void)
 {
+    if (claw_position_state == CLAW_POS_OPEN)
+    {
+        return;   // 已经打开，就不能再次打开
+    }
+  
+  
     HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
                       CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
                       GPIO_PIN_RESET);
@@ -650,11 +664,18 @@ static void hand_claw_open(void)
 
     hand_claw_state = HAND_CLAW_OPENING;
     hand_claw_tick = 0;
+
+    claw_position_state = CLAW_POS_OPEN;
 }
 
 static void hand_claw_close(void)
 {
-    HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+    if (claw_position_state == CLAW_POS_CLOSED)
+    {
+        return;   // 已经闭合，就不能再次闭合
+    }
+  
+  HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
                       CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
                       GPIO_PIN_RESET);
 
@@ -665,6 +686,8 @@ static void hand_claw_close(void)
 
     hand_claw_state = HAND_CLAW_CLOSING;
     hand_claw_tick = 0;
+
+    claw_position_state = CLAW_POS_CLOSED;
 }
 void hand_claw_poll(void)
 {
@@ -713,14 +736,14 @@ void __J2_init(void)
 {
   while (!__hand_J2_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J2, -1, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J2, -0.133f, 0.00078f, 0.00043f);
 }
 
 void __J3_init(void)
 {
   while (!__hand_J3_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J3, -4, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J3, -3, 0.00078f, 0.00043f);
 }
 
 void __J4_init(void)
@@ -954,6 +977,18 @@ uint8_t __hand_gripper_init(void)
     return 0;
   }
   return 1;
+}
+
+//注意回上电起始位置时各个关节的运动顺序（保证各个关节不会干涉）
+void Hand_go_to_start (void)      
+{
+__DM_go_setting_angle(HAND_G, 0, 0.00042f, 0.00023f);
+__DM_go_setting_angle(HAND_J5,-0.712f  , 0.003f, 0.001f);//重点测试J5运动与其他的干涉
+__DM_go_setting_angle(HAND_J4, 0, 0.2f, 0.00043f);
+__DM_go_setting_angle(HAND_J3, -2.93f, 0.00078f, 0.00043f);
+__DM_go_setting_angle(HAND_J2, 0, 0.00078f, 0.00043f);
+__DM_go_setting_angle(HAND_J1, 0, 0.00078f, 0.00043f);
+
 }
 
 void __hand_nonforce()
