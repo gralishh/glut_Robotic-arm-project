@@ -267,7 +267,7 @@ int main(void)
   uart7_init();
   usart10_init();
   DJI_CANBus_init_all();
-  ui_init_g();
+  /* USART10 is dedicated to the visual arm protocol; RM_UI is disabled. */
   WS2812_Ctrl(0,0,0);
 
   /* TEMP TEST: drive PD5/PD6 high to verify these pins output high level */
@@ -305,7 +305,7 @@ HAL_GPIO_WritePin(POWER_5V_EN_GPIO_Port,POWER_5V_EN_Pin,GPIO_PIN_SET);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   motor_ctrl_init();
-  xTimerStart(RM_UI_TimerHandle ,50);
+  /* RM_UI timer intentionally not started: USART10 belongs to visual control. */
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
