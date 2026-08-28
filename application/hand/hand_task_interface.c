@@ -44,19 +44,19 @@
 #define HAND_CTRL_CAN
 // joint mapping parameter
 // #define J1_MAP_K   0.167 /*for m8010*/
-#define J1_MAP_K -0.841f//J1已改
-#define J1_MAP_D -0.0434f
+#define J1_MAP_K     0.87f//-0.87f          //适应视觉         //-0.841f//J1已改
+#define J1_MAP_D    0.0535f //-0.054f             //-0.0434f
 
-#define J2_MAP_K 1.0f
-#define J2_MAP_D 0
+#define J2_MAP_K    -1.0008f       //-0.9957f //0.967897f           //1.0f
+#define J2_MAP_D    0 //1.396f            //0
 
-#define J3_MAP_K 1.0f
-#define J3_MAP_D 0
+#define J3_MAP_K   0.997f//-0.997f //-0.997f //-1.0135f           //1.0f
+#define J3_MAP_D   2.923f //-2.923f //-4.4944f   //-4.542f        //0
 
-#define J4_MAP_K  0.438f       // 0.438f  //J4已改
-#define J4_MAP_D  2.88f         //2.236f
+#define J4_MAP_K  -0.4327f    //0.4392f    //0.452f  //0.438f       // 0.438f  //J4已改
+#define J4_MAP_D    -2.9496f        //2.8798f    //2.967f      // 2.88f         //2.236f
 
-#define J5_MAP_K  -0.671f       //-0.6710f//J5已更改
+#define J5_MAP_K  0.671f       //-0.6710f//J5已更改
 #define J5_MAP_D  0            //1.6349f
 
 #define GR_MAP_K 1.0f
@@ -144,12 +144,17 @@ static void hand_claw_close(void);  // 触发闭合：PE9 高 700ms
  void hand_claw_poll(void);   // 1ms 调用一次，负责到时拉低引脚
 
 //新夹爪参数
-static hand_claw_state_t hand_claw_state = HAND_CLAW_IDLE;//默认夹爪空闲
+static volatile hand_claw_state_t hand_claw_state = HAND_CLAW_IDLE;//默认夹爪空闲
 static uint16_t hand_claw_tick = 0;
 static uint8_t last_claw_open_sta = 0;//记录上次是否已控制夹爪闭合，防止多次闭合夹爪
 static uint8_t last_claw_close_sta = 0;
-static claw_position_state_t claw_position_state = CLAW_POS_START;//标志上一个状态：上电默认为起始状态（未知）
+static volatile claw_position_state_t claw_position_state = CLAW_POS_START;//标志上一个状态：上电默认为起始状态（未知）
                                                                   //后续可添加让机械臂回到起始位置的函数（还要考虑一些问题）    
+static uint8_t startup_close_flag = 0;    //初始化闭合夹爪标志位（将初始化控制闭合放在hand_task_output()中，放hand_task_init();会导致高电平时间过长）
+static volatile uint8_t hand_claw_request_pending = 0u;
+static volatile hand_claw_request_t hand_claw_pending_request = HAND_CLAW_REQUEST_STOP;
+static volatile uint8_t hand_claw_service_ready = 0u;
+
 static float shortest_angle_error(float target, float current);
 
 // static void hand_pitch_reset(void);
@@ -283,22 +288,22 @@ static float shortest_angle_error(float target, float current);
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
-  hand_claw_init();
-  //set_motor_zero(&hfdcan2, 5, POS_MODE);
+  //hand_claw_init();
+  //set_motor_zero(&hfdcan1, 2, POS_MODE);
   basic_motor_init();
   osDelay(100);
   //机械臂初始化
-  __J5_init();
-    osDelay(50);
-    __gripper_init();
-    osDelay(50);
+   __J5_init();
+     osDelay(50);
     __J4_init();
-   osDelay(50);
-    __J3_init();
-    osDelay(50);
-   __J2_init();
-   osDelay(50);
-   __J1_init();
+     osDelay(50);
+    __gripper_init();
+   //osDelay(50);
+    //__J3_init();
+    //  osDelay(50);
+    // __J2_init();
+  //  osDelay(50);
+  //  __J1_init();
 
 }
 
@@ -605,12 +610,12 @@ void basic_motor_init(void)
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
  //先小范围测试
-  __SET_JOINT_LIMIT(HAND_J1, -1.57f, 1.57f);
-  __SET_JOINT_LIMIT(HAND_J2, -2.4f,0.0f );       
-  __SET_JOINT_LIMIT(HAND_J3, -6.0f, -2.93f); 
-  __SET_JOINT_LIMIT(HAND_J4, -2.93f, 2.85f);          //机械限位角度为-2.88——2.88（330度）
+  __SET_JOINT_LIMIT(HAND_J1,-1.57f, 1.57f);//-2.880f,2.880f
+  __SET_JOINT_LIMIT(HAND_J2,0.0f,2.5133f );     // -2.4f,0.0f 
+  __SET_JOINT_LIMIT(HAND_J3,-3.14f,0.0f); // -6.0f, -2.93f
+  __SET_JOINT_LIMIT(HAND_J4, -2.8f, 2.8f);          //机械限位角度为-2.8798——2.8798（330度）
   __SET_JOINT_LIMIT(HAND_J5, -1.57f, 1.57f);         
-  __SET_JOINT_LIMIT(HAND_G, -3.14f, 3.14f);            
+  __SET_JOINT_LIMIT(HAND_G, -3.14f, 3.14f);     //-2.793f,2.793f  
 
   __CLEAR_MOTOR_OFFLINE(DM_J1);
   __CLEAR_MOTOR_OFFLINE(DM_J2);
@@ -643,6 +648,8 @@ void basic_motor_init(void)
 
     last_claw_open_sta = 0;
     last_claw_close_sta = 0;
+
+    startup_close_flag = 1;
 }
 
 static void hand_claw_open(void)
@@ -689,8 +696,90 @@ static void hand_claw_close(void)
 
     claw_position_state = CLAW_POS_CLOSED;
 }
+
+bool hand_claw_request(hand_claw_request_t request)
+{
+    bool accepted = false;
+
+    if ((request != HAND_CLAW_REQUEST_OPEN) &&
+        (request != HAND_CLAW_REQUEST_CLOSE) &&
+        (request != HAND_CLAW_REQUEST_STOP)) {
+        return false;
+    }
+    if ((hand_claw_service_ready == 0u) ||
+        ((request != HAND_CLAW_REQUEST_STOP) &&
+         (hand_task_handler_ptr->ctrl_mode == HAND_MODE_RC2_CTRL))) {
+        return false;
+    }
+
+    taskENTER_CRITICAL();
+    if (hand_claw_request_pending == 0u) {
+        hand_claw_pending_request = request;
+        hand_claw_request_pending = 1u;
+        accepted = true;
+    }
+    taskEXIT_CRITICAL();
+    return accepted;
+}
+
+hand_claw_reported_state_t hand_claw_get_reported_state(void)
+{
+    hand_claw_state_t motion_state;
+    claw_position_state_t position_state;
+
+    taskENTER_CRITICAL();
+    motion_state = hand_claw_state;
+    position_state = claw_position_state;
+    taskEXIT_CRITICAL();
+    if (motion_state == HAND_CLAW_OPENING) {
+        return HAND_CLAW_REPORTED_OPENING;
+    }
+    if (motion_state == HAND_CLAW_CLOSING) {
+        return HAND_CLAW_REPORTED_CLOSING;
+    }
+    if (position_state == CLAW_POS_OPEN) {
+        return HAND_CLAW_REPORTED_OPEN;
+    }
+    if (position_state == CLAW_POS_CLOSED) {
+        return HAND_CLAW_REPORTED_CLOSED;
+    }
+    return HAND_CLAW_REPORTED_UNKNOWN;
+}
+
 void hand_claw_poll(void)
 {
+    hand_claw_request_t request = HAND_CLAW_REQUEST_STOP;
+    uint8_t has_request = 0u;
+
+    hand_claw_service_ready = 1u;
+    taskENTER_CRITICAL();
+    if (hand_claw_request_pending != 0u) {
+        request = hand_claw_pending_request;
+        hand_claw_request_pending = 0u;
+        has_request = 1u;
+    }
+    taskEXIT_CRITICAL();
+
+    if (has_request != 0u) {
+        if ((request == HAND_CLAW_REQUEST_OPEN) &&
+            (hand_task_handler_ptr->ctrl_mode != HAND_MODE_RC2_CTRL)) {
+            hand_claw_open();
+        } else if ((request == HAND_CLAW_REQUEST_CLOSE) &&
+                   (hand_task_handler_ptr->ctrl_mode != HAND_MODE_RC2_CTRL)) {
+            hand_claw_close();
+        } else if (request == HAND_CLAW_REQUEST_STOP) {
+            uint8_t was_moving = (hand_claw_state != HAND_CLAW_IDLE);
+            HAL_GPIO_WritePin(CLAW_PIN_GPIO_Port,
+                              CLAW_OPEN_PIN | CLAW_CLOSE_PIN,
+                              GPIO_PIN_RESET);
+            hand_claw_state = HAND_CLAW_IDLE;
+            hand_claw_tick = 0u;
+            if (was_moving != 0u) {
+                claw_position_state = CLAW_POS_START;
+            }
+        }
+    }
+
     if (hand_claw_state == HAND_CLAW_IDLE)
     {
         return;
@@ -736,14 +825,14 @@ void __J2_init(void)
 {
   while (!__hand_J2_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J2, -0.133f, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J2, 0.5f, 0.00078f, 0.00043f);
 }
 
 void __J3_init(void)
 {
   while (!__hand_J3_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J3, -3, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J3, -0.25f, 0.00078f, 0.00043f);
 }
 
 void __J4_init(void)
@@ -876,7 +965,7 @@ uint8_t __hand_J4_init(void)
     disable_motor_mode(&hfdcan2, 6, POS_MODE);
     osDelay(5);
     enable_motor_mode(&hfdcan2, 6, POS_MODE);
-    //enable_motor_mode(&hfdcan2, 6, SPEED_MODE);
+   
     cnt = 0;
     phase = 0;
     
@@ -889,8 +978,7 @@ uint8_t __hand_J4_init(void)
   switch (phase)
   {
   case 0:
-    // disable_motor_mode(&hfdcan2, 6, POS_MODE);
-    // enable_motor_mode(&hfdcan2, 6,SPEED_MODE);
+    
     enable_motor_mode(&hfdcan2, 6,POS_MODE);
     now = DM_Motor_J4.para.pos;
     last_pos = DM_Motor_J4.para.pos;
@@ -904,8 +992,7 @@ uint8_t __hand_J4_init(void)
       float target = now +13.5 ;
        //mit_ctrl(&DM_Motor_J4, now, 0.0f, 0.0f, 0.0f, J4_Find_TORQUE);
         dm_set_pos(&DM_Motor_J4, target);
-        //speed_ctrl(&hfdcan2,6,0.5);
-        // speed_ctrl_output(&DM_Motor_J4,0.5);
+        
 
        if (ABS(DM_Motor_J4.para.tor)>J4_tor_Limit&&
                ABS(current - last_pos) < POS_Delta_THR) 

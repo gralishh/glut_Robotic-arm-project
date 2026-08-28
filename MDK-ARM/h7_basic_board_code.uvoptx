@@ -348,17 +348,37 @@
         <Ww>
           <count>37</count>
           <WinNumber>1</WinNumber>
-          <ItemText>cnt</ItemText>
+          <ItemText>DM_Motor_J5</ItemText>
         </Ww>
         <Ww>
           <count>38</count>
           <WinNumber>1</WinNumber>
-          <ItemText>\\h7_basic_board_code\../components/modules/M4310_module/dm4310_drv.c\DM_Motor_J4</ItemText>
+          <ItemText>DM_Motor_J1</ItemText>
         </Ww>
         <Ww>
           <count>39</count>
           <WinNumber>1</WinNumber>
-          <ItemText>DM_Motor_J5</ItemText>
+          <ItemText>USART10_TxBuf[ 300 ]</ItemText>
+        </Ww>
+        <Ww>
+          <count>40</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>USART10_TxCBuf_Arr[ 4096 ]</ItemText>
+        </Ww>
+        <Ww>
+          <count>41</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>USART10_RxBuf0[ 1024 ]</ItemText>
+        </Ww>
+        <Ww>
+          <count>42</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>&amp;USART10_TxCBuf</ItemText>
+        </Ww>
+        <Ww>
+          <count>43</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>USART10_TxBuf</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow4>
@@ -1143,7 +1163,7 @@
 
   <Group>
     <GroupName>bsp</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1291,7 +1311,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>68</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\components\modules\Custom_contrllor\arm_serial_protocol.c</PathWithFileName>
@@ -1303,7 +1323,7 @@
       <GroupNumber>8</GroupNumber>
       <FileNumber>69</FileNumber>
       <FileType>1</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\components\modules\Custom_contrllor\arm_visual_control.c</PathWithFileName>

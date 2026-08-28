@@ -56,9 +56,9 @@ typedef struct {
     uint32_t stopped_velocity_urad_s;
     uint32_t state_period_ms;
     uint32_t result_retry_ms;
-    /* Local command-to-completion delays; recommended initial values: 1500 ms. */
-    uint32_t claw_open_duration_ms;
-    uint32_t claw_close_duration_ms;
+    uint32_t claw_state_period_ms;
+    uint32_t claw_communication_timeout_ms;
+    uint32_t claw_action_timeout_ms;
     uint8_t result_max_retries;
 } arm_visual_config_t;
 
@@ -80,6 +80,10 @@ typedef struct {
     bool (*estop_active)(void *user);
     bool (*driver_fault_active)(void *user);
     bool (*request_claw_action)(void *user, arm_claw_action_t action);
+    bool (*read_claw_state)(
+        void *user,
+        arm_claw_state_t *state,
+        uint8_t *flags);
 } arm_visual_hooks_t;
 
 typedef enum {
@@ -132,6 +136,7 @@ typedef struct {
     uint32_t last_valid_rx_ms;
     uint32_t last_trajectory_progress_ms;
     uint32_t last_state_tx_ms;
+    uint32_t last_claw_state_tx_ms;
 
     arm_motion_result_t stopping_result;
     uint16_t stopping_error_code;
@@ -144,6 +149,9 @@ typedef struct {
     arm_claw_action_t claw_action;
     uint16_t claw_command_sequence;
     uint32_t claw_action_start_ms;
+    arm_claw_state_t last_claw_state;
+    uint8_t last_claw_state_flags;
+    bool claw_state_sent;
 } arm_visual_control_t;
 
 bool arm_visual_control_init(

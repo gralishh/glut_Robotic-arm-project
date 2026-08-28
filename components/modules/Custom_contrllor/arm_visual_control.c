@@ -543,8 +543,7 @@ static arm_ack_status_t handle_claw_command(
         (action != ARM_CLAW_STOP)) {
         return ARM_ACK_BAD_DATA;
     }
-    if (!control->ready_permitted ||
-        (control->public_state == ARM_STATE_ESTOP) ||
+    if ((control->public_state == ARM_STATE_ESTOP) ||
         (control->public_state == ARM_STATE_ERROR)) {
         return ARM_ACK_FAULT;
     }
@@ -806,6 +805,8 @@ bool arm_visual_control_init(
         (hooks->controlled_stop_complete == NULL) ||
         (hooks->estop_active == NULL) ||
         (hooks->driver_fault_active == NULL) ||
+        (hooks->request_claw_action == NULL) ||
+        (hooks->read_claw_state == NULL) ||
         (config->max_trajectory_points == 0u) ||
         (config->max_trajectory_points > ARM_VISUAL_MAX_TRAJECTORY_POINTS) ||
         (config->communication_timeout_ms == 0u) ||
@@ -815,8 +816,9 @@ bool arm_visual_control_init(
         (config->stopped_velocity_urad_s == 0u) ||
         (config->state_period_ms == 0u) ||
         (config->result_retry_ms == 0u) ||
-        (config->claw_open_duration_ms == 0u) ||
-        (config->claw_close_duration_ms == 0u) ||
+        (config->claw_state_period_ms == 0u) ||
+        (config->claw_communication_timeout_ms == 0u) ||
+        (config->claw_action_timeout_ms == 0u) ||
         (config->result_max_retries == 0u)) {
         return false;
     }
@@ -843,6 +845,8 @@ bool arm_visual_control_init(
     arm_protocol_parser_init(&control->parser, handle_frame, control);
     control->last_valid_rx_ms = now_ms(control);
     control->last_state_tx_ms = now_ms(control);
+    control->last_claw_state_tx_ms = now_ms(control);
+    control->last_claw_state = ARM_CLAW_STATE_UNKNOWN;
     return true;
 }
 
@@ -938,6 +942,51 @@ static void send_robot_state(arm_visual_control_t *control)
     }
 }
 
+static void service_claw_state(arm_visual_control_t *control, uint32_t now)
+{
+    uint8_t payload[ARM_PAYLOAD_CLAW_STATE];
+    uint8_t frame[ARM_PROTOCOL_MAX_FRAME_SIZE];
+    uint8_t flags = 0u;
+    arm_claw_state_t state = ARM_CLAW_STATE_FAULT;
+    size_t length;
+    bool changed;
+
+    if (!control->hooks.read_claw_state(
+            control->hooks_user, &state, &flags) ||
+        (state > ARM_CLAW_STATE_FAULT)) {
+        state = ARM_CLAW_STATE_FAULT;
+        flags = 0u;
+    }
+    /* No verification sensor is fitted. Unknown future bits must stay clear. */
+    flags &= ARM_CLAW_STATE_FLAG_VERIFIED;
+    changed = !control->claw_state_sent ||
+        (state != control->last_claw_state) ||
+        (flags != control->last_claw_state_flags);
+    if (!changed && !elapsed_at_least(
+            now,
+            control->last_claw_state_tx_ms,
+            control->config.claw_state_period_ms)) {
+        return;
+    }
+
+    payload[0] = (uint8_t)state;
+    payload[1] = flags;
+    length = arm_protocol_encode(
+        ARM_MSG_CLAW_STATE,
+        control->tx_sequence++,
+        payload,
+        sizeof(payload),
+        frame,
+        sizeof(frame));
+    if (length != 0u) {
+        transmit(control, frame, length);
+        control->last_claw_state = state;
+        control->last_claw_state_flags = flags;
+        control->last_claw_state_tx_ms = now;
+        control->claw_state_sent = true;
+    }
+}
+
 void arm_visual_control_service(arm_visual_control_t *control)
 {
     uint32_t now;
@@ -951,6 +1000,7 @@ void arm_visual_control_service(arm_visual_control_t *control)
         control->last_state_tx_ms = now;
         send_robot_state(control);
     }
+    service_claw_state(control, now);
 
     if (control->pending_result.active &&
         !control->pending_result.sent_once) {
@@ -988,6 +1038,8 @@ void arm_visual_control_tick(arm_visual_control_t *control)
     double acceleration[ARM_PROTOCOL_JOINT_COUNT];
     int32_t target_position[ARM_PROTOCOL_JOINT_COUNT];
     int32_t target_velocity[ARM_PROTOCOL_JOINT_COUNT];
+    arm_claw_state_t claw_state = ARM_CLAW_STATE_FAULT;
+    uint8_t claw_state_flags = 0u;
 
     if (control == NULL) {
         return;
@@ -1042,7 +1094,7 @@ void arm_visual_control_tick(arm_visual_control_t *control)
         elapsed_at_least(
             now,
             control->last_valid_rx_ms,
-            control->config.communication_timeout_ms)) {
+            control->config.claw_communication_timeout_ms)) {
         (void)control->hooks.request_claw_action(
             control->hooks_user, ARM_CLAW_STOP);
         (void)queue_claw_result(
@@ -1055,21 +1107,50 @@ void arm_visual_control_tick(arm_visual_control_t *control)
         return;
     }
 
-    if (control->claw_busy &&
-        elapsed_at_least(
-            now,
-            control->claw_action_start_ms,
-            (control->claw_action == ARM_CLAW_OPEN)
-                ? control->config.claw_open_duration_ms
-                : control->config.claw_close_duration_ms)) {
-        (void)queue_claw_result(
-            control,
-            control->claw_command_sequence,
-            ARM_CLAW_COMPLETED_UNVERIFIED);
-        control->claw_busy = false;
-        control->public_state = control->ready_permitted
-            ? ARM_STATE_READY
-            : ARM_STATE_NOT_READY;
+    if (control->claw_busy) {
+        bool claw_state_valid = control->hooks.read_claw_state(
+            control->hooks_user, &claw_state, &claw_state_flags);
+        bool target_reached =
+            ((control->claw_action == ARM_CLAW_OPEN) &&
+             (claw_state == ARM_CLAW_STATE_OPEN)) ||
+            ((control->claw_action == ARM_CLAW_CLOSE) &&
+             (claw_state == ARM_CLAW_STATE_CLOSED));
+
+        if (!claw_state_valid || (claw_state == ARM_CLAW_STATE_FAULT)) {
+            (void)control->hooks.request_claw_action(
+                control->hooks_user, ARM_CLAW_STOP);
+            (void)queue_claw_result(
+                control,
+                control->claw_command_sequence,
+                ARM_CLAW_FAULT);
+            control->claw_busy = false;
+            control->public_state = control->ready_permitted
+                ? ARM_STATE_READY
+                : ARM_STATE_NOT_READY;
+        } else if (target_reached) {
+            (void)queue_claw_result(
+                control,
+                control->claw_command_sequence,
+                ARM_CLAW_COMPLETED_UNVERIFIED);
+            control->claw_busy = false;
+            control->public_state = control->ready_permitted
+                ? ARM_STATE_READY
+                : ARM_STATE_NOT_READY;
+        } else if (elapsed_at_least(
+                now,
+                control->claw_action_start_ms,
+                control->config.claw_action_timeout_ms)) {
+            (void)control->hooks.request_claw_action(
+                control->hooks_user, ARM_CLAW_STOP);
+            (void)queue_claw_result(
+                control,
+                control->claw_command_sequence,
+                ARM_CLAW_TIMEOUT);
+            control->claw_busy = false;
+            control->public_state = control->ready_permitted
+                ? ARM_STATE_READY
+                : ARM_STATE_NOT_READY;
+        }
     }
 
     if (control->trajectory_state == ARM_TRAJECTORY_STOPPING) {

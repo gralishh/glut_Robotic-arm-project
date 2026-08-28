@@ -26,6 +26,7 @@ extern "C" {
 #define ARM_MSG_ROBOT_STATE                0x81u
 #define ARM_MSG_MOTION_DONE                0x82u
 #define ARM_MSG_CLAW_RESULT                0x83u
+#define ARM_MSG_CLAW_STATE                 0x84u
 
 #define ARM_PAYLOAD_TRAJECTORY_BEGIN       2u
 #define ARM_PAYLOAD_TRAJECTORY_POINT       54u
@@ -37,6 +38,9 @@ extern "C" {
 #define ARM_PAYLOAD_ROBOT_STATE            27u
 #define ARM_PAYLOAD_MOTION_DONE            3u
 #define ARM_PAYLOAD_CLAW_RESULT            1u
+#define ARM_PAYLOAD_CLAW_STATE             2u
+
+#define ARM_CLAW_STATE_FLAG_VERIFIED       0x01u
 
 typedef enum {
     ARM_ACK_OK = 0x00,
@@ -75,6 +79,15 @@ typedef enum {
     ARM_CLAW_TIMEOUT = 0x02,
     ARM_CLAW_FAULT = 0x03
 } arm_claw_result_t;
+
+typedef enum {
+    ARM_CLAW_STATE_UNKNOWN = 0x00,
+    ARM_CLAW_STATE_OPENING = 0x01,
+    ARM_CLAW_STATE_OPEN = 0x02,
+    ARM_CLAW_STATE_CLOSING = 0x03,
+    ARM_CLAW_STATE_CLOSED = 0x04,
+    ARM_CLAW_STATE_FAULT = 0x05
+} arm_claw_state_t;
 
 typedef struct {
     uint8_t type;

@@ -91,6 +91,8 @@ int16_t arm_protocol_payload_length(uint8_t type)
         return ARM_PAYLOAD_MOTION_DONE;
     case ARM_MSG_CLAW_RESULT:
         return ARM_PAYLOAD_CLAW_RESULT;
+    case ARM_MSG_CLAW_STATE:
+        return ARM_PAYLOAD_CLAW_STATE;
     default:
         return -1;
     }

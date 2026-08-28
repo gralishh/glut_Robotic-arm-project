@@ -4,6 +4,7 @@
 #include "arm_visual_control.h"
 #include "bsp_usart.h"
 #include "hand_task.h"
+#include "hand_task_interface.h"
 #include "cmsis_os2.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -18,7 +19,32 @@
 #define TRAJECTORY_GOAL_TOLERANCE_URAD  50000
 
 static arm_visual_control_t trajectory_control;
-static const int8_t joint_direction[6] = {1, -1, 1, -1, -1, 1};
+
+/*
+ * USART10 AA55 v1 uses the ROS/URDF joint coordinate system directly:
+ * joint_1..joint_6, radians, URDF zero and URDF positive direction.
+ *
+ * feedback_joint_angle[] and CC_handler targets are required to use the same
+ * convention.  Do not repeat the legacy custom-controller sign/zero mapping
+ * in this serial adapter; doing so reverses J2/J4/J5 and offsets J2 twice.
+ */
+static const int32_t ros_joint_min_urad[6] = {
+    -2879793,  /* J1: -165 deg */
+    -1047198,  /* J2:  -60 deg */
+    -1570796,  /* J3:  -90 deg */
+    -2967060,  /* J4: -170 deg */
+    -1570796,  /* J5:  -90 deg */
+    -2792527   /* J6: -160 deg */
+};
+
+static const int32_t ros_joint_max_urad[6] = {
+     2879793,  /* J1: 165 deg */
+     1396263,  /* J2:  80 deg */
+     1570796,  /* J3:  90 deg */
+     2967060,  /* J4: 170 deg */
+     1570796,  /* J5:  90 deg */
+     2792527   /* J6: 160 deg */
+};
 
 static int32_t rad_to_urad(fp32 value)
 {
@@ -133,26 +159,55 @@ static bool h7_driver_fault_active(void *user)
 static bool h7_claw_action(void *user, arm_claw_action_t action)
 {
     (void)user;
-    (void)action;
-    return false;
+    return hand_claw_request((hand_claw_request_t)action);
+}
+
+static bool h7_read_claw_state(
+    void *user,
+    arm_claw_state_t *state,
+    uint8_t *flags)
+{
+    hand_claw_reported_state_t reported;
+    (void)user;
+    if ((state == NULL) || (flags == NULL)) {
+        return false;
+    }
+
+    reported = hand_claw_get_reported_state();
+    switch (reported) {
+    case HAND_CLAW_REPORTED_OPENING:
+        *state = ARM_CLAW_STATE_OPENING;
+        break;
+    case HAND_CLAW_REPORTED_OPEN:
+        *state = ARM_CLAW_STATE_OPEN;
+        break;
+    case HAND_CLAW_REPORTED_CLOSING:
+        *state = ARM_CLAW_STATE_CLOSING;
+        break;
+    case HAND_CLAW_REPORTED_CLOSED:
+        *state = ARM_CLAW_STATE_CLOSED;
+        break;
+    case HAND_CLAW_REPORTED_FAULT:
+        *state = ARM_CLAW_STATE_FAULT;
+        break;
+    case HAND_CLAW_REPORTED_UNKNOWN:
+    default:
+        *state = ARM_CLAW_STATE_UNKNOWN;
+        break;
+    }
+    /* There is no position/current/contact sensor that verifies the endpoint. */
+    *flags = 0u;
+    return true;
 }
 
 static void set_ros_limits(
     arm_joint_safety_config_t *config,
-    uint8_t index,
-    int32_t controller_min,
-    int32_t controller_max,
-    int32_t zero)
+    uint8_t index)
 {
-    config->direction = joint_direction[index];
-    config->zero_offset_urad = zero;
-    if (config->direction > 0) {
-        config->min_position_urad = controller_min - zero;
-        config->max_position_urad = controller_max - zero;
-    } else {
-        config->min_position_urad = zero - controller_max;
-        config->max_position_urad = zero - controller_min;
-    }
+    config->direction = 1;
+    config->zero_offset_urad = 0;
+    config->min_position_urad = ros_joint_min_urad[index];
+    config->max_position_urad = ros_joint_max_urad[index];
     config->max_velocity_urad_s = TRAJECTORY_MAX_VELOCITY_URAD_S;
     config->max_acceleration_urad_s2 = TRAJECTORY_MAX_ACCEL_URAD_S2;
     config->start_tolerance_urad = TRAJECTORY_START_TOLERANCE_URAD;
@@ -169,11 +224,7 @@ static bool h7_trajectory_init(void)
     memset(&hooks, 0, sizeof(hooks));
 
     for (i = 0u; i < 6u; ++i) {
-        int32_t zero = i == HAND_J2
-            ? -rad_to_urad(hand_task_handler_ptr->min_joint_angle[i]) : 0;
-        set_ros_limits(&config.joint[i], i,
-            rad_to_urad(hand_task_handler_ptr->min_joint_angle[i]),
-            rad_to_urad(hand_task_handler_ptr->max_joint_angle[i]), zero);
+        set_ros_limits(&config.joint[i], i);
     }
     config.max_trajectory_points = ARM_VISUAL_MAX_TRAJECTORY_POINTS;
     config.communication_timeout_ms = 1000u;
@@ -183,8 +234,9 @@ static bool h7_trajectory_init(void)
     config.stopped_velocity_urad_s = 50000u;
     config.state_period_ms = 50u;
     config.result_retry_ms = 100u;
-    config.claw_open_duration_ms = 1500u;
-    config.claw_close_duration_ms = 1500u;
+    config.claw_state_period_ms = 100u;
+    config.claw_communication_timeout_ms = 500u;
+    config.claw_action_timeout_ms = 2000u;
     config.result_max_retries = 5u;
 
     hooks.get_monotonic_ms = h7_now_ms;
@@ -196,6 +248,7 @@ static bool h7_trajectory_init(void)
     hooks.estop_active = h7_estop_active;
     hooks.driver_fault_active = h7_driver_fault_active;
     hooks.request_claw_action = h7_claw_action;
+    hooks.read_claw_state = h7_read_claw_state;
     return arm_visual_control_init(&trajectory_control, &config, &hooks, NULL);
 }
 
