@@ -103,6 +103,7 @@ static void __hand_nonforce(void);
 static void __hand_idle_ctrl(void);
 static void __hand_rc_ctrl(void);
 static void __hand_custom_ctrl(void);
+static void __hand_custom_ctrl_init(void);
 // static void __hand_catch_ground(void);
 
 static void __detect_hand_motor_offline(void);
@@ -288,9 +289,13 @@ static float shortest_angle_error(float target, float current);
   __HALT_TICKS_COUNTING();
   __RESET_TICKS();
 
-  //hand_claw_init();
+  hand_claw_init();
   //set_motor_zero(&hfdcan1, 2, POS_MODE);
+  
+  
   basic_motor_init();
+ __hand_custom_ctrl_init(); 
+
   osDelay(100);
   //机械臂初始化
    __J5_init();
@@ -298,12 +303,12 @@ static float shortest_angle_error(float target, float current);
     __J4_init();
      osDelay(50);
     __gripper_init();
-   //osDelay(50);
-    //__J3_init();
-    //  osDelay(50);
-    // __J2_init();
-  //  osDelay(50);
-  //  __J1_init();
+   osDelay(50);
+    __J3_init();
+      osDelay(50);
+     __J2_init();
+    osDelay(50);
+    __J1_init();
 
 }
 
@@ -379,14 +384,14 @@ void hand_task_mode_flush()
       __SET_STRUCT_MODE(HAND_MODE_RC_CTRL);
     else if (switch_is_up(get_remote_control_point()->rc.s[0]))
       __SET_STRUCT_MODE(HAND_MODE_RC2_CTRL);
-    // __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+     //__SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
     //__SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_mid(get_remote_control_point()->rc.s[1]))
   {
     if (switch_is_up(get_remote_control_point()->rc.s[0]))
-      //__SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+      __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
+      //__SET_STRUCT_MODE(HAND_MODE_IDLE);
 
     else
       __SET_STRUCT_MODE(HAND_MODE_IDLE);
@@ -517,6 +522,10 @@ void hand_task_set_output()
   case HAND_MODE_RC2_CTRL:
     __hand_rc2_ctrl();
     break;
+  case HAND_MODE_CUSTOM_CTRL:
+    __hand_custom_ctrl();
+    break;
+
 
   // case HAND_MODE_RESET_CTRL:
   //   __hand_move_reset();
@@ -825,7 +834,7 @@ void __J2_init(void)
 {
   while (!__hand_J2_init())
     hand_task_get_feedback();
-  __DM_go_setting_angle(HAND_J2, 0.5f, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J2, 0.25f, 0.00078f, 0.00043f);
 }
 
 void __J3_init(void)
@@ -1069,12 +1078,19 @@ uint8_t __hand_gripper_init(void)
 //注意回上电起始位置时各个关节的运动顺序（保证各个关节不会干涉）
 void Hand_go_to_start (void)      
 {
-__DM_go_setting_angle(HAND_G, 0, 0.00042f, 0.00023f);
-__DM_go_setting_angle(HAND_J5,-0.712f  , 0.003f, 0.001f);//重点测试J5运动与其他的干涉
-__DM_go_setting_angle(HAND_J4, 0, 0.2f, 0.00043f);
-__DM_go_setting_angle(HAND_J3, -2.93f, 0.00078f, 0.00043f);
-__DM_go_setting_angle(HAND_J2, 0, 0.00078f, 0.00043f);
-__DM_go_setting_angle(HAND_J1, 0, 0.00078f, 0.00043f);
+  __DM_go_setting_angle(HAND_J1, 0, 0.00078f, 0.00043f);
+  osDelay(1000);
+  __DM_go_setting_angle(HAND_G, 0, 0.00042f, 0.00023f);
+  osDelay(1000);
+  __DM_go_setting_angle(HAND_J5, 0, 0.003f, 0.001f);//重点测试J5运动与其他的干涉
+  osDelay(1000);
+  __DM_go_setting_angle(HAND_J4, 0, 0.2f, 0.00043f);
+  osDelay(1000);
+  __DM_go_setting_angle(HAND_J3, 0, 0.00078f, 0.00043f);
+  osDelay(1000);
+  __DM_go_setting_angle(HAND_J2, 0, 0.00078f, 0.00043f);
+  osDelay(1000);
+
 
 }
 
@@ -1245,6 +1261,7 @@ void __hand_custom_ctrl(void)
 {
   // if (CC_handler.get_cc_data_flag)
   // {
+ 
   __hand_move2_subctrl(
       CC_handler.joint_angle[0],
       CC_handler.joint_angle[1],
@@ -1258,13 +1275,27 @@ void __hand_custom_ctrl(void)
   // else
   //   __hand_idle_ctrl();
 }
+void __hand_custom_ctrl_init(void)
+{
+      CC_handler.joint_angle[0] = 0;
+      CC_handler.joint_angle[1] = 0.2;
+      CC_handler.joint_angle[2] = -0.2;
+      CC_handler.joint_angle[3] = 0;
+      CC_handler.joint_angle[4] =0;
+      CC_handler.G_angle = 0;
+
+
+}
+
+
 
 /**/
 void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, uint8_t EN)
 {
   if (EN & JG_EN)
   {
-    __hand_motor_go_setting_angle(HAND_G, JG, 0.08f, 0.01f, 0.0023f, 0.0008f);
+    __SET_JOINT_ANGLE(HAND_G, JG);
+    //__hand_motor_go_setting_angle(HAND_G, JG, 0.08f, 0.01f, 0.0023f, 0.0008f);
   }
   if (EN & J5_EN)
   {
@@ -1274,7 +1305,8 @@ void __hand_move2_subctrl(fp32 J1, fp32 J2, fp32 J3, fp32 J4, fp32 J5, fp32 JG, 
 
   if (EN & J4_EN)
   {
-    __hand_motor_go_setting_angle(HAND_J4, J4, 2.5f, 1.2f, 0.032f, 0.02f);
+   // __hand_motor_go_setting_angle(HAND_J4, J4, 2.5f, 1.2f, 0.032f, 0.02f);
+   __SET_JOINT_ANGLE(HAND_J4, J4);
   }
 
   if (EN & J3_EN)
