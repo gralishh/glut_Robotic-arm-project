@@ -57,7 +57,7 @@
 #define J4_MAP_D    -2.9496f        //2.8798f    //2.967f      // 2.88f         //2.236f
 
 #define J5_MAP_K  0.671f       //-0.6710f//J5已更改
-#define J5_MAP_D  0            //1.6349f
+#define J5_MAP_D  0.000128f            //1.6349f
 
 #define GR_MAP_K 1.0f
 #define GR_MAP_D 0
@@ -393,8 +393,17 @@ void hand_task_mode_flush()
       __SET_STRUCT_MODE(HAND_MODE_CUSTOM_CTRL);
       //__SET_STRUCT_MODE(HAND_MODE_IDLE);
 
+    else if(switch_is_mid(get_remote_control_point()->rc.s[0]))
+    {
+      if( RC_CTRL_PTR->rc.ch[4]>500)
+      Hand_go_to_start();
+
+      else
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
+    }
+      
     else
-      __SET_STRUCT_MODE(HAND_MODE_IDLE);
+    __SET_STRUCT_MODE(HAND_MODE_IDLE);
   }
   else if (switch_is_down(get_remote_control_point()->rc.s[1]))
   {
@@ -619,7 +628,7 @@ void basic_motor_init(void)
   // limit
   // dm电机有些上电后位置是2PI~0有些是-PI~PI是模式不同，可以在上位机中更改和设置0点，但都直接改数值也可以使用就懒得设置模式更改
  //先小范围测试
-  __SET_JOINT_LIMIT(HAND_J1,-1.57f, 1.57f);//-2.880f,2.880f
+  __SET_JOINT_LIMIT(HAND_J1, -2.0944f, 2.0944f);//-2.880f,2.880f    -1.57f, 1.57f
   __SET_JOINT_LIMIT(HAND_J2,0.0f,2.5133f );     // -2.4f,0.0f 
   __SET_JOINT_LIMIT(HAND_J3,-3.14f,0.0f); // -6.0f, -2.93f
   __SET_JOINT_LIMIT(HAND_J4, -2.8f, 2.8f);          //机械限位角度为-2.8798——2.8798（330度）
@@ -1082,7 +1091,7 @@ void Hand_go_to_start (void)
   osDelay(1000);
   __DM_go_setting_angle(HAND_G, 0, 0.00042f, 0.00023f);
   osDelay(1000);
-  __DM_go_setting_angle(HAND_J5, 0, 0.003f, 0.001f);//重点测试J5运动与其他的干涉
+  __DM_go_setting_angle(HAND_J5, 0.7f, 0.003f, 0.001f);//重点测试J5运动与其他的干涉
   osDelay(1000);
   __DM_go_setting_angle(HAND_J4, 0, 0.2f, 0.00043f);
   osDelay(1000);

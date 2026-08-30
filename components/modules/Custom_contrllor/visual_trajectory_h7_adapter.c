@@ -28,23 +28,26 @@ static arm_visual_control_t trajectory_control;
  * convention.  Do not repeat the legacy custom-controller sign/zero mapping
  * in this serial adapter; doing so reverses J2/J4/J5 and offsets J2 twice.
  */
+
 static const int32_t ros_joint_min_urad[6] = {
-    -2879793,  /* J1: -165 deg */
-    -1047198,  /* J2:  -60 deg */
-    -1570796,  /* J3:  -90 deg */
-    -2967060,  /* J4: -170 deg */
+    -2094395,  /* J1:  -120 deg */
+           0,  /* J2:    0 deg */
+    -3141593,  /* J3: -180 deg */
+    -2879793,  /* J4: -165 deg */
     -1570796,  /* J5:  -90 deg */
-    -2792527   /* J6: -160 deg */
+    -3141593   /* J6: -180 deg */
 };
 
 static const int32_t ros_joint_max_urad[6] = {
-     2879793,  /* J1: 165 deg */
-     1396263,  /* J2:  80 deg */
-     1570796,  /* J3:  90 deg */
-     2967060,  /* J4: 170 deg */
+     2094395,  /* J1: 120 deg */
+     2530727,  /* J2: 145 deg */
+           0,  /* J3:   0 deg */
+     2879793,  /* J4: 165 deg */
      1570796,  /* J5:  90 deg */
-     2792527   /* J6: 160 deg */
+     3141593   /* J6: 180 deg */
 };
+
+
 
 static int32_t rad_to_urad(fp32 value)
 {
@@ -228,7 +231,7 @@ static bool h7_trajectory_init(void)
     }
     config.max_trajectory_points = ARM_VISUAL_MAX_TRAJECTORY_POINTS;
     config.communication_timeout_ms = 1000u;
-    config.execution_timeout_margin_ms = 1000u;
+    config.execution_timeout_margin_ms = 5000u;
     config.following_error_duration_ms = 300u;
     config.completion_stable_ms = 200u;
     config.stopped_velocity_urad_s = 50000u;
